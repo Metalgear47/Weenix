@@ -19,3 +19,10 @@ disk0.vmdk
 *.bak
 *.orig
 *.nfs*
+
+# vagrant file
+.vagrant
+
+# mac file
+.DS_Store
+/doc/.DS_Store
