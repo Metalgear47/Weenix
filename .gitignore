@@ -23,6 +23,9 @@ disk0.vmdk
 # vagrant file
 .vagrant
 
+# puppet file folder
+manifests/
+
 # mac file
 .DS_Store
 /doc/.DS_Store
