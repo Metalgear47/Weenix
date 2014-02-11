@@ -82,8 +82,24 @@ failed:
 proc_t *
 proc_create(char *name)
 {
-        NOT_YET_IMPLEMENTED("PROCS: proc_create");
-        return NULL;
+    KASSERT(NULL != name); 
+    /*the name arg not NULL*/
+    /*initproc?How*/
+
+    proc_t *proc_struct = slab_obj_alloc(proc_allocator);
+    KASSERT(NULL != proc_struct);
+    /*it should not be null*/
+
+    proc_struct->p_pid = _proc_getid();
+    strcpy(proc_struct->p_comm, name);
+    
+    /*threads, children, parent, exit*/
+
+    proc_struct->p_state = PROC_RUNNING;
+
+    /*wait, pagedir, list*/
+        /*NOT_YET_IMPLEMENTED("PROCS: proc_create");*/
+        return proc_struct;
 }
 
 /**
