@@ -1,4 +1,4 @@
-CFLAGS    := -ffreestanding
+FLAGS    := -ffreestanding
 LDFLAGS   := -m elf_i386 -z nodefaultlib
 # XXX should have --omagic?
 
