@@ -82,13 +82,15 @@ failed:
 proc_t *
 proc_create(char *name)
 {
-    KASSERT(NULL != name); 
     /*the name arg not NULL*/
+    KASSERT(NULL != name); 
+
     /*initproc?How*/
 
     proc_t *proc_struct = slab_obj_alloc(proc_allocator);
-    KASSERT(NULL != proc_struct);
+
     /*it should not be null*/
+    KASSERT(NULL != proc_struct);
 
     proc_struct->p_pid = _proc_getid();
     strcpy(proc_struct->p_comm, name);
@@ -98,6 +100,7 @@ proc_create(char *name)
     proc_struct->p_state = PROC_RUNNING;
 
     /*wait, pagedir, list*/
+
         /*NOT_YET_IMPLEMENTED("PROCS: proc_create");*/
         return proc_struct;
 }
