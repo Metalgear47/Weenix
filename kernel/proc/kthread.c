@@ -74,6 +74,25 @@ free_stack(char *stack)
 kthread_t *
 kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
 {
+    KASSERT(NULL != kthread_allocator);
+
+    kthread_t *kthread_struct = slab_obj_alloc(kthread_allocator);
+    KASSERT(NULL != kthread_struct);
+
+    kthread_struct->kt_kstack = alloc_stack();
+    KASSERT(NULL != kthread_struct->kt_kstack);
+
+    kthread_struct->kt_kctx->c_pdptr = pt_create_pagedir();
+    //init pagetable
+
+    context_setup(&kthread_struct->kt_ctx, func, arg1, arg2, kthread_struct->kt_kstack, strlen(kthread_struct->kt_kstack), kthread_struct->kt_ctx->c_pdptr);
+
+    kthread_struct->kt_cancelled = 0;
+    //1 is cancelled, not sure about other value
+
+    kthread_struct->kt_state = KT_NO_STATE;
+    //not sure about the thread state init value
+    kthread_struct->kt_detached = 0;
         NOT_YET_IMPLEMENTED("PROCS: kthread_create");
         return NULL;
 }
