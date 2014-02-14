@@ -82,8 +82,14 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     kthread_struct->kt_kstack = alloc_stack();
     KASSERT(NULL != kthread_struct->kt_kstack);
 
-    kthread_struct->kt_kctx->c_pdptr = pt_create_pagedir();
+    /*retval, errno*/
+
+    KASSERT(NULL != p);
+    kthread_struct->kt_proc = p;
+
+    kthread_struct->kt_kctx->c_pdptr = p->p_pagedir;
     //init pagetable
+    // questions about init pagetable
 
     context_setup(&kthread_struct->kt_ctx, func, arg1, arg2, kthread_struct->kt_kstack, strlen(kthread_struct->kt_kstack), kthread_struct->kt_ctx->c_pdptr);
 
@@ -92,9 +98,10 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
 
     kthread_struct->kt_state = KT_NO_STATE;
     //not sure about the thread state init value
-    kthread_struct->kt_detached = 0;
-        NOT_YET_IMPLEMENTED("PROCS: kthread_create");
-        return NULL;
+    
+    return kthread_struct;
+        /*NOT_YET_IMPLEMENTED("PROCS: kthread_create");*/
+        /*return NULL;*/
 }
 
 void

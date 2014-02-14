@@ -99,10 +99,14 @@ proc_create(char *name)
 
     proc_struct->p_state = PROC_RUNNING;
 
-    /*wait, pagedir, list*/
+    /*wait(x), pagedir?, list(x)*/
+
+    proc_struct->p_pagedir = pt_create_pagedir();
+    
+    return proc_struct;
 
         /*NOT_YET_IMPLEMENTED("PROCS: proc_create");*/
-        return proc_struct;
+        /*return NULL;*/
 }
 
 /**
