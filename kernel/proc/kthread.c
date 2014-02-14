@@ -87,11 +87,8 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     KASSERT(NULL != p);
     kthread_struct->kt_proc = p;
 
-    kthread_struct->kt_kctx->c_pdptr = p->p_pagedir;
-    //init pagetable
-    // questions about init pagetable
-
-    context_setup(&kthread_struct->kt_ctx, func, arg1, arg2, kthread_struct->kt_kstack, strlen(kthread_struct->kt_kstack), kthread_struct->kt_ctx->c_pdptr);
+    context_setup(&kthread_struct->kt_ctx, func, arg1, arg2, kthread_struct->kt_kstack, strlen(kthread_struct->kt_kstack), p->p_pagedir);
+    // The context should have the same pagetable as the process.
 
     kthread_struct->kt_cancelled = 0;
     //1 is cancelled, not sure about other value
