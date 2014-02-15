@@ -88,13 +88,13 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     kthread_struct->kt_proc = p;
 
     context_setup(&kthread_struct->kt_ctx, func, arg1, arg2, kthread_struct->kt_kstack, strlen(kthread_struct->kt_kstack), p->p_pagedir);
-    // The context should have the same pagetable as the process.
+    /*The context should have the same pagetable as the process.*/
 
     kthread_struct->kt_cancelled = 0;
-    //1 is cancelled, not sure about other value
+    /*1 is cancelled, not sure about other value*/
 
     kthread_struct->kt_state = KT_NO_STATE;
-    //not sure about the thread state init value
+    /*not sure about the thread state init value*/
     
     return kthread_struct;
         /*NOT_YET_IMPLEMENTED("PROCS: kthread_create");*/

@@ -136,7 +136,7 @@ bootstrap(int arg1, void *arg2)
     idle_thr = kthread_create(idle_proc, idleproc_run, NULL, NULL);
     curthr = idle_thr;
 
-    context_make_active(idle_thr->kt_ctx);
+    context_make_active(&idle_thr->kt_ctx);
 
         /*NOT_YET_IMPLEMENTED("PROCS: bootstrap");*/
 
