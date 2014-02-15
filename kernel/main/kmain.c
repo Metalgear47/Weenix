@@ -231,8 +231,13 @@ idleproc_run(int arg1, void *arg2)
 static kthread_t *
 initproc_create(void)
 {
-        NOT_YET_IMPLEMENTED("PROCS: initproc_create");
-        return NULL;
+    char *initproc_name = "Init process";
+    proc_t *init_proc = proc_create(initproc_name);
+
+    kthread_t *init_thr = kthread_create(init_proc, initproc_run, NULL, NULL);
+    return init_thr;
+        /*NOT_YET_IMPLEMENTED("PROCS: initproc_create");*/
+        /*return NULL;*/
 }
 
 /**
@@ -249,9 +254,11 @@ initproc_create(void)
 static void *
 initproc_run(int arg1, void *arg2)
 {
-        NOT_YET_IMPLEMENTED("PROCS: initproc_run");
-
-        return NULL;
+    while(1)
+        ;
+    return NULL;
+        /*NOT_YET_IMPLEMENTED("PROCS: initproc_run");*/
+        /*return NULL;*/
 }
 
 /**
