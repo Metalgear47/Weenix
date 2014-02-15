@@ -127,7 +127,18 @@ bootstrap(int arg1, void *arg2)
         /* necessary to finalize page table information */
         pt_template_init();
 
-        NOT_YET_IMPLEMENTED("PROCS: bootstrap");
+    char *idleproc_name = "Idle process";
+    proc_t *idle_proc;
+    idle_proc = proc_create(idleproc_name);
+    curproc = idle_proc;
+
+    kthread_t *idle_thr;
+    idle_thr = kthread_create(idle_proc, idleproc_run, NULL, NULL);
+    curthr = idle_thr;
+
+    context_make_active(idle_thr->kt_ctx);
+
+        /*NOT_YET_IMPLEMENTED("PROCS: bootstrap");*/
 
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
         return NULL;

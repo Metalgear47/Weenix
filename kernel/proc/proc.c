@@ -93,6 +93,10 @@ proc_create(char *name)
     KASSERT(NULL != proc_struct);
 
     proc_struct->p_pid = _proc_getid();
+    if (proc_struct->p_pid == 1) {
+        // setting the init process if pid is 1
+        proc_initproc = proc_struct;
+    }
     strcpy(proc_struct->p_comm, name);
     
     /*threads, children, parent, exit*/
