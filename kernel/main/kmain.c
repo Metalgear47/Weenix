@@ -133,9 +133,10 @@ bootstrap(int arg1, void *arg2)
     curproc = idle_proc;
 
     kthread_t *idle_thr;
-    idle_thr = kthread_create(idle_proc, idleproc_run, NULL, NULL);
+    idle_thr = kthread_create(idle_proc, idleproc_run, 0, NULL);
     curthr = idle_thr;
 
+    dbg(DBG_THR, "Before context_make_active\n");
     context_make_active(&idle_thr->kt_ctx);
 
         /*NOT_YET_IMPLEMENTED("PROCS: bootstrap");*/
@@ -159,6 +160,7 @@ bootstrap(int arg1, void *arg2)
 static void *
 idleproc_run(int arg1, void *arg2)
 {
+    dbg(DBG_THR, "Start idleproc_run.\n");
         int status;
         pid_t child;
 

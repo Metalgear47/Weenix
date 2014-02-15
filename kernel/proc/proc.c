@@ -85,27 +85,33 @@ proc_create(char *name)
     /*the name arg not NULL*/
     KASSERT(NULL != name); 
 
-    /*initproc?How*/
-
     proc_t *proc_struct = slab_obj_alloc(proc_allocator);
 
     /*it should not be null*/
     KASSERT(NULL != proc_struct);
 
     proc_struct->p_pid = _proc_getid();
-    if (proc_struct->p_pid == 1) {
+    if (proc_struct->p_pid == PID_INIT) {
         /*setting the init process if pid is 1*/
+        dbg(DBG_PROC, "proc_initproc is set\n");
         proc_initproc = proc_struct;
     }
     strcpy(proc_struct->p_comm, name);
     
-    /*threads, children, parent, exit*/
+    /*parent, exit*/
+
+    list_init(&proc_struct->p_threads);
+    list_init(&proc_struct->p_children);
 
     proc_struct->p_state = PROC_RUNNING;
 
-    /*wait(x), pagedir?, list(x)*/
+    /*wait(x)*/
 
     proc_struct->p_pagedir = pt_create_pagedir();
+    list_link_init(&proc_struct->p_list_link);
+    list_link_init(&proc_struct->p_child_link);
+
+    dbg(DBG_PROC, "Created process with name: %s\n", name);
     
     return proc_struct;
 

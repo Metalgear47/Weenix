@@ -87,7 +87,10 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     KASSERT(NULL != p);
     kthread_struct->kt_proc = p;
 
-    context_setup(&kthread_struct->kt_ctx, func, arg1, arg2, kthread_struct->kt_kstack, strlen(kthread_struct->kt_kstack), p->p_pagedir);
+    char *ctx_stack = alloc_stack();
+    KASSERT(NULL != ctx_stack);
+
+    context_setup(&kthread_struct->kt_ctx, func, arg1, arg2, ctx_stack, strlen(ctx_stack), p->p_pagedir);
     /*The context should have the same pagetable as the process.*/
 
     kthread_struct->kt_cancelled = 0;
@@ -95,7 +98,15 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
 
     kthread_struct->kt_state = KT_NO_STATE;
     /*not sure about the thread state init value*/
+
+    /*sched_queue_init(kthread_struct->kt_wchan);*/
     
+    list_link_init(&kthread_struct->kt_qlink);
+    list_link_init(&kthread_struct->kt_plink);
+
+    list_insert_head(&p->p_threads, &kthread_struct->kt_plink);
+    
+    dbg(DBG_THR, "Created thread for process: %s\n", p->p_comm);
     return kthread_struct;
         /*NOT_YET_IMPLEMENTED("PROCS: kthread_create");*/
         /*return NULL;*/
