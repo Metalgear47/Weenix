@@ -130,6 +130,11 @@ sched_cancellable_sleep_on(ktqueue_t *q)
 kthread_t *
 sched_wakeup_on(ktqueue_t *q)
 {
+    if (ktqueue_empty(q)) {
+        panic("queue is empty, panic for now\n");
+    } else {
+        return ktqueue_dequeue(q);
+    }
         NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");
         return NULL;
 }
@@ -137,6 +142,11 @@ sched_wakeup_on(ktqueue_t *q)
 void
 sched_broadcast_on(ktqueue_t *q)
 {
+    while (!ktqueue_empty(q)) {
+        kthread_t *kthr_tmp = sched_wakeup_on(q);
+        sched_make_runnable(kthr_tmp);
+        sched_switch();
+    }
         NOT_YET_IMPLEMENTED("PROCS: sched_broadcast_on");
 }
 
