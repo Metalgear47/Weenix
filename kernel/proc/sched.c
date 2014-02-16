@@ -104,9 +104,6 @@ sched_sleep_on(ktqueue_t *q)
 
     curthr->kt_state = KT_SLEEP;
 
-    /*kt_runq need to be ATOM*/
-    /*ktqueue_remove(&kt_runq, curthr);*/
-
     ktqueue_enqueue(q, curthr);
     sched_switch();
         /*NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");*/
@@ -131,16 +128,13 @@ sched_cancellable_sleep_on(ktqueue_t *q)
         return EINTR;
     }
 
-    /*kt_runq need to be ATOM*/
-    /*ktqueue_remove(&kt_runq, curthr);*/
-
     ktqueue_enqueue(q, curthr);
     sched_switch();
 
     /*check kt_cancelled NYI*/
     
     return 0;
-        NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");
+        /*NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");*/
 }
 
 kthread_t *
@@ -149,7 +143,9 @@ sched_wakeup_on(ktqueue_t *q)
     if (sched_queue_empty(q)) {
         return NULL;
     } else {
-        return ktqueue_dequeue(q);
+        kthread_t *kthr_tmp = ktqueue_dequeue(q);
+        sched_make_runnable(kthr_tmp);
+        return kthr_tmp;
     }
         /*NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");*/
         /*return NULL;*/
@@ -160,9 +156,8 @@ sched_broadcast_on(ktqueue_t *q)
 {
     while (!sched_queue_empty(q)) {
         kthread_t *kthr_tmp = sched_wakeup_on(q);
-        sched_make_runnable(kthr_tmp);
+        /*sched_make_runnable(kthr_tmp);*/
     }
-    sched_switch();
         /*NOT_YET_IMPLEMENTED("PROCS: sched_broadcast_on");*/
 }
 
