@@ -189,19 +189,21 @@ sched_switch(void)
     uint8_t old_ipl = intr_getipl();
     intr_setipl(IPL_HIGH);
 
+    if (sched_queue_empty(&kt_runq)) {
+        panic("This situation not handled yet.\n");
+    }
+
     /*extract a thread from runq*/
     kthread_t *new_kthr = ktqueue_dequeue(&kt_runq);
-    /*put current thread in runq*/
-    ktqueue_enqueue(&kt_runq, curthr);
 
-    /*unblock interrupts*/
-    intr_setipl(old_ipl);
+    curthr = new_kthr;
+    curproc = new_kthr->kt_proc;
 
     /*do the switching*/
     context_switch(&curthr->kt_ctx, &new_kthr->kt_ctx);
 
-    curthr = new_kthr;
-    curproc = new_kthr->kt_proc;
+    /*unblock interrupts*/
+    intr_setipl(old_ipl);
 
     return;
         NOT_YET_IMPLEMENTED("PROCS: sched_switch");
