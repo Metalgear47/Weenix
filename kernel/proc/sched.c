@@ -193,6 +193,8 @@ sched_cancel(struct kthread *kthr)
 void
 sched_switch(void)
 {
+    KASSERT(NULL != kt_runq);
+
     /*block interrupts*/
     uint8_t old_ipl = intr_getipl();
     intr_setipl(IPL_HIGH);
@@ -203,18 +205,19 @@ sched_switch(void)
 
     /*extract a thread from runq*/
     kthread_t *new_kthr = ktqueue_dequeue(&kt_runq);
+    kthread_t *old_kthr = curthr;
 
     curthr = new_kthr;
     curproc = new_kthr->kt_proc;
 
     /*do the switching*/
-    context_switch(&curthr->kt_ctx, &new_kthr->kt_ctx);
+    context_switch(&old_kthr->kt_ctx, &new_kthr->kt_ctx);
 
     /*unblock interrupts*/
     intr_setipl(old_ipl);
 
     return;
-        NOT_YET_IMPLEMENTED("PROCS: sched_switch");
+        /*NOT_YET_IMPLEMENTED("PROCS: sched_switch");*/
 }
 
 /*
@@ -233,6 +236,8 @@ sched_switch(void)
 void
 sched_make_runnable(kthread_t *thr)
 {
+    KASSERT(NULL != kt_runq);
+
     uint8_t old_ipl = intr_getipl();
     intr_setipl(IPL_HIGH);
 
