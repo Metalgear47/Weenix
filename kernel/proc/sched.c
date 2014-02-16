@@ -236,8 +236,11 @@ sched_switch(void)
     uint8_t old_ipl = intr_getipl();
     intr_setipl(IPL_HIGH);
 
-    if (sched_queue_empty(&kt_runq)) {
-        panic("This situation not handled yet.\n");
+    while (sched_queue_empty(&kt_runq)) {
+        intr_disable();
+        intr_setipl(IPL_LOW);
+        intr_wait();
+        intr_setipl(IPL_HIGH);
     }
 
     /*extract a thread from runq*/
