@@ -141,11 +141,9 @@ kthread_cancel(kthread_t *kthr, void *retval)
     if (kthr == curthr) {
         kthread_exit(retval);
     } else {
-        kthr->kt_cancelled = 1;
-        kthr->kt_retval = retval;
+        sched_cancel(kthr);
+        kthr->retval = retval;
         if (KT_SLEEP_CANCELLABLE == kthr->kt_state) {
-            /*how to get it off the wait queue*/
-
             /*wake it up*/
             sched_make_runnable(kthr);
         }
@@ -173,7 +171,6 @@ kthread_exit(void *retval)
 
     proc_thread_exited(retval);
     sched_switch();
-
         /*NOT_YET_IMPLEMENTED("PROCS: kthread_exit");*/
 }
 

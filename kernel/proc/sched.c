@@ -179,8 +179,6 @@ sched_cancel(struct kthread *kthr)
             kthr->kt_cancelled = 1;
             /*remove it from the queue*/
             ktqueue_dequeue(&kthr->kt_wchan, kthr);
-            /*add it to the runq*/
-            sched_make_runnable(kthr);
             break;
         default:
             kthr->kt_cancelled = 1;
