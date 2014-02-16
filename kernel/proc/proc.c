@@ -132,7 +132,6 @@ proc_create(char *name)
     return proc_struct;
 
         /*NOT_YET_IMPLEMENTED("PROCS: proc_create");*/
-        /*return NULL;*/
 }
 
 /**

@@ -127,6 +127,10 @@ sched_cancellable_sleep_on(ktqueue_t *q)
 
     curthr->kt_state = KT_SLEEP_CANCELLABLE;
 
+    if (1 == curthr->kt_cancelled) {
+        return EINTR;
+    }
+
     /*kt_runq need to be ATOM*/
     /*ktqueue_remove(&kt_runq, curthr);*/
 
@@ -134,15 +138,16 @@ sched_cancellable_sleep_on(ktqueue_t *q)
     sched_switch();
 
     /*check kt_cancelled NYI*/
+    
+    return 0;
         NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");
-        return 0;
 }
 
 kthread_t *
 sched_wakeup_on(ktqueue_t *q)
 {
     if (sched_queue_empty(q)) {
-        panic("queue is empty, panic for now\n");
+        return NULL;
     } else {
         return ktqueue_dequeue(q);
     }
