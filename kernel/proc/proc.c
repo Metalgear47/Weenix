@@ -108,7 +108,11 @@ proc_create(char *name)
     /*wait(x)*/
 
     proc_struct->p_pagedir = pt_create_pagedir();
+
     list_link_init(&proc_struct->p_list_link);
+    list_insert_tail(&_proc_list, &proc_struct->p_list_link);
+    /*add itself to _proc_list*/
+
     list_link_init(&proc_struct->p_child_link);
 
     dbg(DBG_PROC, "Created process with name: %s\n", name);

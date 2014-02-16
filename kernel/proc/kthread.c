@@ -87,7 +87,8 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     KASSERT(NULL != p);
     kthread_struct->kt_proc = p;
 
-    char *ctx_stack = alloc_stack();
+    /*char *ctx_stack = alloc_stack();*/
+    void *ctx_stack = page_alloc();
     KASSERT(NULL != ctx_stack);
 
     context_setup(&kthread_struct->kt_ctx, func, arg1, arg2, ctx_stack, strlen(ctx_stack), p->p_pagedir);
@@ -99,7 +100,7 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     kthread_struct->kt_state = KT_NO_STATE;
     /*not sure about the thread state init value*/
 
-    /*sched_queue_init(kthread_struct->kt_wchan);*/
+    kthread_struct->kt_wchan = NULL;
     
     list_link_init(&kthread_struct->kt_qlink);
     list_link_init(&kthread_struct->kt_plink);

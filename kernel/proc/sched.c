@@ -185,6 +185,8 @@ sched_cancel(struct kthread *kthr)
 void
 sched_switch(void)
 {
+    intr_setipl(IPL_HIGH);
+    intr_setipl(IPL_LOW);
         NOT_YET_IMPLEMENTED("PROCS: sched_switch");
 }
 
@@ -204,5 +206,8 @@ sched_switch(void)
 void
 sched_make_runnable(kthread_t *thr)
 {
+    uint8_t old_ipl = intr_getipl();
+    intr_setipl(IPL_HIGH);
+    intr_setipl(old_ipl);
         NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");
 }
