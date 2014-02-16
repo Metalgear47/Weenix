@@ -144,7 +144,10 @@ kthread_cancel(kthread_t *kthr, void *retval)
         kthr->kt_cancelled = 1;
         kthr->kt_retval = retval;
         if (KT_SLEEP_CANCELLABLE == kthr->kt_state) {
+            /*how to get it off the wait queue*/
+
             /*wake it up*/
+            sched_make_runnable(kthr);
         }
     }
         NOT_YET_IMPLEMENTED("PROCS: kthread_cancel");
@@ -169,6 +172,7 @@ kthread_exit(void *retval)
     /*not setting state to exited here*/
 
     proc_thread_exited(retval);
+    sched_switch();
 
         /*NOT_YET_IMPLEMENTED("PROCS: kthread_exit");*/
 }
