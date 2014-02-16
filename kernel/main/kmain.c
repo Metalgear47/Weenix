@@ -258,6 +258,7 @@ initproc_create(void)
 static void *
 initproc_run(int arg1, void *arg2)
 {
+    dbg(DBG_THR, "Going into initproc.\n");
     while(1)
         ;
     return NULL;

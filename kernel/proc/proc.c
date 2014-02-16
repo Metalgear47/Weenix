@@ -124,7 +124,10 @@ proc_create(char *name)
         dbg(DBG_PROC, "Not IDLE_PROC, hook it up with parent: %d\n", proc_struct->p_pid);
     }
 
+    /*char *proc_buf = (char *)kmalloc(512 * sizeof(char));*/
+    /*proc_info(proc_struct, proc_buf, 512);*/
     dbg(DBG_PROC, "Created process with name: %s\n", name);
+    /*kfree(proc_buf);*/
     
     return proc_struct;
 
@@ -173,6 +176,9 @@ proc_cleanup(int status)
 void
 proc_kill(proc_t *p, int status)
 {
+    if (curproc == p) {
+        do_exit(status);
+    }
         NOT_YET_IMPLEMENTED("PROCS: proc_kill");
 }
 
