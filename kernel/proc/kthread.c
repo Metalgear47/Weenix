@@ -161,7 +161,7 @@ kthread_exit(void *retval)
 
     proc_thread_exited(retval);
 
-        NOT_YET_IMPLEMENTED("PROCS: kthread_exit");
+        /*NOT_YET_IMPLEMENTED("PROCS: kthread_exit");*/
 }
 
 /*

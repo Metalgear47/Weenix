@@ -1,16 +1,16 @@
   Not yet implemented:
 
-[ ]         main/kmain.c:130                      bootstrap()    PROCS
-[ ]         main/kmain.c:223                initproc_create()    PROCS
-[ ]         main/kmain.c:241                   initproc_run()    PROCS
+[o]         main/kmain.c:130                      bootstrap()    PROCS
+[o]         main/kmain.c:223                initproc_create()    PROCS
+[o]         main/kmain.c:241                   initproc_run()    PROCS
 [ ]         proc/kmutex.c:18                    kmutex_init()    PROCS
 [ ]         proc/kmutex.c:30                    kmutex_lock()    PROCS
 [ ]         proc/kmutex.c:40        kmutex_lock_cancellable()    PROCS
 [ ]         proc/kmutex.c:61                  kmutex_unlock()    PROCS
-[ ]        proc/kthread.c:77                 kthread_create()    PROCS
+[o]        proc/kthread.c:77                 kthread_create()    PROCS
 [ ]       proc/kthread.c:106                 kthread_cancel()    PROCS
 [ ]       proc/kthread.c:124                   kthread_exit()    PROCS
-[ ]           proc/proc.c:85                    proc_create()    PROCS
+[o]           proc/proc.c:85                    proc_create()    PROCS
 [ ]          proc/proc.c:116                   proc_cleanup()    PROCS
 [ ]          proc/proc.c:130                      proc_kill()    PROCS
 [ ]          proc/proc.c:142                  proc_kill_all()    PROCS

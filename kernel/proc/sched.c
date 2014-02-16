@@ -143,7 +143,15 @@ sched_broadcast_on(ktqueue_t *q)
 void
 sched_cancel(struct kthread *kthr)
 {
-        NOT_YET_IMPLEMENTED("PROCS: sched_cancel");
+    switch(kthr->kt_state) {
+        case KT_SLEEP_CANCELLABLE:
+            kthr->kt_cancelled = 1;
+            /*remove it from the queue*/
+            break;
+        default:
+            kthr->kt_cancelled = 1;
+    }
+        /*NOT_YET_IMPLEMENTED("PROCS: sched_cancel");*/
 }
 
 /*

@@ -162,6 +162,21 @@ proc_create(char *name)
 void
 proc_cleanup(int status)
 {
+    /*waking up its parent*/
+
+    /*reparenting*/
+    proc_t *child_proc;
+    list_iterate_begin(&curproc->p_children, child_proc, proc_t, p_child_link) {
+        child_proc->p_pproc = proc_initproc;
+        list_remove(&child_proc->p_child_link);
+        list_insert_head(&proc_initproc->p_children, &child_proc->p_child_link);
+        dbg(DBG_THR, "Reparenting to proc: %s\n", child_proc->p_pproc->p_comm);
+    } list_iterate_end();
+    KASSERT(list_empty(&curproc->p_children));
+
+    /*setting state and status*/
+    curproc->p_state = PROC_DEAD;
+    curproc->p_status = status;
         NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
 }
 
@@ -223,6 +238,8 @@ proc_list()
 void
 proc_thread_exited(void *retval)
 {
+
+    kthread_destroy(curthr);
         NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
 }
 
