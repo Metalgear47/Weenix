@@ -86,9 +86,8 @@ proc_create(char *name)
     KASSERT(NULL != name); 
 
     proc_t *proc_struct = slab_obj_alloc(proc_allocator);
-
-    /*it should not be null*/
     KASSERT(NULL != proc_struct);
+    /*it should not be null*/
 
     proc_struct->p_pid = _proc_getid();
     if (proc_struct->p_pid == PID_INIT) {
@@ -96,9 +95,10 @@ proc_create(char *name)
         dbg(DBG_PROC, "proc_initproc is set\n");
         proc_initproc = proc_struct;
     }
+
     strcpy(proc_struct->p_comm, name);
     
-    /*parent, exit*/
+    /*exit value?*/
 
     list_init(&proc_struct->p_threads);
     list_init(&proc_struct->p_children);
@@ -114,6 +114,15 @@ proc_create(char *name)
     /*add itself to _proc_list*/
 
     list_link_init(&proc_struct->p_child_link);
+
+    if (PID_IDLE != proc_struct->p_pid) {
+        KASSERT(NULL != curproc);
+        proc_struct->p_pproc = curproc;
+        /*not sure about the parent process.*/
+
+        list_insert_tail(&curproc->p_children, &proc_struct->p_child_link);
+        dbg(DBG_PROC, "Not IDLE_PROC, hook it up with parent: %d\n", proc_struct->p_pid);
+    }
 
     dbg(DBG_PROC, "Created process with name: %s\n", name);
     

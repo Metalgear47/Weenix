@@ -236,6 +236,8 @@ initproc_create(void)
     char *initproc_name = "Init process";
     proc_t *init_proc = proc_create(initproc_name);
 
+    /*NEED to hookup it with its parent*/
+
     kthread_t *init_thr = kthread_create(init_proc, initproc_run, NULL, NULL);
     return init_thr;
         /*NOT_YET_IMPLEMENTED("PROCS: initproc_create");*/
