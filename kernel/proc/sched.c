@@ -125,6 +125,7 @@ sched_cancellable_sleep_on(ktqueue_t *q)
     curthr->kt_state = KT_SLEEP_CANCELLABLE;
 
     if (1 == curthr->kt_cancelled) {
+        /*not sure about the kthread state*/
         return EINTR;
     }
 
@@ -177,15 +178,14 @@ sched_cancel(struct kthread *kthr)
         case KT_SLEEP_CANCELLABLE:
             kthr->kt_cancelled = 1;
             /*remove it from the queue*/
-            list_remove(&kthr->kt_qlink);
+            ktqueue_dequeue(&kthr->kt_wchan, kthr);
             /*add it to the runq*/
             sched_make_runnable(kthr);
-            /*question?*/
             break;
         default:
             kthr->kt_cancelled = 1;
     }
-        NOT_YET_IMPLEMENTED("PROCS: sched_cancel");
+        /*NOT_YET_IMPLEMENTED("PROCS: sched_cancel");*/
 }
 
 /*
