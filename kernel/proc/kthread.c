@@ -82,12 +82,12 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     kthread_struct->kt_kstack = alloc_stack();
     KASSERT(NULL != kthread_struct->kt_kstack);
 
-    /*retval, errno*/
+    /*errno*/
+    kthread_struct->kt_retval = NULL;
 
     KASSERT(NULL != p);
     kthread_struct->kt_proc = p;
 
-    /*char *ctx_stack = alloc_stack();*/
     void *ctx_stack = page_alloc();
     KASSERT(NULL != ctx_stack);
 
@@ -108,7 +108,7 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     list_insert_head(&p->p_threads, &kthread_struct->kt_plink);
     
     dbg(DBG_THR, "Created thread for process: %s\n", p->p_comm);
-    /*dbginfo(DBG_THR, &proc_info, p);*/
+    dbginfo(DBG_THR, &proc_info, p);
     return kthread_struct;
         /*NOT_YET_IMPLEMENTED("PROCS: kthread_create");*/
         /*return NULL;*/

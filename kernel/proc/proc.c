@@ -98,14 +98,14 @@ proc_create(char *name)
 
     strcpy(proc_struct->p_comm, name);
     
-    /*exit value?*/
+    /*exit value? p_status not set here.*/
 
     list_init(&proc_struct->p_threads);
     list_init(&proc_struct->p_children);
 
     proc_struct->p_state = PROC_RUNNING;
 
-    /*wait(x)*/
+    sched_queue_init(&proc_struct->p_wait);
 
     proc_struct->p_pagedir = pt_create_pagedir();
 
@@ -121,11 +121,14 @@ proc_create(char *name)
         /*not sure about the parent process.*/
 
         list_insert_tail(&curproc->p_children, &proc_struct->p_child_link);
-        dbg(DBG_PROC, "Not IDLE_PROC, hook it up with parent: %d\n", proc_struct->p_pid);
+        /*dbg(DBG_PROC, "Not IDLE_PROC, hook it up with parent: %d\n", proc_struct->p_pid);*/
+    } else {
+        proc_struct->p_pproc = NULL;
     }
 
     dbg(DBG_PROC, "Created process with name: %s\n", name);
-    /*dbginfo(DBG_PROC, proc_info, proc_struct);*/
+    dbginfo(DBG_PROC, proc_info, proc_struct);
+    dbginfo(DBG_PROC, proc_list_info, NULL);
     
     return proc_struct;
 
@@ -160,13 +163,14 @@ void
 proc_cleanup(int status)
 {
     /*waking up its parent*/
+    sched_wakeup_on(&curproc->p_wait);
 
     /*reparenting*/
     proc_t *child_proc;
     list_iterate_begin(&curproc->p_children, child_proc, proc_t, p_child_link) {
         child_proc->p_pproc = proc_initproc;
         list_remove(&child_proc->p_child_link);
-        list_insert_head(&proc_initproc->p_children, &child_proc->p_child_link);
+        list_insert_tail(&proc_initproc->p_children, &child_proc->p_child_link);
         dbg(DBG_THR, "Reparenting to proc: %s\n", child_proc->p_pproc->p_comm);
     } list_iterate_end();
     KASSERT(list_empty(&curproc->p_children));
@@ -174,7 +178,7 @@ proc_cleanup(int status)
     /*setting state and status*/
     curproc->p_state = PROC_DEAD;
     curproc->p_status = status;
-        NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");
+        /*NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");*/
 }
 
 /*
