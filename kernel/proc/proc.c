@@ -131,8 +131,6 @@ proc_create(char *name)
     dbginfo(DBG_PROC, proc_list_info, NULL);
     
     return proc_struct;
-
-        /*NOT_YET_IMPLEMENTED("PROCS: proc_create");*/
 }
 
 /**
@@ -239,8 +237,8 @@ proc_list()
 void
 proc_thread_exited(void *retval)
 {
-
     kthread_destroy(curthr);
+    proc_cleanup((int)*(int *)retval);
         NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
 }
 
@@ -262,6 +260,14 @@ proc_thread_exited(void *retval)
 pid_t
 do_waitpid(pid_t pid, int options, int *status)
 {
+    if (list_empty(&curproc->p_children)) {
+        return ECHILD;
+    }
+
+    if (-1 == pid) {
+    } else {
+
+    }
         NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
         return 0;
 }
