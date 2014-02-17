@@ -178,7 +178,7 @@ sched_cancel(struct kthread *kthr)
         case KT_SLEEP_CANCELLABLE:
             kthr->kt_cancelled = 1;
             /*remove it from the queue*/
-            ktqueue_dequeue(&kthr->kt_wchan, kthr);
+            ktqueue_remove(kthr->kt_wchan, kthr);
             break;
         default:
             kthr->kt_cancelled = 1;

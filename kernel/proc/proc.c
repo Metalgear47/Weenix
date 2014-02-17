@@ -124,10 +124,8 @@ proc_create(char *name)
         dbg(DBG_PROC, "Not IDLE_PROC, hook it up with parent: %d\n", proc_struct->p_pid);
     }
 
-    /*char *proc_buf = (char *)kmalloc(512 * sizeof(char));*/
-    /*proc_info(proc_struct, proc_buf, 512);*/
     dbg(DBG_PROC, "Created process with name: %s\n", name);
-    /*kfree(proc_buf);*/
+    /*dbginfo(DBG_PROC, proc_info, proc_struct);*/
     
     return proc_struct;
 

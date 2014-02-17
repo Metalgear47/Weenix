@@ -108,6 +108,7 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     list_insert_head(&p->p_threads, &kthread_struct->kt_plink);
     
     dbg(DBG_THR, "Created thread for process: %s\n", p->p_comm);
+    /*dbginfo(DBG_THR, &proc_info, p);*/
     return kthread_struct;
         /*NOT_YET_IMPLEMENTED("PROCS: kthread_create");*/
         /*return NULL;*/
@@ -142,7 +143,7 @@ kthread_cancel(kthread_t *kthr, void *retval)
         kthread_exit(retval);
     } else {
         sched_cancel(kthr);
-        kthr->retval = retval;
+        kthr->kt_retval = retval;
         if (KT_SLEEP_CANCELLABLE == kthr->kt_state) {
             /*wake it up*/
             sched_make_runnable(kthr);
