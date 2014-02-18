@@ -195,7 +195,16 @@ proc_kill(proc_t *p, int status)
     if (curproc == p) {
         do_exit(status);
     } else {
-        
+        kthread_t *kthr;
+        list_iterate_begin(&p->p_children, kthr, kthread_t, kt_plink) {
+            /*remove it from the queue(wait/ run)*/
+            ktqueue_remove(&kthr->kt_wchan, kthr);
+            /*remove it from parent's thread list*/
+            list_remove(&kthr->kt_plink);
+            /*free the resources*/
+            kthread_destroy(kthr);
+        } list_iterate_end();
+        /*proc_cleanup?*/
     }
         NOT_YET_IMPLEMENTED("PROCS: proc_kill");
 }
@@ -243,6 +252,7 @@ proc_thread_exited(void *retval)
 {
     kthread_destroy(curthr);
     proc_cleanup((int)*(int *)retval);
+    sched_switch();
         NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
 }
 
