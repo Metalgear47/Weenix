@@ -190,8 +190,12 @@ proc_cleanup(int status)
 void
 proc_kill(proc_t *p, int status)
 {
+    KASSERT(NULL != p);
+
     if (curproc == p) {
         do_exit(status);
+    } else {
+        
     }
         NOT_YET_IMPLEMENTED("PROCS: proc_kill");
 }
