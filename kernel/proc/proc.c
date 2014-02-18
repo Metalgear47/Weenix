@@ -218,6 +218,15 @@ proc_kill(proc_t *p, int status)
 void
 proc_kill_all()
 {
+    proc_t *proc_iter;
+    list_iterate_begin(_proc_list, proc_iter, proc_t, p_list_link) {
+        /*no direct children of idle proces, not curproc*/
+        if (PID_IDLE != proc_iter->p_pproc->p_pid || curproc != proc_iter) {
+            proc_kill(proc_iter, 0);
+        }
+    } list_iterate_end();
+    /*kill current process*/
+    proc_kill(curproc, 0);
         NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
 }
 
