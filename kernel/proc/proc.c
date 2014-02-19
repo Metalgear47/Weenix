@@ -171,6 +171,7 @@ proc_cleanup(int status)
         list_insert_tail(&proc_initproc->p_children, &child_proc->p_child_link);
         dbg(DBG_PROC, "Reparenting to proc: %s\n", child_proc->p_pproc->p_comm);
     } list_iterate_end();
+    
     KASSERT(list_empty(&curproc->p_children));
     dbg(DBG_PROC, "After reparenting:\n");
     dbginfo(DBG_PROC, proc_list_info, NULL);
@@ -204,7 +205,8 @@ proc_kill(proc_t *p, int status)
             /*remove it from parent's thread list*/
             list_remove(&kthr->kt_plink);
             /*free the resources*/
-            kthread_destroy(kthr);
+            /*kthread_destroy(kthr);*/
+            kthread_cancel(kthr, (void *)0);
         } list_iterate_end();
         /*proc_cleanup?*/
     }
@@ -289,7 +291,22 @@ do_waitpid(pid_t pid, int options, int *status)
         return ECHILD;
     }
 
+    sched_make_runnable(curthr);
+    sched_switch();
+
+    proc_t *child_proc;
+    pid_t child_pid;
+
     if (-1 == pid) {
+        list_iterate_begin(&curproc->p_children, child_proc, proc_t, p_child_link) {
+            if (PROC_DEAD == child_proc->p_state) {
+                /*clean*/
+                child_pid = child_proc->p_pid;
+                list_remove(&child_proc->p_child_link);
+                /*slab_obj_free(child);*/
+                return pid;
+            }
+        } list_iterate_end();
     } else {
 
     }
@@ -306,6 +323,14 @@ do_waitpid(pid_t pid, int options, int *status)
 void
 do_exit(int status)
 {
+    kthread_t *kthr;
+    list_iterate_begin(&curproc->p_threads, kthr, kthread_t, kt_plink) {
+        kthread_cancel(kthr, (void *)0);
+        list_remove(&kthr->kt_plink);
+    } list_iterate_end();
+
+    KASSERT(list_empty(&curproc->p_threads));
+    sched_switch();
         NOT_YET_IMPLEMENTED("PROCS: do_exit");
 }
 

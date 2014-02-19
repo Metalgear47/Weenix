@@ -239,6 +239,9 @@ sched_switch(void)
     kthread_t *new_kthr = ktqueue_dequeue(&kt_runq);
     kthread_t *old_kthr = curthr;
 
+    dbg(DBG_SCHED, "Before switching, the process is:\n");
+    dbginfo(DBG_SCHED, proc_info, curproc);
+
     curthr = new_kthr;
     curproc = new_kthr->kt_proc;
 
@@ -247,6 +250,9 @@ sched_switch(void)
 
     /*unblock interrupts*/
     intr_setipl(old_ipl);
+
+    dbg(DBG_SCHED, "After switching, the process is:\n");
+    dbginfo(DBG_SCHED, proc_info, curproc);
 
     return;
         /*NOT_YET_IMPLEMENTED("PROCS: sched_switch");*/
