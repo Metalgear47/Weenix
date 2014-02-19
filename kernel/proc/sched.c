@@ -101,6 +101,7 @@ void
 sched_sleep_on(ktqueue_t *q)
 {
     KASSERT(NULL != curthr);
+    KASSERT(NULL != q);
 
     curthr->kt_state = KT_SLEEP;
 
@@ -121,18 +122,18 @@ int
 sched_cancellable_sleep_on(ktqueue_t *q)
 {
     KASSERT(NULL != curthr);
+    KASSERT(NULL != q);
 
     curthr->kt_state = KT_SLEEP_CANCELLABLE;
-
-    if (1 == curthr->kt_cancelled) {
-        /*not sure about the kthread state*/
-        return EINTR;
-    }
 
     ktqueue_enqueue(q, curthr);
     sched_switch();
 
-    /*check kt_cancelled NYI*/
+    /*check kt_cancelled*/
+    if (1 == curthr->kt_cancelled) {
+        /*not sure about the kthread state*/
+        return EINTR;
+    }
     
     return 0;
         /*NOT_YET_IMPLEMENTED("PROCS: sched_cancellable_sleep_on");*/
@@ -141,25 +142,23 @@ sched_cancellable_sleep_on(ktqueue_t *q)
 kthread_t *
 sched_wakeup_on(ktqueue_t *q)
 {
-    if (sched_queue_empty(q)) {
-        return NULL;
-    } else {
-        kthread_t *kthr_tmp = ktqueue_dequeue(q);
+    KASSERT(NULL != q);
+
+    kthread_t *kthr_tmp = ktqueue_dequeue(q);
+    if (NULL != kthr_tmp) {
         sched_make_runnable(kthr_tmp);
-        return kthr_tmp;
     }
-        /*NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");*/
-        /*return NULL;*/
+    return kthr_tmp;
 }
 
 void
 sched_broadcast_on(ktqueue_t *q)
 {
+    KASSERT(NULL != q);
+
     while (!sched_queue_empty(q)) {
         kthread_t *kthr_tmp = sched_wakeup_on(q);
-        /*sched_make_runnable(kthr_tmp);*/
     }
-        /*NOT_YET_IMPLEMENTED("PROCS: sched_broadcast_on");*/
 }
 
 /*
@@ -277,5 +276,4 @@ sched_make_runnable(kthread_t *thr)
 
     intr_setipl(old_ipl);
     return;
-        /*NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");*/
 }

@@ -198,9 +198,9 @@ proc_kill(proc_t *p, int status)
         do_exit(status);
     } else {
         kthread_t *kthr;
-        list_iterate_begin(&p->p_children, kthr, kthread_t, kt_plink) {
+        list_iterate_begin(&p->p_threads, kthr, kthread_t, kt_plink) {
             /*remove it from the queue(wait/ run)*/
-            ktqueue_remove(&kthr->kt_wchan, kthr);
+            /*ktqueue_remove(kthr->kt_wchan, kthr);*/
             /*remove it from parent's thread list*/
             list_remove(&kthr->kt_plink);
             /*free the resources*/
@@ -221,7 +221,7 @@ void
 proc_kill_all()
 {
     proc_t *proc_iter;
-    list_iterate_begin(_proc_list, proc_iter, proc_t, p_list_link) {
+    list_iterate_begin(&_proc_list, proc_iter, proc_t, p_list_link) {
         /*no direct children of idle proces, not curproc*/
         if (PID_IDLE != proc_iter->p_pproc->p_pid || curproc != proc_iter) {
             proc_kill(proc_iter, 0);
