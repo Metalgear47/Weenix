@@ -169,9 +169,11 @@ proc_cleanup(int status)
         child_proc->p_pproc = proc_initproc;
         list_remove(&child_proc->p_child_link);
         list_insert_tail(&proc_initproc->p_children, &child_proc->p_child_link);
-        dbg(DBG_THR, "Reparenting to proc: %s\n", child_proc->p_pproc->p_comm);
+        dbg(DBG_PROC, "Reparenting to proc: %s\n", child_proc->p_pproc->p_comm);
     } list_iterate_end();
     KASSERT(list_empty(&curproc->p_children));
+    dbg(DBG_PROC, "After reparenting:\n");
+    dbginfo(DBG_PROC, proc_list_info, NULL);
 
     /*setting state and status*/
     curproc->p_state = PROC_DEAD;

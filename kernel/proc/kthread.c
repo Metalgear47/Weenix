@@ -171,7 +171,7 @@ kthread_exit(void *retval)
     /*not setting state to exited here*/
 
     proc_thread_exited(retval);
-    sched_switch();
+    /*sched_switch();*/
         /*NOT_YET_IMPLEMENTED("PROCS: kthread_exit");*/
 }
 
