@@ -264,7 +264,7 @@ void
 proc_thread_exited(void *retval)
 {
     kthread_destroy(curthr);
-    proc_cleanup((int)*(int *)retval);
+    /*proc_cleanup((int)*(int *)retval);*/
     sched_switch();
         NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
 }
@@ -294,6 +294,8 @@ do_waitpid(pid_t pid, int options, int *status)
     sched_make_runnable(curthr);
     sched_switch();
 
+    dbg(DBG_PROC, "Switch, you make it!\n");
+
     proc_t *child_proc;
     pid_t child_pid;
 
@@ -304,7 +306,7 @@ do_waitpid(pid_t pid, int options, int *status)
                 child_pid = child_proc->p_pid;
                 list_remove(&child_proc->p_child_link);
                 /*slab_obj_free(child);*/
-                return pid;
+                return child_pid;
             }
         } list_iterate_end();
     } else {

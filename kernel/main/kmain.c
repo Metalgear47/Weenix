@@ -67,7 +67,7 @@ kmain()
         GDB_CALL_HOOK(boot);
 
         dbg_init();
-        dbgq(DBG_CORE, "Kernel binary:\n");
+        dbg(DBG_CORE, "Kernel binary:\n");
         dbgq(DBG_CORE, "  text: 0x%p-0x%p\n", &kernel_start_text, &kernel_end_text);
         dbgq(DBG_CORE, "  data: 0x%p-0x%p\n", &kernel_start_data, &kernel_end_data);
         dbgq(DBG_CORE, "  bss:  0x%p-0x%p\n", &kernel_start_bss, &kernel_end_bss);
@@ -259,8 +259,8 @@ static void *
 initproc_run(int arg1, void *arg2)
 {
     dbg(DBG_THR, "Going into initproc.\n");
-    while(1)
-        ;
+    /*while(1)*/
+        /*;*/
     return NULL;
         /*NOT_YET_IMPLEMENTED("PROCS: initproc_run");*/
         /*return NULL;*/

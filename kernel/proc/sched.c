@@ -236,22 +236,22 @@ sched_switch(void)
     }
 
     /*extract a thread from runq*/
-    kthread_t *new_kthr = ktqueue_dequeue(&kt_runq);
     kthread_t *old_kthr = curthr;
+    curthr = ktqueue_dequeue(&kt_runq);
+    curproc = curthr->kt_proc;
 
-    dbg(DBG_SCHED, "Before switching, the process is:\n");
+    dbg(DBG_SCHED, "Before context switching, the old process is:\n");
+    dbginfo(DBG_SCHED, proc_info, old_kthr->kt_proc);
+    dbg(DBG_SCHED, "Before context switching, the new process is:\n");
     dbginfo(DBG_SCHED, proc_info, curproc);
 
-    curthr = new_kthr;
-    curproc = new_kthr->kt_proc;
-
     /*do the switching*/
-    context_switch(&old_kthr->kt_ctx, &new_kthr->kt_ctx);
+    context_switch(&old_kthr->kt_ctx, &curthr->kt_ctx);
 
     /*unblock interrupts*/
     intr_setipl(old_ipl);
 
-    dbg(DBG_SCHED, "After switching, the process is:\n");
+    dbg(DBG_SCHED, "After context switching, the process is:\n");
     dbginfo(DBG_SCHED, proc_info, curproc);
 
     return;
