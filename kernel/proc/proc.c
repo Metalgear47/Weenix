@@ -200,17 +200,13 @@ proc_kill(proc_t *p, int status)
     } else {
         kthread_t *kthr;
         list_iterate_begin(&p->p_threads, kthr, kthread_t, kt_plink) {
-            /*remove it from the queue(wait/ run)*/
-            /*ktqueue_remove(kthr->kt_wchan, kthr);*/
             /*remove it from parent's thread list*/
             list_remove(&kthr->kt_plink);
-            /*free the resources*/
-            /*kthread_destroy(kthr);*/
-            kthread_cancel(kthr, (void *)0);
+            /*cancel the thread*/
+            kthread_cancel(kthr, (void *)(&status));
         } list_iterate_end();
-        /*proc_cleanup?*/
+        /*proc_cleanup? -maybe not here, wait till syscall*/
     }
-        NOT_YET_IMPLEMENTED("PROCS: proc_kill");
 }
 
 /*
@@ -229,8 +225,9 @@ proc_kill_all()
             proc_kill(proc_iter, 0);
         }
     } list_iterate_end();
+
     /*kill current process*/
-    proc_kill(curproc, 0);
+    do_exit(0);
         NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
 }
 
@@ -266,8 +263,9 @@ proc_thread_exited(void *retval)
     /*it should not be in any wait queue*/
     KASSERT(NULL == curthr->kt_wchan);
 
+    /*not a good idea here, still in the context of curthr*/
     /*clean the resources*/
-    kthread_destroy(curthr);
+    /*kthread_destroy(curthr);*/
 
     /*deal with NULL pointer*/
     if (retval == NULL) {

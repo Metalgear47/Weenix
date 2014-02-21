@@ -149,7 +149,6 @@ kthread_cancel(kthread_t *kthr, void *retval)
             sched_make_runnable(kthr);
         }
     }
-        /*NOT_YET_IMPLEMENTED("PROCS: kthread_cancel");*/
 }
 
 /*
