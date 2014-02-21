@@ -263,8 +263,13 @@ proc_list()
 void
 proc_thread_exited(void *retval)
 {
+    /*it should not be in any wait queue*/
     KASSERT(NULL == curthr->kt_wchan);
+
+    /*clean the resources*/
     kthread_destroy(curthr);
+
+    /*deal with NULL pointer*/
     if (retval == NULL) {
         curproc->p_status = 0;
         proc_cleanup(0);
@@ -272,6 +277,7 @@ proc_thread_exited(void *retval)
         curproc->p_status = *((int *)retval);
         proc_cleanup(*((int *)retval));
     }
+
     sched_switch();
 }
 
@@ -331,15 +337,8 @@ do_waitpid(pid_t pid, int options, int *status)
 void
 do_exit(int status)
 {
-    kthread_t *kthr;
-    list_iterate_begin(&curproc->p_threads, kthr, kthread_t, kt_plink) {
-        kthread_cancel(kthr, (void *)0);
-        list_remove(&kthr->kt_plink);
-    } list_iterate_end();
-
-    KASSERT(list_empty(&curproc->p_threads));
-    sched_switch();
-        NOT_YET_IMPLEMENTED("PROCS: do_exit");
+    /*implementation for now, only one thread*/
+    kthread_exit((void *)(&status));
 }
 
 size_t
