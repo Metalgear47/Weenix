@@ -263,10 +263,16 @@ proc_list()
 void
 proc_thread_exited(void *retval)
 {
+    KASSERT(NULL == curthr->kt_wchan);
     kthread_destroy(curthr);
-    /*proc_cleanup((int)*(int *)retval);*/
+    if (retval == NULL) {
+        curproc->p_status = 0;
+        proc_cleanup(0);
+    } else {
+        curproc->p_status = *((int *)retval);
+        proc_cleanup(*((int *)retval));
+    }
     sched_switch();
-        NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");
 }
 
 /* If pid is -1 dispose of one of the exited children of the current
