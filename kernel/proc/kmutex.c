@@ -29,11 +29,10 @@ kmutex_init(kmutex_t *mtx)
 void
 kmutex_lock(kmutex_t *mtx)
 {
-    if (NULL == mtx->km_hloder) {
+    if (NULL == mtx->km_holder) {
         mtx->km_holder = curthr;
     } else {
         sched_sleep_on(&mtx->km_waitq);
-        sched_switch();
     }
         /*NOT_YET_IMPLEMENTED("PROCS: kmutex_lock");*/
 }
@@ -45,8 +44,18 @@ kmutex_lock(kmutex_t *mtx)
 int
 kmutex_lock_cancellable(kmutex_t *mtx)
 {
-        NOT_YET_IMPLEMENTED("PROCS: kmutex_lock_cancellable");
+CheckAgain:
+    if (NULL == mtx->km_holder) {
+        mtx->km_holder = curthr;
         return 0;
+    } else {
+        if (0 == sched_cancellable_sleep_on(&mtx->km_waitq)) {
+            goto CheckAgain;
+        } else {
+            return EINTR;
+        }
+    }
+        /*NOT_YET_IMPLEMENTED("PROCS: kmutex_lock_cancellable");*/
 }
 
 /*
