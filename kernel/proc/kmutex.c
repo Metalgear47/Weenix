@@ -50,12 +50,11 @@ CheckAgain:
         return 0;
     } else {
         if (0 == sched_cancellable_sleep_on(&mtx->km_waitq)) {
-            goto CheckAgain;
+            return 0;
         } else {
             return EINTR;
         }
     }
-        /*NOT_YET_IMPLEMENTED("PROCS: kmutex_lock_cancellable");*/
 }
 
 /*
