@@ -300,7 +300,6 @@ do_waitpid(pid_t pid, int options, int *status)
 {
     KASSERT(0 != pid);
     KASSERT(0 == options);
-    KASSERT(NULL != status);
 
     if (list_empty(&curproc->p_children)) {
         return ECHILD;
@@ -362,7 +361,9 @@ CheckAgain:
     } list_iterate_end();
     KASSERT(list_empty(&child_proc->p_threads));
     /*cleanup the proc*/
-    *status = child_proc->p_status;
+    if (NULL != status) {
+        *status = child_proc->p_status;
+    }
     pt_destroy_pagedir(child_proc->p_pagedir);
     slab_obj_free(proc_allocator, child_proc);
 

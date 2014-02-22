@@ -139,8 +139,6 @@ bootstrap(int arg1, void *arg2)
     dbg(DBG_THR, "Before context_make_active\n");
     context_make_active(&idle_thr->kt_ctx);
 
-        /*NOT_YET_IMPLEMENTED("PROCS: bootstrap");*/
-
         panic("weenix returned to bootstrap()!!! BAD!!!\n");
         return NULL;
 }
@@ -242,8 +240,6 @@ initproc_create(void)
 
     kthread_t *init_thr = kthread_create(init_proc, initproc_run, NULL, NULL);
     return init_thr;
-        /*NOT_YET_IMPLEMENTED("PROCS: initproc_create");*/
-        /*return NULL;*/
 }
 
 /**
@@ -261,8 +257,8 @@ static void *
 initproc_run(int arg1, void *arg2)
 {
     dbg(DBG_THR, "Going into initproc.\n");
-    /*while(1)*/
-        /*;*/
+    while(1)
+        do_waitpid(-1, 0, NULL);
     do_exit(0);
 
     panic("initproc won't go here because it has exited.\n");
