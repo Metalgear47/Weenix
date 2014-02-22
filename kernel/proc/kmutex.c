@@ -29,7 +29,13 @@ kmutex_init(kmutex_t *mtx)
 void
 kmutex_lock(kmutex_t *mtx)
 {
-        NOT_YET_IMPLEMENTED("PROCS: kmutex_lock");
+    if (NULL == mtx->km_hloder) {
+        mtx->km_holder = curthr;
+    } else {
+        sched_sleep_on(&mtx->km_waitq);
+        sched_switch();
+    }
+        /*NOT_YET_IMPLEMENTED("PROCS: kmutex_lock");*/
 }
 
 /*
