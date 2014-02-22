@@ -190,6 +190,7 @@ idleproc_run(int arg1, void *arg2)
         /* Now wait for it */
         child = do_waitpid(-1, 0, &status);
         KASSERT(PID_INIT == child);
+        dbg(DBG_PROC, "The return value is %d\n", status);
 
 #ifdef __MTP__
         kthread_reapd_shutdown();

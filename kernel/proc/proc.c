@@ -348,7 +348,7 @@ CheckAgain:
 
     /*no dead child found*/
     if (child_proc == NULL && -1 == pid) {
-        gdb(GDB_PROC, "Aha! None of your children are dead, gonna try again.\n");
+        dbg(DBG_PROC, "Aha! None of your children are dead, gonna try again.\n");
         sched_make_runnable(curthr);
         sched_switch();
         goto CheckAgain;
@@ -362,6 +362,7 @@ CheckAgain:
     } list_iterate_end();
     KASSERT(list_empty(&child_proc->p_threads));
     /*cleanup the proc*/
+    *status = child_proc->p_status;
     pt_destroy_pagedir(child_proc->p_pagedir);
     slab_obj_free(proc_allocator, child_proc);
 
