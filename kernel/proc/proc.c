@@ -222,13 +222,14 @@ proc_kill_all()
     list_iterate_begin(&_proc_list, proc_iter, proc_t, p_list_link) {
         /*no direct children of idle proces, not curproc*/
         if (PID_IDLE != proc_iter->p_pproc->p_pid || curproc != proc_iter) {
+            list_remove(&proc_iter->p_list_link);
+            list_remove(&proc_iter->p_child_link);
             proc_kill(proc_iter, 0);
         }
     } list_iterate_end();
 
     /*kill current process*/
     do_exit(0);
-        NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");
 }
 
 proc_t *
@@ -297,6 +298,10 @@ proc_thread_exited(void *retval)
 pid_t
 do_waitpid(pid_t pid, int options, int *status)
 {
+    KASSERT(0 != pid);
+    KASSERT(0 == options);
+    KASSERT(NULL != status);
+
     if (list_empty(&curproc->p_children)) {
         return ECHILD;
     }
@@ -304,26 +309,63 @@ do_waitpid(pid_t pid, int options, int *status)
     sched_make_runnable(curthr);
     sched_switch();
 
-    dbg(DBG_PROC, "Switch, you make it!\n");
+    dbg(DBG_PROC, "do_waitpid get the processor back after do_waitpid gave up its processor.\n");
 
-    proc_t *child_proc;
-    pid_t child_pid;
+    proc_t *child_proc = NULL;
+    pid_t child_pid = -1;
 
+CheckAgain:
     if (-1 == pid) {
-        list_iterate_begin(&curproc->p_children, child_proc, proc_t, p_child_link) {
-            if (PROC_DEAD == child_proc->p_state) {
-                /*clean*/
-                child_pid = child_proc->p_pid;
-                list_remove(&child_proc->p_child_link);
-                /*slab_obj_free(child);*/
-                return child_pid;
+        proc_t *proc_iter;
+        list_iterate_begin(&curproc->p_children, proc_iter, proc_t, p_child_link) {
+            if (PROC_DEAD == proc_iter->p_state) {
+                /*remove it from the p_children list of parent*/
+                list_remove(&proc_iter->p_child_link);
+                /*record child's pid*/
+                child_pid = proc_iter->p_pid;
+
+                child_proc = proc_iter;
+                break;
             }
         } list_iterate_end();
     } else {
+        proc_t *proc_iter;
+        list_iterate_begin(&curproc->p_children, proc_iter, proc_t, p_child_link) {
+            if (pid == proc_iter->p_pid) {
+                /*record child's pid*/
+                child_pid = pid;
 
+                child_proc = proc_iter;
+                break;
+            }
+        } list_iterate_end();
     }
-        NOT_YET_IMPLEMENTED("PROCS: do_waitpid");
-        return 0;
+
+    /*pid is not child of curproc*/
+    if (child_proc == NULL && pid > 0) {
+        return ECHILD;
+    }
+
+    /*no dead child found*/
+    if (child_proc == NULL && -1 == pid) {
+        gdb(GDB_PROC, "Aha! None of your children are dead, gonna try again.\n");
+        sched_make_runnable(curthr);
+        sched_switch();
+        goto CheckAgain;
+    }
+    KASSERT(NULL != child_proc);
+
+    /*cleanup the thread*/
+    kthread_t *kthr;
+    list_iterate_begin(&child_proc->p_threads, kthr, kthread_t, kt_plink) {
+        kthread_destroy(kthr);
+    } list_iterate_end();
+    KASSERT(list_empty(&child_proc->p_threads));
+    /*cleanup the proc*/
+    pt_destroy_pagedir(child_proc->p_pagedir);
+    slab_obj_free(proc_allocator, child_proc);
+
+    return child_pid;
 }
 
 /*

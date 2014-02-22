@@ -161,6 +161,7 @@ static void *
 idleproc_run(int arg1, void *arg2)
 {
     dbg(DBG_THR, "Start idleproc_run.\n");
+
         int status;
         pid_t child;
 
@@ -261,9 +262,10 @@ initproc_run(int arg1, void *arg2)
     dbg(DBG_THR, "Going into initproc.\n");
     /*while(1)*/
         /*;*/
+    do_exit(0);
+
+    panic("initproc won't go here because it has exited.\n");
     return NULL;
-        /*NOT_YET_IMPLEMENTED("PROCS: initproc_run");*/
-        /*return NULL;*/
 }
 
 /**
