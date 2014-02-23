@@ -355,6 +355,7 @@ CheckAgain:
     /*cleanup the thread*/
     kthread_t *kthr;
     list_iterate_begin(&child_proc->p_threads, kthr, kthread_t, kt_plink) {
+        page_free((void *)kthr->kt_ctx.c_kstack);
         kthread_destroy(kthr);
     } list_iterate_end();
     KASSERT(list_empty(&child_proc->p_threads));
