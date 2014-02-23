@@ -394,13 +394,15 @@ run_kmutex_test(int arg1, void *arg2)
     dbg(DBG_TEST, "Start testing kmutex\n");
     kmutex_t *mtx = (kmutex_t *)kmalloc(sizeof(kmutex_t));
     kmutex_init(mtx);
-    create_proc("lock and switch", lock_and_switch, NULL, (void *)mtx);
+    create_proc("lock and switch No.1", lock_and_switch, NULL, (void *)mtx);
+    create_proc("lock and switch No.2", lock_and_switch, NULL, (void *)mtx);
     create_proc("just lock No.1", just_lock, NULL, (void *)mtx);
     create_proc("just lock No.2", just_lock, NULL, (void *)mtx);
 
     print_proc_list();
 
     /*sched_make_runnable(curthr);*/
+    do_waitpid(-1, 0, NULL);
     do_waitpid(-1, 0, NULL);
     do_waitpid(-1, 0, NULL);
     do_waitpid(-1, 0, NULL);
