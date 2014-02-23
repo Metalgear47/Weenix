@@ -55,9 +55,13 @@ static void      *initproc_run(int arg1, void *arg2);
 static void       hard_shutdown(void);
 
 /*proc_tests*/
-static void create_proc(char *proc_name, context_func_t func);
+/*run 3 different proceses*/
+static void create_proc(char *proc_name, context_func_t func, int arg1, void *arg2);
 static void *run_procs(int arg1, void *arg2);
 static void print_proc_list(void);
+
+/*test about mutex*/
+static void *run_kmutex_test(int arg1, void *arg2);
 /*proc_tests*/
 
 static context_t bootstrap_context;
@@ -264,9 +268,12 @@ initproc_run(int arg1, void *arg2)
     /*while(1)*/
         /*do_waitpid(-1, 0, NULL);*/
     /*run tests*/
-    create_proc("run procs", run_procs);
+    /*create_proc("run procs", run_procs, NULL, NULL);*/
+    /*do_waitpid(-1, 0, NULL);*/
+    /*print_proc_list();*/
+
+    create_proc("mutex test", run_kmutex_test, NULL, NULL);
     do_waitpid(-1, 0, NULL);
-    print_proc_list();
     /*end tests*/
     do_exit(0);
 
@@ -303,11 +310,11 @@ print_proc_info(int arg1, void *arg2)
 }
 
 static void
-create_proc(char *proc_name, context_func_t func)
+create_proc(char *proc_name, context_func_t func, int arg1, void *arg2)
 {
     proc_t *test_proc = proc_create(proc_name);
 
-    kthread_t *test_thr = kthread_create(test_proc, func, NULL, NULL);
+    kthread_t *test_thr = kthread_create(test_proc, func, arg1, arg2);
     sched_make_runnable(test_thr);
     return;
 }
@@ -325,11 +332,11 @@ run_procs(int arg1, void *arg2)
     dbg(DBG_TEST, "Starting testing\n");
 
     char *proc_name = "Test1";
-    create_proc(proc_name, print_proc_info);
+    create_proc(proc_name, print_proc_info, NULL, NULL);
     proc_name = "Test2";
-    create_proc(proc_name, print_proc_info);
+    create_proc(proc_name, print_proc_info, NULL, NULL);
     proc_name = "Test3";
-    create_proc(proc_name, print_proc_info);
+    create_proc(proc_name, print_proc_info, NULL, NULL);
 
     print_proc_list();
 
@@ -345,5 +352,57 @@ run_procs(int arg1, void *arg2)
     do_exit(1);
 
     panic("Should not be here\n");
+    return NULL;
+}
+
+static void *
+lock_and_switch(int arg1, void *arg2) {
+    kmutex_t *mtx = (kmutex_t *)arg2;
+
+    kmutex_lock(mtx);
+    dbg(DBG_TEST, "This proc acquire the lock and will give up the processor.\n");
+    sched_make_runnable(curthr);
+    sched_switch();
+    kmutex_unlock(mtx);
+    dbg(DBG_TEST, "Now unlock the mutex and exit.\n");
+
+    kthread_exit((void *)0);
+
+    panic("Should not be here.\n");
+    return NULL;
+}
+
+static void *
+just_lock(int arg1, void *arg2) {
+    kmutex_t *mtx = (kmutex_t *)arg2;
+
+    kmutex_lock(mtx);
+    kmutex_unlock(mtx);
+
+    kthread_exit((void *)0);
+
+    panic("Should not be here.\n");
+    return NULL;
+}
+
+static void *
+run_kmutex_test(int arg1, void *arg2)
+{
+    dbg(DBG_TEST, "Start testing kmutex\n");
+    kmutex_t *mtx = (kmutex_t *)kmalloc(sizeof(kmutex_t));
+    kmutex_init(mtx);
+    create_proc("lock and switch", lock_and_switch, NULL, (void *)mtx);
+    create_proc("just lock", just_lock, NULL, (void *)mtx);
+
+    print_proc_list();
+
+    sched_make_runnable(curthr);
+    do_waitpid(-1, 0, NULL);
+    do_waitpid(-1, 0, NULL);
+
+    kfree(mtx);
+    do_exit(0);
+
+    panic("Should not be here.\n");
     return NULL;
 }
