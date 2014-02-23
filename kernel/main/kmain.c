@@ -62,6 +62,9 @@ static void print_proc_list(void);
 
 /*test about mutex*/
 static void *run_kmutex_test(int arg1, void *arg2);
+
+/*terminate out of order*/
+static void *terminate_out_of_order(int arg1, void *arg2);
 /*proc_tests*/
 
 static context_t bootstrap_context;
@@ -272,7 +275,10 @@ initproc_run(int arg1, void *arg2)
     /*do_waitpid(-1, 0, NULL);*/
     /*print_proc_list();*/
 
-    create_proc("mutex test", run_kmutex_test, NULL, NULL);
+    /*create_proc("mutex test", run_kmutex_test, NULL, NULL);*/
+    /*do_waitpid(-1, 0, NULL);*/
+
+    create_proc("out of order", terminate_out_of_order, NULL, NULL);
     do_waitpid(-1, 0, NULL);
     /*end tests*/
     do_exit(0);
@@ -408,6 +414,46 @@ run_kmutex_test(int arg1, void *arg2)
     do_waitpid(-1, 0, NULL);
 
     kfree(mtx);
+    do_exit(0);
+
+    panic("Should not be here.\n");
+    return NULL;
+}
+
+static void *
+switch_then_exit(int arg1, void *arg2)
+{
+    sched_make_runnable(curthr);
+    sched_switch();
+
+    do_exit(0);
+
+    panic("Should not go to here.\n");
+    return NULL;
+}
+
+static void *
+just_exit(int arg1, void *arg2)
+{
+    do_exit(0);
+
+    panic("Should not go to here.\n");
+    return NULL;
+}
+
+static void *
+terminate_out_of_order(int arg1, void *arg2)
+{
+    create_proc("switch_then_exit No.1", switch_then_exit, NULL, NULL);
+    create_proc("just_exit No.1", just_exit, NULL, NULL);
+    create_proc("switch_then_exit No.2", switch_then_exit, NULL, NULL);
+    create_proc("just_exit No.2", just_exit, NULL, NULL);
+
+    do_waitpid(-1, 0, NULL);
+    do_waitpid(-1, 0, NULL);
+    do_waitpid(-1, 0, NULL);
+    do_waitpid(-1, 0, NULL);
+
     do_exit(0);
 
     panic("Should not be here.\n");
