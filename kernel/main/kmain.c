@@ -44,6 +44,8 @@
 
 #include "test/kshell/kshell.h"
 
+#include "test/proc_test.h"
+
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
 GDB_DEFINE_HOOK(shutdown)
@@ -53,6 +55,12 @@ static void      *idleproc_run(int arg1, void *arg2);
 static kthread_t *initproc_create(void);
 static void      *initproc_run(int arg1, void *arg2);
 static void       hard_shutdown(void);
+
+/*proc_tests*/
+static void create_proc(char *proc_name, context_func_t func);
+static void *run_procs(int arg1, void *arg2);
+static void print_proc_list(void);
+/*proc_tests*/
 
 static context_t bootstrap_context;
 
@@ -236,8 +244,6 @@ initproc_create(void)
     char *initproc_name = "Init process";
     proc_t *init_proc = proc_create(initproc_name);
 
-    /*NEED to hookup it with its parent*/
-
     kthread_t *init_thr = kthread_create(init_proc, initproc_run, NULL, NULL);
     return init_thr;
 }
@@ -257,8 +263,13 @@ static void *
 initproc_run(int arg1, void *arg2)
 {
     dbg(DBG_THR, "Going into initproc.\n");
-    while(1)
-        do_waitpid(-1, 0, NULL);
+    /*while(1)*/
+        /*do_waitpid(-1, 0, NULL);*/
+    /*run tests*/
+    create_proc("run procs", run_procs);
+    do_waitpid(-1, 0, NULL);
+    print_proc_list();
+    /*end tests*/
     do_exit(0);
 
     panic("initproc won't go here because it has exited.\n");
@@ -276,4 +287,61 @@ hard_shutdown()
         vt_print_shutdown();
 #endif
         __asm__ volatile("cli; hlt");
+}
+
+/*---------------------TEST-------------------------*/
+/*---------------------PROC-------------------------*/
+static void *
+print_proc_info(int arg1, void *arg2)
+{
+    KASSERT(NULL != curproc);
+    dbg(DBG_TEST, "Printing info of curproc:\n");
+    dbginfo(DBG_TEST, proc_info, curproc);
+
+    kthread_exit((void *)0);
+
+    panic("Should not be here\n");
+    return NULL;
+}
+
+static void
+create_proc(char *proc_name, context_func_t func)
+{
+    proc_t *test_proc = proc_create(proc_name);
+
+    kthread_t *test_thr = kthread_create(test_proc, func, NULL, NULL);
+    sched_make_runnable(test_thr);
+    return;
+}
+
+static void
+print_proc_list(void)
+{
+    dbg(DBG_TEST, "Printing proc_list:\n");
+    dbginfo(DBG_TEST, proc_list_info, NULL);
+}
+
+static void *
+run_procs(int arg1, void *arg2)
+{
+    dbg(DBG_TEST, "Starting testing\n");
+
+    char *proc_name = "Test1";
+    create_proc(proc_name, print_proc_info);
+    proc_name = "Test2";
+    create_proc(proc_name, print_proc_info);
+    proc_name = "Test3";
+    create_proc(proc_name, print_proc_info);
+
+    print_proc_list();
+
+    int i = 0;
+    for (i = 0 ; i < 3 ; i++) {
+        do_waitpid(-1, 0, NULL);
+    }
+    print_proc_list();
+    do_exit(1);
+
+    panic("Should not be here\n");
+    return NULL;
 }
