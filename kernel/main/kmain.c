@@ -376,7 +376,10 @@ static void *
 just_lock(int arg1, void *arg2) {
     kmutex_t *mtx = (kmutex_t *)arg2;
 
+    dbg(DBG_TEST, "Just lock trying to acquire the lock.\n");
     kmutex_lock(mtx);
+
+    dbg(DBG_TEST, "Just lock acquire the lock and unlock it.\n");
     kmutex_unlock(mtx);
 
     kthread_exit((void *)0);
@@ -392,11 +395,13 @@ run_kmutex_test(int arg1, void *arg2)
     kmutex_t *mtx = (kmutex_t *)kmalloc(sizeof(kmutex_t));
     kmutex_init(mtx);
     create_proc("lock and switch", lock_and_switch, NULL, (void *)mtx);
-    create_proc("just lock", just_lock, NULL, (void *)mtx);
+    create_proc("just lock No.1", just_lock, NULL, (void *)mtx);
+    create_proc("just lock No.2", just_lock, NULL, (void *)mtx);
 
     print_proc_list();
 
-    sched_make_runnable(curthr);
+    /*sched_make_runnable(curthr);*/
+    do_waitpid(-1, 0, NULL);
     do_waitpid(-1, 0, NULL);
     do_waitpid(-1, 0, NULL);
 

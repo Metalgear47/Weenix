@@ -179,7 +179,6 @@ proc_cleanup(int status)
     /*setting state and status*/
     curproc->p_state = PROC_DEAD;
     curproc->p_status = status;
-        /*NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");*/
 }
 
 /*
