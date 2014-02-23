@@ -264,10 +264,10 @@ proc_thread_exited(void *retval)
     /*it should not be in any wait queue*/
     KASSERT(NULL == curthr->kt_wchan);
 
-    /*not a good idea here, still in the context of curthr*/
-    /*clean the resources*/
-    /*kthread_destroy(curthr);*/
-
+    /*remove it from proc_list and parent's children list*/
+    /*list_remove(&curproc->p_list_link);*/
+    /*list_remove(&curproc->p_child_link);*/
+    
     /*deal with NULL pointer*/
     if (retval == NULL) {
         curproc->p_status = 0;
@@ -318,8 +318,6 @@ CheckAgain:
         proc_t *proc_iter;
         list_iterate_begin(&curproc->p_children, proc_iter, proc_t, p_child_link) {
             if (PROC_DEAD == proc_iter->p_state) {
-                /*remove it from the p_children list of parent*/
-                list_remove(&proc_iter->p_child_link);
                 /*record child's pid*/
                 child_pid = proc_iter->p_pid;
 
@@ -360,10 +358,20 @@ CheckAgain:
         kthread_destroy(kthr);
     } list_iterate_end();
     KASSERT(list_empty(&child_proc->p_threads));
+
     /*cleanup the proc*/
+    /*assign the return to out parameter*/
     if (NULL != status) {
         *status = child_proc->p_status;
     }
+
+    /*debug infomation*/
+    dbg(DBG_PROC, "About to clean the process: %s\n", child_proc->p_comm);
+
+    list_remove(&child_proc->p_list_link);
+    list_remove(&child_proc->p_child_link);
+
+    /*destroy page table and the struct*/
     pt_destroy_pagedir(child_proc->p_pagedir);
     slab_obj_free(proc_allocator, child_proc);
 

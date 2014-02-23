@@ -336,9 +336,13 @@ run_procs(int arg1, void *arg2)
     print_proc_list();
 
     int i = 0;
-    for (i = 0 ; i < 3 ; i++) {
-        do_waitpid(-1, 0, NULL);
-    }
+    do_waitpid(-1, 0, NULL);
+    dbg(DBG_TEST, "1\n");
+    do_waitpid(-1, 0, NULL);
+    dbg(DBG_TEST, "2\n");
+    do_waitpid(-1, 0, NULL);
+    dbg(DBG_TEST, "3\n");
+    dbg(DBG_TEST, "After wait for 3 processes.\n");
     print_proc_list();
     do_exit(1);
 
