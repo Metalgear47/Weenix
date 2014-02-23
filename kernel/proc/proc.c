@@ -264,10 +264,6 @@ proc_thread_exited(void *retval)
     /*it should not be in any wait queue*/
     KASSERT(NULL == curthr->kt_wchan);
 
-    /*remove it from proc_list and parent's children list*/
-    /*list_remove(&curproc->p_list_link);*/
-    /*list_remove(&curproc->p_child_link);*/
-    
     /*deal with NULL pointer*/
     if (retval == NULL) {
         curproc->p_status = 0;
@@ -308,12 +304,12 @@ do_waitpid(pid_t pid, int options, int *status)
     sched_make_runnable(curthr);
     sched_switch();
 
+CheckAgain:
     dbg(DBG_PROC, "do_waitpid get the processor back after do_waitpid gave up its processor.\n");
 
     proc_t *child_proc = NULL;
     pid_t child_pid = -1;
 
-CheckAgain:
     if (-1 == pid) {
         proc_t *proc_iter;
         list_iterate_begin(&curproc->p_children, proc_iter, proc_t, p_child_link) {
@@ -361,7 +357,7 @@ CheckAgain:
     KASSERT(list_empty(&child_proc->p_threads));
 
     /*cleanup the proc*/
-    /*assign the return to out parameter*/
+    /*assign the return value to out parameter*/
     if (NULL != status) {
         *status = child_proc->p_status;
     }

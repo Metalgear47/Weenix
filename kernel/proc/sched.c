@@ -146,6 +146,7 @@ sched_wakeup_on(ktqueue_t *q)
 
     kthread_t *kthr_tmp = ktqueue_dequeue(q);
     if (NULL != kthr_tmp) {
+        kthr_tmp->kt_state = KT_RUN;
         sched_make_runnable(kthr_tmp);
     }
     return kthr_tmp;

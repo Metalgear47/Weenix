@@ -44,8 +44,6 @@
 
 #include "test/kshell/kshell.h"
 
-#include "test/proc_test.h"
-
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
 GDB_DEFINE_HOOK(shutdown)
@@ -166,7 +164,7 @@ bootstrap(int arg1, void *arg2)
 static void *
 idleproc_run(int arg1, void *arg2)
 {
-    dbg(DBG_THR, "Start idleproc_run.\n");
+    dbg(DBG_PROC, "Start idleproc_run.\n");
 
         int status;
         pid_t child;
