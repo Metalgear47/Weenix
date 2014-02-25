@@ -101,6 +101,36 @@ n_tty_detach(tty_ldisc_t *ldisc, tty_device_t *tty)
 }
 
 /*
+ *Self-defined function to deal with special characters.
+ */
+int
+is_ctrl_d(char c) {
+    if (c == 0x04) {
+        return 1;
+    }
+    return 0;
+}
+
+int
+is_backspace(char c) {
+    if (c == 0x08 || c == 0x7f) {
+        return 1;
+    }
+    return 0;
+}
+
+int
+is_newline(char c) {
+    if (c == '\r' || c == '\n') {
+        return 1;
+    }
+    return 0;
+}
+/*
+ *Self-defined function to deal with special characters.
+ */
+
+/*
  * Read a maximum of len bytes from the line discipline into buf. If
  * the buffer is empty, sleep until some characters appear. This might
  * be a long wait, so it's best to let the thread be cancellable.
