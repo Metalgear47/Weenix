@@ -71,15 +71,15 @@ n_tty_attach(tty_ldisc_t *ldisc, tty_device_t *tty)
     tty->tty_ldisc = ldisc;
 
     /*get the pointer to ntty*/
-    n_tty *ntty = ldisc_to_ntty(ldisc);
+    struct n_tty *ntty = ldisc_to_ntty(ldisc);
 
     /*initialize each field*/
     kmutex_init(&ntty->ntty_rlock);
     sched_queue_init(&ntty->ntty_rwaitq);
     ntty->ntty_inbuf = (char *)kmalloc(sizeof(char) * TTY_BUF_SIZE);
     ntty->ntty_rhead = 0;
-    ntty->rawtail = 0;
-    ntty->ckdtail = 0;
+    ntty->ntty_rawtail = 0;
+    ntty->ntty_ckdtail = 0;
         /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_attach");*/
 }
 
@@ -90,7 +90,14 @@ n_tty_attach(tty_ldisc_t *ldisc, tty_device_t *tty)
 void
 n_tty_detach(tty_ldisc_t *ldisc, tty_device_t *tty)
 {
-        NOT_YET_IMPLEMENTED("DRIVERS: n_tty_detach");
+    struct n_tty *ntty = ldisc_to_ntty(ldisc);
+    kfree(ntty->ntty_inbuf);
+
+    /*not sure about freeing it*/
+    n_tty_destroy(ldisc);
+
+    tty->tty_ldisc = NULL;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_detach");*/
 }
 
 /*
