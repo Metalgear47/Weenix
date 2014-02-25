@@ -67,7 +67,20 @@ n_tty_destroy(tty_ldisc_t *ldisc)
 void
 n_tty_attach(tty_ldisc_t *ldisc, tty_device_t *tty)
 {
-        NOT_YET_IMPLEMENTED("DRIVERS: n_tty_attach");
+    /*set tty->tty_ldisc field*/
+    tty->tty_ldisc = ldisc;
+
+    /*get the pointer to ntty*/
+    n_tty *ntty = ldisc_to_ntty(ldisc);
+
+    /*initialize each field*/
+    kmutex_init(&ntty->ntty_rlock);
+    sched_queue_init(&ntty->ntty_rwaitq);
+    ntty->ntty_inbuf = (char *)kmalloc(sizeof(char) * TTY_BUF_SIZE);
+    ntty->ntty_rhead = 0;
+    ntty->rawtail = 0;
+    ntty->ckdtail = 0;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_attach");*/
 }
 
 /*

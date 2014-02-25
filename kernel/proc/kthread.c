@@ -110,8 +110,6 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     dbg(DBG_THR, "Created thread for process: %s\n", p->p_comm);
     dbginfo(DBG_THR, &proc_info, p);
     return kthread_struct;
-        /*NOT_YET_IMPLEMENTED("PROCS: kthread_create");*/
-        /*return NULL;*/
 }
 
 void
