@@ -199,7 +199,7 @@ idleproc_run(int arg1, void *arg2)
         /* Run initproc */
         sched_make_runnable(initthr);
         /* Now wait for it */
-        child = do_waitpid(-1, 0, &status);
+        child = do_waitpid(PID_INIT, 0, &status);
         KASSERT(PID_INIT == child);
         dbg(DBG_PROC, "The return value is %d\n", status);
 
@@ -271,12 +271,12 @@ initproc_run(int arg1, void *arg2)
     /*while(1)*/
         /*do_waitpid(-1, 0, NULL);*/
     /*run tests*/
-    /*create_proc("run procs", run_procs, NULL, NULL);*/
-    /*do_waitpid(-1, 0, NULL);*/
-    /*print_proc_list();*/
+    create_proc("run procs", run_procs, NULL, NULL);
+    do_waitpid(-1, 0, NULL);
+    print_proc_list();
 
-    /*create_proc("mutex test", run_kmutex_test, NULL, NULL);*/
-    /*do_waitpid(-1, 0, NULL);*/
+    create_proc("mutex test", run_kmutex_test, NULL, NULL);
+    do_waitpid(-1, 0, NULL);
 
     create_proc("out of order", terminate_out_of_order, NULL, NULL);
     do_waitpid(-1, 0, NULL);

@@ -161,7 +161,7 @@ void
 proc_cleanup(int status)
 {
     /*waking up its parent*/
-    sched_wakeup_on(&curproc->p_wait);
+    sched_wakeup_on(&curproc->p_pproc->p_wait);
 
     /*reparenting*/
     proc_t *child_proc;
@@ -272,6 +272,8 @@ proc_thread_exited(void *retval)
         proc_cleanup(*((int *)retval));
     }
 
+    dbg(DBG_PROC, "Exiting process: [%s], now gonna make the switch and never return.\n", curproc->p_comm);
+
     sched_switch();
 }
 
@@ -300,14 +302,15 @@ do_waitpid(pid_t pid, int options, int *status)
         return ECHILD;
     }
 
-    sched_make_runnable(curthr);
-    sched_switch();
+    /*sched_make_runnable(curthr);*/
+    /*sched_switch();*/
 
 CheckAgain:
-    dbg(DBG_PROC, "do_waitpid get the processor back after do_waitpid gave up its processor.\n");
+    dbg(DBG_PROC, "do_waitpid now starts collecting one child process.\n");
 
     proc_t *child_proc = NULL;
     pid_t child_pid = -1;
+    int child_exist = 0;
 
     if (-1 == pid) {
         proc_t *proc_iter;
@@ -324,13 +327,24 @@ CheckAgain:
         proc_t *proc_iter;
         list_iterate_begin(&curproc->p_children, proc_iter, proc_t, p_child_link) {
             if (pid == proc_iter->p_pid) {
-                /*record child's pid*/
-                child_pid = pid;
+                child_exist = 1;
+                if (PROC_DEAD == proc_iter->p_state) {
+                    /*record child's pid*/
+                    child_pid = pid;
 
-                child_proc = proc_iter;
+                    child_proc = proc_iter;
+                }
                 break;
             }
         } list_iterate_end();
+    }
+
+    /*child exists but not dead yet*/
+    if (child_exist && NULL == child_proc) {
+        dbg(DBG_PROC, "The child current process is waiting for is not dead yet.\n");
+        sched_sleep_on(&curproc->p_wait);
+        dbg(DBG_PROC, "Get woken up because it's child exited.\n");
+        goto CheckAgain;
     }
 
     /*pid is not child of curproc*/
@@ -340,9 +354,11 @@ CheckAgain:
 
     /*no dead child found*/
     if (child_proc == NULL && -1 == pid) {
-        dbg(DBG_PROC, "Aha! None of your children are dead, gonna try again.\n");
-        sched_make_runnable(curthr);
-        sched_switch();
+        dbg(DBG_PROC, "Aha! None of your children are dead, put yourself to sleep...\n");
+        /*sched_make_runnable(curthr);*/
+        /*sched_switch();*/
+        sched_sleep_on(&curproc->p_wait);
+        dbg(DBG_PROC, "Get woken up because one of it's children exited.\n");
         goto CheckAgain;
     }
     KASSERT(NULL != child_proc);

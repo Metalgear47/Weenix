@@ -241,10 +241,6 @@ sched_switch(void)
     curthr = ktqueue_dequeue(&kt_runq);
     curproc = curthr->kt_proc;
 
-    /*dbg(DBG_SCHED, "Before context switching, the old process is:\n");*/
-    /*dbginfo(DBG_SCHED, proc_info, old_kthr->kt_proc);*/
-    /*dbg(DBG_SCHED, "Before context switching, the new process is:\n");*/
-    /*dbginfo(DBG_SCHED, proc_info, curproc);*/
     dbg(DBG_SCHED, "Switching: %s -> %s\n", old_kthr->kt_proc->p_comm, curproc->p_comm);
 
     /*do the switching*/
@@ -253,12 +249,9 @@ sched_switch(void)
     /*unblock interrupts*/
     intr_setipl(old_ipl);
 
-    /*dbg(DBG_SCHED, "After context switching, the process is:\n");*/
-    /*dbginfo(DBG_SCHED, proc_info, curproc);*/
     dbg(DBG_SCHED, "Going back to proc: %s\n", curproc->p_comm);
 
     return;
-        /*NOT_YET_IMPLEMENTED("PROCS: sched_switch");*/
 }
 
 /*
