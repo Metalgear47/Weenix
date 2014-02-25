@@ -157,6 +157,10 @@ tty_global_driver_callback(void *arg, char c)
 void
 tty_echo(tty_driver_t *driver, const char *out)
 {
+    int i = 0;
+    while ('\0' != out[i]) {
+        driver->ttd_ops->provide_char(driver, out[i]);
+    }
         NOT_YET_IMPLEMENTED("DRIVERS: tty_echo");
 }
 
