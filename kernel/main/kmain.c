@@ -283,9 +283,10 @@ initproc_run(int arg1, void *arg2)
  *    do_waitpid(-1, 0, NULL);
  */
     /*end tests*/
-    int err = 0;
     kshell_t *ksh = kshell_create(0);
     KASSERT(NULL != ksh);
+    while (kshell_execute_next(ksh));
+    kshell_destroy(ksh);
 
     do_exit(0);
 

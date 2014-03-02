@@ -134,10 +134,8 @@ tty_create(tty_driver_t *driver, int id)
     tty->tty_id = MKDEVID(2, id);
 
     /*initialize bytedev*/
-    tty->tty_cdev->cd_id = MKDEVID(2, id);
-    tty->tty_cdev->cd_ops = tty_bytedev_ops;
-    int result = bytedev_register(&tty->tty_cdev);
-    KASSERT(result != -1);
+    tty->tty_cdev.cd_id = MKDEVID(2, id);
+    tty->tty_cdev.cd_ops = &tty_bytedev_ops;
 
     return tty;
         /*NOT_YET_IMPLEMENTED("DRIVERS: tty_create");*/
