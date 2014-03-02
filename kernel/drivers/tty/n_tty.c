@@ -137,6 +137,27 @@ is_eof(char c) {
  */
 
 /*
+ *Self-defined function to deal with index incrementing and decrementing
+ */
+void
+increment(int *n) {
+    *n++;
+    *n = *n % TTY_BUF_SIZE;
+}
+
+void
+decrement(int *n) {
+    if (0 == *n) {
+        *n = TTY_BUF_SIZE - 1;
+    } else {
+        *n--;
+    }
+}
+/*
+ *Self-defined function to deal with index incrementing and decrementing
+ */
+
+/*
  * Read a maximum of len bytes from the line discipline into buf. If
  * the buffer is empty, sleep until some characters appear. This might
  * be a long wait, so it's best to let the thread be cancellable.
@@ -186,8 +207,20 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
 const char *
 n_tty_receive_char(tty_ldisc_t *ldisc, char c)
 {
-        NOT_YET_IMPLEMENTED("DRIVERS: n_tty_receive_char");
-        return NULL;
+    struct n_tty *ntty = ldisc_to_ntty(ldisc);
+
+    /*backspace*/
+    if (is_backspace(c)) {
+        decrement(&ntty->ntty_rhead);
+    }
+    if (is_newline(c)) {
+         
+    }
+    return NULL;
+        /*
+         *NOT_YET_IMPLEMENTED("DRIVERS: n_tty_receive_char");
+         *return NULL;
+         */
 }
         /**
          * Receive a character and return a string to be echoed to the

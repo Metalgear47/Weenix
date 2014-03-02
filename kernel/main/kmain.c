@@ -284,7 +284,7 @@ initproc_run(int arg1, void *arg2)
  */
     /*end tests*/
     int err = 0;
-    kshell_t *ksh = kshell_create(ttyid);
+    kshell_t *ksh = kshell_create(0);
     KASSERT(NULL != ksh);
 
     do_exit(0);
