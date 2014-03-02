@@ -271,16 +271,22 @@ initproc_run(int arg1, void *arg2)
     /*while(1)*/
         /*do_waitpid(-1, 0, NULL);*/
     /*run tests*/
-    create_proc("run procs", run_procs, NULL, NULL);
-    do_waitpid(-1, 0, NULL);
-    print_proc_list();
-
-    create_proc("mutex test", run_kmutex_test, NULL, NULL);
-    do_waitpid(-1, 0, NULL);
-
-    create_proc("out of order", terminate_out_of_order, NULL, NULL);
-    do_waitpid(-1, 0, NULL);
+/*
+ *    create_proc("run procs", run_procs, NULL, NULL);
+ *    do_waitpid(-1, 0, NULL);
+ *    print_proc_list();
+ *
+ *    create_proc("mutex test", run_kmutex_test, NULL, NULL);
+ *    do_waitpid(-1, 0, NULL);
+ *
+ *    create_proc("out of order", terminate_out_of_order, NULL, NULL);
+ *    do_waitpid(-1, 0, NULL);
+ */
     /*end tests*/
+    int err = 0;
+    kshell_t *ksh = kshell_create(ttyid);
+    KASSERT(NULL != ksh);
+
     do_exit(0);
 
     panic("initproc won't go here because it has exited.\n");

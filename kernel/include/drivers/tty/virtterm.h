@@ -24,7 +24,7 @@ void vt_init(void);
 int vt_num_terminals();
 
 /**
- * Returns a pointer to the tty_driver_T for the virtual terminal with
+ * Returns a pointer to the tty_driver_t for the virtual terminal with
  * a given id. The terminals are numbered 0 through vt_num_terminals()
  * - 1.
  *

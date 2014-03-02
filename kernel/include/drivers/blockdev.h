@@ -1,5 +1,5 @@
 /*
- *       FILE: dev_byte.h
+ *       FILE: blockdev.h
  *      DESCR: device management: block-oriented devices
  */
 
