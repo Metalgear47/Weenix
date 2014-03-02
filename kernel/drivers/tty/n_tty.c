@@ -80,7 +80,6 @@ n_tty_attach(tty_ldisc_t *ldisc, tty_device_t *tty)
     ntty->ntty_rhead = 0;
     ntty->ntty_rawtail = 0;
     ntty->ntty_ckdtail = 0;
-        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_attach");*/
 }
 
 /*
@@ -90,14 +89,13 @@ n_tty_attach(tty_ldisc_t *ldisc, tty_device_t *tty)
 void
 n_tty_detach(tty_ldisc_t *ldisc, tty_device_t *tty)
 {
+    tty->tty_ldisc = NULL;
+    
     struct n_tty *ntty = ldisc_to_ntty(ldisc);
     kfree(ntty->ntty_inbuf);
 
     /*not sure about freeing it*/
     n_tty_destroy(ldisc);
-
-    tty->tty_ldisc = NULL;
-        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_detach");*/
 }
 
 /*
@@ -122,6 +120,14 @@ is_backspace(char c) {
 int
 is_newline(char c) {
     if (c == '\r' || c == '\n') {
+        return 1;
+    }
+    return 0;
+}
+
+int
+is_eof(char c) {
+    if (c == EOFC) {
         return 1;
     }
     return 0;
@@ -151,9 +157,18 @@ is_newline(char c) {
 int
 n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
 {
+
         NOT_YET_IMPLEMENTED("DRIVERS: n_tty_read");
         return 0;
 }
+        /**
+         * Read bytes from the line discipline into the buffer.
+         *
+         * @param ldisc the line discipline
+         * @param buf the buffer to read into
+         * @param len the maximum number of bytes to read
+         * @return the number of bytes read
+         */
 
 /*
  * The tty subsystem calls this when the tty driver has received a
@@ -174,6 +189,14 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
         NOT_YET_IMPLEMENTED("DRIVERS: n_tty_receive_char");
         return NULL;
 }
+        /**
+         * Receive a character and return a string to be echoed to the
+         * tty.
+         *
+         * @param ldisc the line discipline to receive the character
+         * @param c the character received
+         * @return a null terminated string to be echoed to the tty
+         */
 
 /*
  * Process a character to be written to the screen.
@@ -187,3 +210,11 @@ n_tty_process_char(tty_ldisc_t *ldisc, char c)
 
         return NULL;
 }
+        /**
+         * Process a character and return a string to be echoed to the
+         * tty.
+         *
+         * @param ldisc the line discipline
+         * @param c the character to process
+         * @return a null terminated string to be echoed to the tty
+         */
