@@ -141,7 +141,7 @@ is_eof(char c) {
  */
 void
 increment(int *n) {
-    *n++;
+    (*n)++;
     *n = *n % TTY_BUF_SIZE;
 }
 
@@ -150,7 +150,7 @@ decrement(int *n) {
     if (0 == *n) {
         *n = TTY_BUF_SIZE - 1;
     } else {
-        *n--;
+        (*n)--;
     }
 }
 
@@ -188,9 +188,11 @@ convert(int n) {
 int
 n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
 {
+    dbg(DBG_TERM, "Starting read\n");
     struct n_tty *ntty = ldisc_to_ntty(ldisc);
+    char *outbuf = (char *)buf;
 
-    if (ntty->ntty_rhead == ntty->ckdtail) {
+    if (ntty->ntty_rhead == ntty->ntty_ckdtail) {
         if (EINTR == sched_cancellable_sleep_on(&ntty->ntty_rwaitq)) {
             /*is cancelled, not handled yet*/
             panic("n_tty_read get cancelled\n");
@@ -203,7 +205,7 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     int i = 0;
     for (i = 0 ; i < len ; i++) {
         /*?ckdtail?*/
-        buf[i] = ntty->ntty_inbuf[convert(ntty->ntty_rhead)];
+        outbuf[i] = ntty->ntty_inbuf[convert(ntty->ntty_rhead)];
         if (is_newline(ntty->ntty_inbuf[convert(ntty->ntty_rhead)])) {
             break;
         }
@@ -212,6 +214,13 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
             break;
         }
     }
+
+    outbuf[i] = '\0';
+    ntty->ntty_rhead = convert(ntty->ntty_rhead + i);
+
+    /*unlock*/
+
+    return i;
         /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_read");*/
         /*return 0;*/
 }
@@ -245,7 +254,7 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
 
     /*backspace*/
     if (is_backspace(c)) {
-        decrement(&ntty->rowtail)
+        decrement(&ntty->ntty_rawtail);
         return "\b \b";
     }
     if (is_newline(c)) {
