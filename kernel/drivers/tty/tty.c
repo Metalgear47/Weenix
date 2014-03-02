@@ -131,10 +131,10 @@ tty_create(tty_driver_t *driver, int id)
     /*initialize tty itself*/
     tty->tty_driver = driver;
     tty->tty_ldisc = NULL;
-    tty->tty_id = MKDEVID(2, id);
+    tty->tty_id = MKDEVID(TTY_MAJOR, id);
 
     /*initialize bytedev*/
-    tty->tty_cdev.cd_id = MKDEVID(2, id);
+    tty->tty_cdev.cd_id = MKDEVID(TTY_MAJOR, id);
     tty->tty_cdev.cd_ops = &tty_bytedev_ops;
 
     return tty;
@@ -187,9 +187,22 @@ tty_echo(tty_driver_t *driver, const char *out)
 int
 tty_read(bytedev_t *dev, int offset, void *buf, int count)
 {
-        NOT_YET_IMPLEMENTED("DRIVERS: tty_read");
+    tty_device_t *tty = bd_to_tty(dev);
+    tty_driver_t *ttyd = tty->tty_driver;
 
-        return 0;
+    /*block IO*/
+    void *ret = ttyd->ttd_ops->block_io(ttyd);
+
+    struct tty_ldisc *ldisc = tty->tty_ldisc;
+    int read = ldisc->ld_ops->read(ldisc, buf, count);
+
+    /*unblock IO*/
+    ttyd->ttd_ops->unblock_io(ttyd, ret);
+
+    return read;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: tty_read");*/
+
+        /*return 0;*/
 }
 
 /*
