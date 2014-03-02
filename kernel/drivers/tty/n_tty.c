@@ -201,22 +201,26 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     }
 
     /*lock*/
+    char *inbuf = ntty->ntty_inbuf;
+    int rhead = ntty->ntty_rhead;
 
     int i = 0;
     for (i = 0 ; i < len ; i++) {
         /*?ckdtail?*/
-        outbuf[i] = ntty->ntty_inbuf[convert(ntty->ntty_rhead)];
-        if (is_newline(ntty->ntty_inbuf[convert(ntty->ntty_rhead)])) {
+        outbuf[i] = inbuf[convert(rhead+i)];
+        if (is_newline(inbuf[convert(rhead+i)])) {
+            i++;
             break;
         }
-        if (is_ctrl_d(ntty->ntty_inbuf[convert(ntty->ntty_rhead)])) {
+        if (is_ctrl_d(inbuf[convert(rhead+i)])) {
             /*and something else*/
+            i++;
             break;
         }
     }
 
     outbuf[i] = '\0';
-    ntty->ntty_rhead = convert(ntty->ntty_rhead + i);
+    ntty->ntty_rhead = convert(rhead + i);
 
     /*unlock*/
 
