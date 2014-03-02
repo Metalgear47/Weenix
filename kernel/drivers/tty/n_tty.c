@@ -67,16 +67,23 @@ n_tty_destroy(tty_ldisc_t *ldisc)
 void
 n_tty_attach(tty_ldisc_t *ldisc, tty_device_t *tty)
 {
+    KASSERT(NULL != ldisc);
+    KASSERT(NULL != tty);
+
     /*set tty->tty_ldisc field*/
     tty->tty_ldisc = ldisc;
 
     /*get the pointer to ntty*/
     struct n_tty *ntty = ldisc_to_ntty(ldisc);
+    KASSERT(NULL != ntty);
 
     /*initialize each field*/
     kmutex_init(&ntty->ntty_rlock);
     sched_queue_init(&ntty->ntty_rwaitq);
+
     ntty->ntty_inbuf = (char *)kmalloc(sizeof(char) * TTY_BUF_SIZE);
+    KASSERT(NULL != ntty->ntty_inbuf);
+
     ntty->ntty_rhead = 0;
     ntty->ntty_rawtail = 0;
     ntty->ntty_ckdtail = 0;
@@ -89,9 +96,14 @@ n_tty_attach(tty_ldisc_t *ldisc, tty_device_t *tty)
 void
 n_tty_detach(tty_ldisc_t *ldisc, tty_device_t *tty)
 {
+    KASSERT(NULL != ldisc);
+    KASSERT(NULL != tty);
+
     tty->tty_ldisc = NULL;
     
     struct n_tty *ntty = ldisc_to_ntty(ldisc);
+    KASSERT(NULL != ntty);
+
     kfree(ntty->ntty_inbuf);
 
     /*not sure about freeing it*/
@@ -188,8 +200,12 @@ convert(int n) {
 int
 n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
 {
+    KASSERT(NULL != ldisc);
+    KASSERT(NULL != buf);
+
     dbg(DBG_TERM, "Starting read\n");
     struct n_tty *ntty = ldisc_to_ntty(ldisc);
+    KASSERT(NULL != ntty);
     char *outbuf = (char *)buf;
 
     if (ntty->ntty_rhead == ntty->ntty_ckdtail) {
@@ -202,6 +218,7 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
 
     /*lock*/
     char *inbuf = ntty->ntty_inbuf;
+    KASSERT(NULL != inbuf);
     int rhead = ntty->ntty_rhead;
 
     int i = 0;
@@ -253,8 +270,10 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
 const char *
 n_tty_receive_char(tty_ldisc_t *ldisc, char c)
 {
+    KASSERT(NULL != ldisc);
     /*lock it?*/
     struct n_tty *ntty = ldisc_to_ntty(ldisc);
+    KASSERT(NULL != ntty);
 
     /*backspace*/
     if (is_backspace(c)) {
