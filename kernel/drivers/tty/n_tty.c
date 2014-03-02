@@ -95,7 +95,7 @@ n_tty_detach(tty_ldisc_t *ldisc, tty_device_t *tty)
     kfree(ntty->ntty_inbuf);
 
     /*not sure about freeing it*/
-    n_tty_destroy(ldisc);
+    /*n_tty_destroy(ldisc);*/
 }
 
 /*
@@ -153,6 +153,16 @@ decrement(int *n) {
         *n--;
     }
 }
+
+int
+convert(int n) {
+    if (n < 0) {
+        n += TTY_BUF_SIZE;
+    } else {
+        n %= TTY_BUF_SIZE;
+    }
+    return n;
+}
 /*
  *Self-defined function to deal with index incrementing and decrementing
  */
@@ -178,9 +188,32 @@ decrement(int *n) {
 int
 n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
 {
+    struct n_tty *ntty = ldisc_to_ntty(ldisc);
 
-        NOT_YET_IMPLEMENTED("DRIVERS: n_tty_read");
-        return 0;
+    if (ntty->ntty_rhead == ntty->ckdtail) {
+        if (EINTR == sched_cancellable_sleep_on(&ntty->ntty_rwaitq)) {
+            /*is cancelled, not handled yet*/
+            panic("n_tty_read get cancelled\n");
+            return 0;
+        }
+    }
+
+    /*lock*/
+
+    int i = 0;
+    for (i = 0 ; i < len ; i++) {
+        /*?ckdtail?*/
+        buf[i] = ntty->ntty_inbuf[convert(ntty->ntty_rhead)];
+        if (is_newline(ntty->ntty_inbuf[convert(ntty->ntty_rhead)])) {
+            break;
+        }
+        if (is_ctrl_d(ntty->ntty_inbuf[convert(ntty->ntty_rhead)])) {
+            /*and something else*/
+            break;
+        }
+    }
+        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_read");*/
+        /*return 0;*/
 }
         /**
          * Read bytes from the line discipline into the buffer.
@@ -207,16 +240,18 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
 const char *
 n_tty_receive_char(tty_ldisc_t *ldisc, char c)
 {
+    /*lock it?*/
     struct n_tty *ntty = ldisc_to_ntty(ldisc);
 
     /*backspace*/
     if (is_backspace(c)) {
-        decrement(&ntty->ntty_rhead);
+        decrement(&ntty->rowtail)
+        return "\b \b";
     }
     if (is_newline(c)) {
-         
+        return "\n";
     }
-    return NULL;
+    return c + "";
         /*
          *NOT_YET_IMPLEMENTED("DRIVERS: n_tty_receive_char");
          *return NULL;
