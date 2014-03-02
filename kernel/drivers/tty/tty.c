@@ -127,7 +127,11 @@ tty_init()
 tty_device_t *
 tty_create(tty_driver_t *driver, int id)
 {
+    KASSERT(NULL != driver);
+
     tty_device_t *tty = (tty_device_t *)kmalloc(sizeof(tty_device_t));
+    KASSERT(NULL != tty);
+
     /*initialize tty itself*/
     tty->tty_driver = driver;
     tty->tty_ldisc = NULL;
@@ -193,18 +197,26 @@ tty_echo(tty_driver_t *driver, const char *out)
 int
 tty_read(bytedev_t *dev, int offset, void *buf, int count)
 {
+    KASSERT(NULL != dev);
+
     tty_device_t *tty = bd_to_tty(dev);
     tty_driver_t *ttyd = tty->tty_driver;
+
+    KASSERT(NULL != tty);
+    KASSERT(NULL != ttyd);
+    dbg(DBG_TERM, "tty_read ready to start.\n");
 
     /*block IO*/
     void *ret = ttyd->ttd_ops->block_io(ttyd);
 
     struct tty_ldisc *ldisc = tty->tty_ldisc;
+    KASSERT(NULL != ldisc);
     int read = ldisc->ld_ops->read(ldisc, buf, count);
 
     /*unblock IO*/
     ttyd->ttd_ops->unblock_io(ttyd, ret);
 
+    dbg(DBG_TERM, "tty_read ready to return.\n");
     return read;
         /*NOT_YET_IMPLEMENTED("DRIVERS: tty_read");*/
 
