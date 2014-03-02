@@ -162,7 +162,7 @@ tty_global_driver_callback(void *arg, char c)
     tty_ldisc_t *tty_ldisc = tty->tty_ldisc;
     const char *s = tty_ldisc->ld_ops->receive_char(tty_ldisc, c);
     tty_echo(tty->tty_driver, s);
-        NOT_YET_IMPLEMENTED("DRIVERS: tty_global_driver_callback");
+        /*NOT_YET_IMPLEMENTED("DRIVERS: tty_global_driver_callback");*/
 }
 
 /*
@@ -176,7 +176,7 @@ tty_echo(tty_driver_t *driver, const char *out)
     while ('\0' != out[i]) {
         driver->ttd_ops->provide_char(driver, out[i++]);
     }
-        NOT_YET_IMPLEMENTED("DRIVERS: tty_echo");
+        /*NOT_YET_IMPLEMENTED("DRIVERS: tty_echo");*/
 }
 
 /*
