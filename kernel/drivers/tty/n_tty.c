@@ -281,8 +281,10 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
         return "\b \b";
     }
     if (is_newline(c)) {
+        increment(&ntty->ntty_rawtail);
         return "\n";
     }
+    increment(&ntty->ntty_rawtail);
     return c + "";
         /*
          *NOT_YET_IMPLEMENTED("DRIVERS: n_tty_receive_char");
@@ -306,9 +308,13 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
 const char *
 n_tty_process_char(tty_ldisc_t *ldisc, char c)
 {
-        NOT_YET_IMPLEMENTED("DRIVERS: n_tty_process_char");
+    if (is_newline(c)) {
+        return "\r";
+    }
+    return c + "";
+        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_process_char");*/
 
-        return NULL;
+        /*return NULL;*/
 }
         /**
          * Process a character and return a string to be echoed to the

@@ -182,6 +182,7 @@ void
 tty_echo(tty_driver_t *driver, const char *out)
 {
     KASSERT(NULL != driver);
+
     int i = 0;
     while ('\0' != out[i]) {
         driver->ttd_ops->provide_char(driver, out[i++]);
@@ -211,7 +212,9 @@ tty_read(bytedev_t *dev, int offset, void *buf, int count)
 
     struct tty_ldisc *ldisc = tty->tty_ldisc;
     KASSERT(NULL != ldisc);
-    int read = ldisc->ld_ops->read(ldisc, buf, count);
+
+    char *buff = (char *)buf;
+    int read = ldisc->ld_ops->read(ldisc, &buff[offset], count);
 
     /*unblock IO*/
     ttyd->ttd_ops->unblock_io(ttyd, ret);
@@ -234,7 +237,29 @@ tty_read(bytedev_t *dev, int offset, void *buf, int count)
 int
 tty_write(bytedev_t *dev, int offset, const void *buf, int count)
 {
-        NOT_YET_IMPLEMENTED("DRIVERS: tty_write");
+    KASSERT(NULL != dev);
 
-        return 0;
+    tty_device_t *tty = bd_to_tty(dev);
+    tty_driver_t *ttyd = tty->tty_driver;
+
+    KASSERT(NULL != tty);
+    KASSERT(NULL != ttyd);
+    dbg(DBG_TERM, "tty_write ready to start.\n");
+
+    /*block IO*/
+    void *ret = ttyd->ttd_ops->block_io(ttyd);
+
+    struct tty_ldisc *ldisc = tty->tty_ldisc;
+    KASSERT(NULL != ldisc);
+
+    int i = offset;
+
+    /*unblock IO*/
+    ttyd->ttd_ops->unblock_io(ttyd, ret);
+
+    dbg(DBG_TERM, "tty_write ready to return.\n");
+    return read;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: tty_write");*/
+
+        /*return 0;*/
 }
