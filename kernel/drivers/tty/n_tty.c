@@ -275,17 +275,30 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
     struct n_tty *ntty = ldisc_to_ntty(ldisc);
     KASSERT(NULL != ntty);
 
+    char *s = "   ";
+
     /*backspace*/
     if (is_backspace(c)) {
         decrement(&ntty->ntty_rawtail);
-        return "\b \b";
+        s[0] = '\b';
+        s[1] = ' ';
+        s[2] = '\b';
+        s[3] = '\0';
+        return s;
     }
     if (is_newline(c)) {
+        ntty->ntty_inbuf[ntty->ntty_rawtail] = c;
         increment(&ntty->ntty_rawtail);
-        return "\n";
+        s[0] = '\n';
+        s[1] = '\r';
+        s[2] = '\0';
+        return s;
     }
+    ntty->ntty_inbuf[ntty->ntty_rawtail] = c;
     increment(&ntty->ntty_rawtail);
-    return c + "";
+    s[0] = c;
+    s[1] = '\0';
+    return s;
         /*
          *NOT_YET_IMPLEMENTED("DRIVERS: n_tty_receive_char");
          *return NULL;
