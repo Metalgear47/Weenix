@@ -62,15 +62,15 @@ n_tty_print_inbuf(tty_ldisc_t *ldisc)
     }
     dbgq(DBG_TERM, "\n");
     for (i = 0 ; i < ntty->ntty_rhead ; i++) {
-        dbgq(DBG_TERM, " ");
+        dbgq(DBG_TERM, "%c", ' ');
     }
     dbgq(DBG_TERM, "|read head\n");
     for (i = 0 ; i < ntty->ntty_ckdtail ; i++) {
-        dbgq(DBG_TERM, " ");
+        dbgq(DBG_TERM, "%c", ' ');
     }
     dbgq(DBG_TERM, "|cooked tail\n");
     for (i = 0 ; i < ntty->ntty_rawtail ; i++) {
-        dbgq(DBG_TERM, " ");
+        dbgq(DBG_TERM, "%c", ' ');
     }
     dbgq(DBG_TERM, "|raw tail\n");
     return;
