@@ -14,7 +14,7 @@
 
 /* helpful macros */
 #define EOFC            '\x4'
-#define TTY_BUF_SIZE    8
+#define TTY_BUF_SIZE    128
 #define ldisc_to_ntty(ldisc) \
         CONTAINER_OF(ldisc, n_tty_t, ntty_ldisc)
 
@@ -313,21 +313,28 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
     struct n_tty *ntty = ldisc_to_ntty(ldisc);
     KASSERT(NULL != ntty);
 
-    char *s = "   ";
+    char *s;
 
     /*backspace*/
     if (is_backspace(c)) {
-        if (ntty->ntty_rawtail == ntty->ntty_ckdtail+1 || (ntty->ntty_ckdtail == TTY_BUF_SIZE-1 && ntty->ntty_rawtail == 0)) {
-            s[0] = '\0';
+        /*ckdtail is actual ckdtail, there is a newline char there*/
+        if (is_newline(ntty->ntty_inbuf[ntty->ntty_ckdtail]) && (ntty->ntty_rawtail == ntty->ntty_ckdtail+1 || (ntty->ntty_ckdtail == TTY_BUF_SIZE-1 && ntty->ntty_rawtail == 0))) {
+            dbg(DBG_TERM, "Already cooked, delete not working.\n");
+            s = "";
             /*n_tty_print_inbuf(ldisc);*/
             return s;
         }
+        
+        /*ckdtail is not an actuall ckdtail, it's just the initial state*/
+        if (0 == is_newline(ntty->ntty_inbuf[ntty->ntty_ckdtail]) && ntty->ntty_rawtail == ntty->ntty_ckdtail) {
+            dbg(DBG_TERM, "Initial state, delete not working.\n");
+            s = "";
+            return s;
+        }
+
         decrement(&ntty->ntty_rawtail);
         ntty->ntty_inbuf[ntty->ntty_rawtail] = '_';
-        s[0] = '\b';
-        s[1] = ' ';
-        s[2] = '\b';
-        s[3] = '\0';
+        s = "\b \b";
         n_tty_print_inbuf(ldisc);
         return s;
     }
@@ -335,16 +342,15 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
         ntty->ntty_inbuf[ntty->ntty_rawtail] = c;
         ntty->ntty_ckdtail = ntty->ntty_rawtail;
         increment(&ntty->ntty_rawtail);
-        s[0] = '\n';
-        s[1] = '\r';
-        s[2] = '\0';
+        s = "\n\r";
+        /*s[2] = '\0';*/
         n_tty_print_inbuf(ldisc);
         return s;
     }
     ntty->ntty_inbuf[ntty->ntty_rawtail] = c;
     increment(&ntty->ntty_rawtail);
+    s = " ";
     s[0] = c;
-    s[1] = '\0';
     n_tty_print_inbuf(ldisc);
     return s;
         /*
