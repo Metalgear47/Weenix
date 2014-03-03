@@ -72,10 +72,9 @@ static int
 null_read(bytedev_t *dev, int offset, void *buf, int count)
 {
     char *buff = (char *)buf;
-    buff[0] = '\0';
+    buff[0] = 0x04;
+    /*not sure if needed to append a '\0'*/
     return 0;
-        /*NOT_YET_IMPLEMENTED("DRIVERS: null_read");*/
-        /*return -ENOMEM;*/
 }
 
 /**
@@ -100,8 +99,6 @@ null_write(bytedev_t *dev, int offset, const void *buf, int count)
         }
     }
     return i;
-        /*NOT_YET_IMPLEMENTED("DRIVERS: null_write");*/
-        /*return -ENOMEM;*/
 }
 
 /**
@@ -121,12 +118,10 @@ zero_read(bytedev_t *dev, int offset, void *buf, int count)
     char *buff = (char *)buf;
     int i = 0;
     for (i = 0 ; i < count; i++) {
-        buff[i] = '0';
+        buff[i] = '\0';
     }
     buff[i] = '\0';
     return i;
-        NOT_YET_IMPLEMENTED("DRIVERS: zero_read");
-        return 0;
 }
 
 /* Don't worry about these until VM. Once you're there, they shouldn't be hard. */
