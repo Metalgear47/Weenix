@@ -24,6 +24,8 @@ static int n_tty_read(tty_ldisc_t *ldisc, void *buf, int len);
 static const char *n_tty_receive_char(tty_ldisc_t *ldisc, char c);
 static const char *n_tty_process_char(tty_ldisc_t *ldisc, char c);
 
+int is_newline(char c);
+
 static tty_ldisc_ops_t n_tty_ops = {
         .attach       = n_tty_attach,
         .detach       = n_tty_detach,
@@ -49,9 +51,16 @@ n_tty_print_inbuf(tty_ldisc_t *ldisc)
     struct n_tty *ntty = ldisc_to_ntty(ldisc);
     char *inbuf = ntty->ntty_inbuf;
     dbg(DBG_TERM, "Printing the inbuf of n_tty\n");
-    dbgq(DBG_TERM, "%s\n", inbuf);
     
     int i = 0;
+    for (i = 0 ; i < TTY_BUF_SIZE ; i++) {
+        if (is_newline(inbuf[i])) {
+            dbgq(DBG_TERM, "|");
+        } else {
+            dbgq(DBG_TERM, "%c", inbuf[i]);
+        }
+    }
+    dbgq(DBG_TERM, "\n");
     for (i = 0 ; i < ntty->ntty_rhead ; i++) {
         dbgq(DBG_TERM, " ");
     }
