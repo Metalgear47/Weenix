@@ -308,10 +308,14 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
 const char *
 n_tty_process_char(tty_ldisc_t *ldisc, char c)
 {
+    char *s = "  ";
     if (is_newline(c)) {
-        return "\r";
+        s[0] = '\r';
+    } else {
+        s[0] = c;
     }
-    return c + "";
+    s[1] = '\0';
+    return s;
         /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_process_char");*/
 
         /*return NULL;*/
