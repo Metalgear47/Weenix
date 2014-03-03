@@ -246,7 +246,7 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     KASSERT(NULL != ntty);
     char *outbuf = (char *)buf;
 
-    if (ntty->ntty_rhead == ntty->ntty_ckdtail || ntty->ntty_rhead == ntty->ntty_ckdtail + 1) {
+    if (ntty->ntty_rhead == ntty->ntty_ckdtail) {
         dbg(DBG_TERM, "Nothing in the inbuf yet.\n");
         if (EINTR == sched_cancellable_sleep_on(&ntty->ntty_rwaitq)) {
             /*is cancelled, not handled yet*/
@@ -271,9 +271,8 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
         }
         if (is_ctrl_d(inbuf[convert(rhead+i)])) {
             /*and something else*/
-            if (0 == is_newline(inbuf[ntty->ntty_ckdtail]) && ntty->ntty_ckdtail == rhead - 1) {
-                return 0;
-            }
+            outbuf[i] = '\0';
+            return i;
             break;
         }
         outbuf[i] = inbuf[convert(rhead+i)];
@@ -322,16 +321,8 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
 
     /*backspace*/
     if (is_backspace(c)) {
-        /*ckdtail is actual ckdtail, there is a newline char there*/
-        if (is_newline(ntty->ntty_inbuf[ntty->ntty_ckdtail]) && (ntty->ntty_rawtail == ntty->ntty_ckdtail+1 || (ntty->ntty_ckdtail == TTY_BUF_SIZE-1 && ntty->ntty_rawtail == 0))) {
-            dbg(DBG_TERM, "Already cooked, delete not working.\n");
-            s = "";
-            /*n_tty_print_inbuf(ldisc);*/
-            return s;
-        }
-        
-        /*ckdtail is not an actuall ckdtail, it's just the initial state*/
-        if (0 == is_newline(ntty->ntty_inbuf[ntty->ntty_ckdtail]) && ntty->ntty_rawtail == ntty->ntty_ckdtail) {
+        /*nothing after ckdtail*/
+        if (ntty->ntty_rawtail == ntty->ntty_ckdtail) {
             dbg(DBG_TERM, "Initial state, delete not working.\n");
             s = "";
             return s;
@@ -345,10 +336,9 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
     }
     if (is_newline(c)) {
         ntty->ntty_inbuf[ntty->ntty_rawtail] = c;
-        ntty->ntty_ckdtail = ntty->ntty_rawtail;
         increment(&ntty->ntty_rawtail);
+        ntty->ntty_ckdtail = ntty->ntty_rawtail;
         s = "\n\r";
-        /*s[2] = '\0';*/
         n_tty_print_inbuf(ldisc);
         sched_wakeup_on(&ntty->ntty_rwaitq);
         return s;
