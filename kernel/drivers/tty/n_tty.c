@@ -124,7 +124,6 @@ n_tty_attach(tty_ldisc_t *ldisc, tty_device_t *tty)
     ntty->ntty_rhead = 0;
     ntty->ntty_rawtail = 0;
     ntty->ntty_ckdtail = 0;
-    /*n_tty_print_inbuf(ldisc);*/
 }
 
 /*
@@ -264,6 +263,7 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     int i = 0;
     for (i = 0 ; i < len ; i++) {
         /*?ckdtail?*/
+        /*no: ckdtail is always at a newline or ctrl-d*/
         if (is_newline(inbuf[convert(rhead+i)])) {
             outbuf[i] = '\n';
             i++;
@@ -295,8 +295,6 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     /*unlock*/
 
     return i;
-        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_read");*/
-        /*return 0;*/
 }
         /**
          * Read bytes from the line discipline into the buffer.
@@ -370,10 +368,6 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
     s[0] = c;
     n_tty_print_inbuf(ldisc);
     return s;
-        /*
-         *NOT_YET_IMPLEMENTED("DRIVERS: n_tty_receive_char");
-         *return NULL;
-         */
 }
         /**
          * Receive a character and return a string to be echoed to the
@@ -403,9 +397,6 @@ n_tty_process_char(tty_ldisc_t *ldisc, char c)
         s[1] = '\0';
         return s;
     }
-        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_process_char");*/
-
-        /*return NULL;*/
 }
         /**
          * Process a character and return a string to be echoed to the

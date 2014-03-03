@@ -142,8 +142,6 @@ tty_create(tty_driver_t *driver, int id)
     tty->tty_cdev.cd_ops = &tty_bytedev_ops;
 
     return tty;
-        /*NOT_YET_IMPLEMENTED("DRIVERS: tty_create");*/
-        /*return 0;*/
 }
 
 /*
@@ -171,7 +169,6 @@ tty_global_driver_callback(void *arg, char c)
 
     KASSERT(NULL != tty->tty_driver);
     tty_echo(tty->tty_driver, s);
-        /*NOT_YET_IMPLEMENTED("DRIVERS: tty_global_driver_callback");*/
 }
 
 /*
@@ -187,7 +184,6 @@ tty_echo(tty_driver_t *driver, const char *out)
     while ('\0' != out[i]) {
         driver->ttd_ops->provide_char(driver, out[i++]);
     }
-        /*NOT_YET_IMPLEMENTED("DRIVERS: tty_echo");*/
 }
 
 /*
@@ -205,7 +201,6 @@ tty_read(bytedev_t *dev, int offset, void *buf, int count)
 
     KASSERT(NULL != tty);
     KASSERT(NULL != ttyd);
-    dbg(DBG_TERM, "tty_read ready to start.\n");
 
     /*block IO*/
     void *ret = ttyd->ttd_ops->block_io(ttyd);
@@ -219,7 +214,7 @@ tty_read(bytedev_t *dev, int offset, void *buf, int count)
     /*unblock IO*/
     ttyd->ttd_ops->unblock_io(ttyd, ret);
 
-    dbg(DBG_TERM, "tty_read ready to return.\n");
+    dbg(DBG_TERM, "tty_read successful.\n");
     return read;
         /*NOT_YET_IMPLEMENTED("DRIVERS: tty_read");*/
 
@@ -244,7 +239,6 @@ tty_write(bytedev_t *dev, int offset, const void *buf, int count)
 
     KASSERT(NULL != tty);
     KASSERT(NULL != ttyd);
-    dbg(DBG_TERM, "tty_write ready to start.\n");
 
     /*block IO*/
     void *ret = ttyd->ttd_ops->block_io(ttyd);
@@ -253,6 +247,7 @@ tty_write(bytedev_t *dev, int offset, const void *buf, int count)
     KASSERT(NULL != ldisc);
 
     const char *buff = (const char *)buf;
+    dbg(DBG_TERM, "tty_write: the string is: %s\n", buff);
     int i = 0;
     for (i = 0 ; i < count; i++) {
         if ('\0' == buff[i+offset]) {
@@ -266,9 +261,5 @@ tty_write(bytedev_t *dev, int offset, const void *buf, int count)
     /*unblock IO*/
     ttyd->ttd_ops->unblock_io(ttyd, ret);
 
-    dbg(DBG_TERM, "tty_write ready to return.\n");
     return i;
-        /*NOT_YET_IMPLEMENTED("DRIVERS: tty_write");*/
-
-        /*return 0;*/
 }
