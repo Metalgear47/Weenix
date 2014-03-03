@@ -118,6 +118,13 @@ null_write(bytedev_t *dev, int offset, const void *buf, int count)
 static int
 zero_read(bytedev_t *dev, int offset, void *buf, int count)
 {
+    char *buff = (char *)buf;
+    int i = 0;
+    for (i = 0 ; i < count; i++) {
+        buff[i] = '0';
+    }
+    buff[i] = '\0';
+    return i;
         NOT_YET_IMPLEMENTED("DRIVERS: zero_read");
         return 0;
 }
