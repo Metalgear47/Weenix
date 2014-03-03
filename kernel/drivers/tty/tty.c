@@ -216,9 +216,6 @@ tty_read(bytedev_t *dev, int offset, void *buf, int count)
 
     dbg(DBG_TERM, "tty_read successful.\n");
     return read;
-        /*NOT_YET_IMPLEMENTED("DRIVERS: tty_read");*/
-
-        /*return 0;*/
 }
 
 /*

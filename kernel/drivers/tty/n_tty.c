@@ -256,6 +256,8 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     }
 
     /*lock*/
+    kmutex_lock(&ntty->ntty_rlock);
+
     char *inbuf = ntty->ntty_inbuf;
     KASSERT(NULL != inbuf);
     int rhead = ntty->ntty_rhead;
@@ -270,13 +272,6 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
             break;
         }
         if (is_ctrl_d(inbuf[convert(rhead+i)])) {
-            /*and something else*/
-            /*if (0 == i) {*/
-                /*dbg(DBG_TERM, "First char is ctrl-d\n");*/
-                /*outbuf[0] = 0x04;*/
-                /*outbuf[1] = '\0';*/
-                /*return 1;*/
-            /*}*/
             if (0 == i) {
                 outbuf[i] = '\0';
                 ntty->ntty_rhead = convert(i);
@@ -293,6 +288,7 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     ntty->ntty_rhead = convert(rhead + i);
 
     /*unlock*/
+    kmutex_unlock(&ntty->ntty_rlock);
 
     return i;
 }
