@@ -71,8 +71,11 @@ memdevs_init()
 static int
 null_read(bytedev_t *dev, int offset, void *buf, int count)
 {
-        NOT_YET_IMPLEMENTED("DRIVERS: null_read");
-        return -ENOMEM;
+    char *buff = (char *)buf;
+    buff[0] = '\0';
+    return 0;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: null_read");*/
+        /*return -ENOMEM;*/
 }
 
 /**
