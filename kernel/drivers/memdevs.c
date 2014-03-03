@@ -92,8 +92,16 @@ null_read(bytedev_t *dev, int offset, void *buf, int count)
 static int
 null_write(bytedev_t *dev, int offset, const void *buf, int count)
 {
-        NOT_YET_IMPLEMENTED("DRIVERS: null_write");
-        return -ENOMEM;
+    char *buff = (char *)buf;
+    int i = 0;
+    for (i = 0 ; i < count; i++) {
+        if (buff[i] == '\0') {
+            break;
+        }
+    }
+    return i;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: null_write");*/
+        /*return -ENOMEM;*/
 }
 
 /**
