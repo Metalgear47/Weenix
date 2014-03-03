@@ -252,13 +252,22 @@ tty_write(bytedev_t *dev, int offset, const void *buf, int count)
     struct tty_ldisc *ldisc = tty->tty_ldisc;
     KASSERT(NULL != ldisc);
 
-    int i = offset;
+    const char *buff = (const char *)buf;
+    int i = 0;
+    for (i = 0 ; i < count; i++) {
+        if ('\0' == buff[i+offset]) {
+            break;
+        }
+        const char *s = ldisc->ld_ops->process_char(ldisc, buff[i+offset]);
+        tty_echo(ttyd, s);
+    }
+    int write = i;
 
     /*unblock IO*/
     ttyd->ttd_ops->unblock_io(ttyd, ret);
 
     dbg(DBG_TERM, "tty_write ready to return.\n");
-    return read;
+    return i;
         /*NOT_YET_IMPLEMENTED("DRIVERS: tty_write");*/
 
         /*return 0;*/
