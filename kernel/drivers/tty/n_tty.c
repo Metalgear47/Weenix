@@ -44,6 +44,8 @@ struct n_tty {
         int                 ntty_ckdtail;
 
         tty_ldisc_t         ntty_ldisc;
+
+        int                 ntty_initial;
 };
 
 void
@@ -129,6 +131,7 @@ n_tty_attach(tty_ldisc_t *ldisc, tty_device_t *tty)
     ntty->ntty_rhead = 0;
     ntty->ntty_rawtail = 0;
     ntty->ntty_ckdtail = 0;
+    ntty->ntty_initial = 1;
 }
 
 /*
@@ -328,6 +331,17 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
     KASSERT(NULL != ntty);
 
     char *s;
+
+    /*
+     *if (ntty->ntty_initial == 0 && convert(ntty->ntty_rawtail) == convert(ntty->ntty_rhead)) {
+     *    s = "";
+     *    return s;
+     *}
+     */
+
+    if (ntty->ntty_initial) {
+        ntty->ntty_initial = 0;
+    }
 
     /*backspace*/
     if (is_backspace(c)) {
