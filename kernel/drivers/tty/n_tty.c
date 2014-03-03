@@ -246,7 +246,7 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     KASSERT(NULL != ntty);
     char *outbuf = (char *)buf;
 
-    if (ntty->ntty_rhead == ntty->ntty_ckdtail) {
+    if (ntty->ntty_rhead == ntty->ntty_ckdtail || ntty->ntty_rhead == ntty->ntty_ckdtail + 1) {
         dbg(DBG_TERM, "Nothing in the inbuf yet.\n");
         if (EINTR == sched_cancellable_sleep_on(&ntty->ntty_rwaitq)) {
             /*is cancelled, not handled yet*/
@@ -265,10 +265,15 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     for (i = 0 ; i < len ; i++) {
         /*?ckdtail?*/
         if (is_newline(inbuf[convert(rhead+i)])) {
+            outbuf[i] = '\n';
+            i++;
             break;
         }
         if (is_ctrl_d(inbuf[convert(rhead+i)])) {
             /*and something else*/
+            if (0 == is_newline(inbuf[ntty->ntty_ckdtail]) && ntty->ntty_ckdtail == rhead - 1) {
+                return 0;
+            }
             break;
         }
         outbuf[i] = inbuf[convert(rhead+i)];
