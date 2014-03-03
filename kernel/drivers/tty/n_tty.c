@@ -247,11 +247,13 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     char *outbuf = (char *)buf;
 
     if (ntty->ntty_rhead == ntty->ntty_ckdtail) {
+        dbg(DBG_TERM, "Nothing in the inbuf yet.\n");
         if (EINTR == sched_cancellable_sleep_on(&ntty->ntty_rwaitq)) {
             /*is cancelled, not handled yet*/
             panic("n_tty_read get cancelled\n");
             return 0;
         }
+        dbg(DBG_TERM, "Something is cooked, been woken up.\n");
     }
 
     /*lock*/
@@ -262,16 +264,14 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     int i = 0;
     for (i = 0 ; i < len ; i++) {
         /*?ckdtail?*/
-        outbuf[i] = inbuf[convert(rhead+i)];
         if (is_newline(inbuf[convert(rhead+i)])) {
-            i++;
             break;
         }
         if (is_ctrl_d(inbuf[convert(rhead+i)])) {
             /*and something else*/
-            i++;
             break;
         }
+        outbuf[i] = inbuf[convert(rhead+i)];
     }
 
     outbuf[i] = '\0';
@@ -345,6 +345,7 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
         s = "\n\r";
         /*s[2] = '\0';*/
         n_tty_print_inbuf(ldisc);
+        sched_wakeup_on(&ntty->ntty_rwaitq);
         return s;
     }
     ntty->ntty_inbuf[ntty->ntty_rawtail] = c;
@@ -377,12 +378,15 @@ n_tty_process_char(tty_ldisc_t *ldisc, char c)
 {
     char *s = "  ";
     if (is_newline(c)) {
-        s[0] = '\r';
+        s[0] = '\n';
+        s[1] = '\r';
+        s[2] = '\0';
+        return s;
     } else {
         s[0] = c;
+        s[1] = '\0';
+        return s;
     }
-    s[1] = '\0';
-    return s;
         /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_process_char");*/
 
         /*return NULL;*/
