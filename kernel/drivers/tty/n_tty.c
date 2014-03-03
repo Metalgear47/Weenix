@@ -25,6 +25,7 @@ static const char *n_tty_receive_char(tty_ldisc_t *ldisc, char c);
 static const char *n_tty_process_char(tty_ldisc_t *ldisc, char c);
 
 int is_newline(char c);
+int is_ctrl_d(char c);
 
 static tty_ldisc_ops_t n_tty_ops = {
         .attach       = n_tty_attach,
@@ -57,7 +58,11 @@ n_tty_print_inbuf(tty_ldisc_t *ldisc)
         if (is_newline(inbuf[i])) {
             dbgq(DBG_TERM, "|");
         } else {
-            dbgq(DBG_TERM, "%c", inbuf[i]);
+            if (is_ctrl_d(inbuf[i])) {
+                dbgq(DBG_TERM, "#");
+            } else {
+                dbgq(DBG_TERM, "%c", inbuf[i]);
+            }
         }
     }
     dbgq(DBG_TERM, "\n");
