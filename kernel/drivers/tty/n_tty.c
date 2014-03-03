@@ -271,11 +271,20 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
         }
         if (is_ctrl_d(inbuf[convert(rhead+i)])) {
             /*and something else*/
+            /*if (0 == i) {*/
+                /*dbg(DBG_TERM, "First char is ctrl-d\n");*/
+                /*outbuf[0] = 0x04;*/
+                /*outbuf[1] = '\0';*/
+                /*return 1;*/
+            /*}*/
             if (0 == i) {
-                dbg(DBG_TERM, "First char is ctrl-d\n");
                 outbuf[i] = '\0';
+                ntty->ntty_rhead = convert(i);
                 return i;
             }
+            outbuf[i] = '\n';
+            i++;
+            break;
         }
         outbuf[i] = inbuf[convert(rhead+i)];
     }
@@ -345,15 +354,18 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
         sched_wakeup_on(&ntty->ntty_rwaitq);
         return s;
     }
-    ntty->ntty_inbuf[ntty->ntty_rawtail] = c;
-    increment(&ntty->ntty_rawtail);
     if (is_ctrl_d(c)) {
         dbg(DBG_TERM, "CTRL-D pressed\n");
-        s = "";
+        ntty->ntty_inbuf[ntty->ntty_rawtail] = c;
+        increment(&ntty->ntty_rawtail);
+        ntty->ntty_ckdtail = ntty->ntty_rawtail;
+        s = "\n\r";
         n_tty_print_inbuf(ldisc);
         sched_wakeup_on(&ntty->ntty_rwaitq);
         return s;
     }
+    ntty->ntty_inbuf[ntty->ntty_rawtail] = c;
+    increment(&ntty->ntty_rawtail);
     s = " ";
     s[0] = c;
     n_tty_print_inbuf(ldisc);
