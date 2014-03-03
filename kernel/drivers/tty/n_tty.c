@@ -43,6 +43,29 @@ struct n_tty {
         tty_ldisc_t         ntty_ldisc;
 };
 
+void
+n_tty_print_inbuf(tty_ldisc_t *ldisc)
+{
+    struct n_tty *ntty = ldisc_to_ntty(ldisc);
+    char *inbuf = ntty->ntty_inbuf;
+    dbg(DBG_TERM, "Printing the inbuf of n_tty\n");
+    dbgq(DBG_TERM, "%s\n", inbuf);
+    
+    int i = 0;
+    for (i = 0 ; i < ntty->ntty_rhead ; i++) {
+        dbgq(DBG_TERM, " ");
+    }
+    dbgq(DBG_TERM, "|read head\n");
+    for (i = 0 ; i < ntty->ntty_ckdtail ; i++) {
+        dbgq(DBG_TERM, " ");
+    }
+    dbgq(DBG_TERM, "|cooked tail\n");
+    for (i = 0 ; i < ntty->ntty_rawtail ; i++) {
+        dbgq(DBG_TERM, " ");
+    }
+    dbgq(DBG_TERM, "|raw tail\n");
+    return;
+}
 
 tty_ldisc_t *
 n_tty_create()
@@ -81,12 +104,18 @@ n_tty_attach(tty_ldisc_t *ldisc, tty_device_t *tty)
     kmutex_init(&ntty->ntty_rlock);
     sched_queue_init(&ntty->ntty_rwaitq);
 
-    ntty->ntty_inbuf = (char *)kmalloc(sizeof(char) * TTY_BUF_SIZE);
+    ntty->ntty_inbuf = (char *)kmalloc(sizeof(char) * (TTY_BUF_SIZE + 1));
     KASSERT(NULL != ntty->ntty_inbuf);
+    int i = 0;
+    for (i = 0 ; i < TTY_BUF_SIZE ; i++) {
+        ntty->ntty_inbuf[i] = '_';
+    }
+    ntty->ntty_inbuf[i] = '\0';
 
     ntty->ntty_rhead = 0;
     ntty->ntty_rawtail = 0;
     ntty->ntty_ckdtail = 0;
+    /*n_tty_print_inbuf(ldisc);*/
 }
 
 /*
@@ -279,11 +308,13 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
 
     /*backspace*/
     if (is_backspace(c)) {
+        ntty->ntty_inbuf[ntty->ntty_rawtail] = '_';
         decrement(&ntty->ntty_rawtail);
         s[0] = '\b';
         s[1] = ' ';
         s[2] = '\b';
         s[3] = '\0';
+        n_tty_print_inbuf(ldisc);
         return s;
     }
     if (is_newline(c)) {
@@ -292,12 +323,14 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
         s[0] = '\n';
         s[1] = '\r';
         s[2] = '\0';
+        n_tty_print_inbuf(ldisc);
         return s;
     }
     ntty->ntty_inbuf[ntty->ntty_rawtail] = c;
     increment(&ntty->ntty_rawtail);
     s[0] = c;
     s[1] = '\0';
+    n_tty_print_inbuf(ldisc);
     return s;
         /*
          *NOT_YET_IMPLEMENTED("DRIVERS: n_tty_receive_char");
