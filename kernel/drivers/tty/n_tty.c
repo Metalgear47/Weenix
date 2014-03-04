@@ -14,7 +14,7 @@
 
 /* helpful macros */
 #define EOFC            '\x4'
-#define TTY_BUF_SIZE    128
+#define TTY_BUF_SIZE    8
 #define ldisc_to_ntty(ldisc) \
         CONTAINER_OF(ldisc, n_tty_t, ntty_ldisc)
 
@@ -332,12 +332,11 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
 
     char *s;
 
-    /*
-     *if (ntty->ntty_initial == 0 && convert(ntty->ntty_rawtail) == convert(ntty->ntty_rhead)) {
-     *    s = "";
-     *    return s;
-     *}
-     */
+    if (ntty->ntty_initial == 0 && convert(ntty->ntty_rawtail) == convert(ntty->ntty_rhead - 1)) {
+        /*discard the newly input character*/
+        s = "";
+        return s;
+    }
 
     if (ntty->ntty_initial) {
         ntty->ntty_initial = 0;
