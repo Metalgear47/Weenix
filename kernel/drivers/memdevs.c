@@ -72,8 +72,7 @@ static int
 null_read(bytedev_t *dev, int offset, void *buf, int count)
 {
     char *buff = (char *)buf;
-    buff[0] = 0x04;
-    /*not sure if needed to append a '\0'*/
+    buff[0] = '\x4';
     return 0;
 }
 
@@ -120,8 +119,7 @@ zero_read(bytedev_t *dev, int offset, void *buf, int count)
     for (i = 0 ; i < count; i++) {
         buff[i] = '\0';
     }
-    buff[i] = '\0';
-    return i;
+    return count;
 }
 
 /* Don't worry about these until VM. Once you're there, they shouldn't be hard. */
