@@ -515,11 +515,11 @@ ata_do_operation(ata_disk_t *adisk, char *data, blocknum_t blocknum, int write)
     /*lock the mutex*/
     kmutex_lock(&adisk->ata_mutex);
 
-    /*Initialize DMA (really unsure about it)*/
-    dma_load(adisk->ata_channel,  (void *)data, );
+    /*Initialize DMA*/
+    dma_load(adisk->ata_channel, data, BLOCK_SIZE);
 
     /*number of sectors*/
-    ata_outb_reg(adisk->ata_channel, ATA_REG_SECCOUNT0, ):
+    ata_outb_reg(adisk->ata_channel, ATA_REG_SECCOUNT0, adisk->ata_sectors_per_block);
     /*starting sector*/
     ata_outb_reg(adisk->ata_channel, ATA_REG_LBA0, blocknum & 0xff);
     ata_outb_reg(adisk->ata_channel, ATA_REG_LBA1, blocknum & 0xff00);
@@ -536,8 +536,7 @@ ata_do_operation(ata_disk_t *adisk, char *data, blocknum_t blocknum, int write)
     ata_pause(adisk->ata_channel);
 
     /*start*/
-    uint16_t busmaster_addr = ata_setup_busmaster(&adisk);
-    dma_start(adisk->ata_channel, busmaster_addr, write);
+    dma_start(adisk->ata_channel, ATA_CHANNELS[adisk->ata_channel].atac_busmaster, write);
 
     /*sleep*/
     sched_cancellable_sleep_on(&adisk->ata_waitq);
@@ -556,8 +555,11 @@ ata_do_operation(ata_disk_t *adisk, char *data, blocknum_t blocknum, int write)
         error = ata_inb_reg(adisk->ata_channel, ATA_REG_ERROR);
 
         /*clear the error bit*/
-        dma_reset(busmaster_addr);
+        ata_outb_reg(adisk->ata_channel, ATA_REG_ERROR, 0x00);
     }
+
+    /*how to alert the DMA controller that we've received the interrupt*/
+    dma_reset(ATA_CHANNELS[adisk->ata_channel].atac_busmaster);
 
     /*unlock the mutex*/
     kmutex_unlock(&adisk->ata_mutex);
@@ -565,8 +567,6 @@ ata_do_operation(ata_disk_t *adisk, char *data, blocknum_t blocknum, int write)
     intr_setipl(old_ipl);
 
     return -error;
-        /*NOT_YET_IMPLEMENTED("DRIVERS: ata_do_operation");*/
-        /*return -1;*/
 }
 
 /**
