@@ -393,8 +393,20 @@ ata_intr_wrapper(regs_t *regs)
 static int
 ata_read(blockdev_t *bdev, char *data, blocknum_t blocknum, unsigned int count)
 {
-        NOT_YET_IMPLEMENTED("DRIVERS: ata_read");
-        return -1;
+    KASSERT(NULL != bdev);
+    KASSERT(NULL != data);
+
+    unsigned int i = 0;
+    ata_disk_t *adisk = bd_to_ata(bdev);
+    for (i = 0 ; i < count ; i++) {
+        int ret;
+        if ((ret = ata_do_operation(adisk, &data[i * BLOCK_SIZE], blocknum + i, 0)) != 0) {
+            return ret;
+        }
+    }
+    return 0;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: ata_read");*/
+        /*return -1;*/
 }
 
 /**
