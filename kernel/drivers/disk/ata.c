@@ -580,7 +580,9 @@ ata_do_operation(ata_disk_t *adisk, char *data, blocknum_t blocknum, int write)
 static void
 ata_intr(regs_t *regs, void *arg)
 {
-        NOT_YET_IMPLEMENTED("DRIVERS: ata_intr");
+    ata_disk_t *adisk = (ata_disk_t *)arg;
+    sched_wakeup_on(&adisk->ata_waitq);
+        /*NOT_YET_IMPLEMENTED("DRIVERS: ata_intr");*/
 }
 
 /*
