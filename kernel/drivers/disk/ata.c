@@ -72,8 +72,8 @@ static struct ata_channel {
         /* Argument for interrupt handler */
         void *atac_intr_arg;
 	
-	/* address of busmaster register */
-	uint16_t atac_busmaster;
+        /* address of busmaster register */
+        uint16_t atac_busmaster;
 } ATA_CHANNELS[2] = {
         {
                 ATA_PRIMARY_CMD_BASE,
@@ -505,8 +505,68 @@ ata_write(blockdev_t *bdev, const char *data, blocknum_t blocknum, unsigned int 
 static int
 ata_do_operation(ata_disk_t *adisk, char *data, blocknum_t blocknum, int write)
 {
-        NOT_YET_IMPLEMENTED("DRIVERS: ata_do_operation");
-        return -1;
+    KASSERT(NULL != adisk);
+    KASSERT(NULL != data);
+
+    /*store the old ipl*/
+    uint8_t old_ipl = intr_getipl();
+    /*set the IPL(not sure about the ipl level)*/
+    intr_setipl(INTR_DISK_SECONDARY);
+    /*lock the mutex*/
+    kmutex_lock(&adisk->ata_mutex);
+
+    /*Initialize DMA (really unsure about it)*/
+    dma_load(adisk->ata_channel,  (void *)data, );
+
+    /*number of sectors*/
+    ata_outb_reg(adisk->ata_channel, ATA_REG_SECCOUNT0, ):
+    /*starting sector*/
+    ata_outb_reg(adisk->ata_channel, ATA_REG_LBA0, blocknum & 0xff);
+    ata_outb_reg(adisk->ata_channel, ATA_REG_LBA1, blocknum & 0xff00);
+    ata_outb_reg(adisk->ata_channel, ATA_REG_LBA2, blocknum & 0xff0000);
+
+    /*type of operation*/
+    if (write) {
+        ata_outb_reg(adisk->ata_channel, ATA_REG_COMMAND, ATA_CMD_WRITE_DMA);
+    } else {
+        ata_outb_reg(adisk->ata_channel, ATA_REG_COMMAND, ATA_CMD_READ_DMA);
+    }
+
+    /*pause*/
+    ata_pause(adisk->ata_channel);
+
+    /*start*/
+    uint16_t busmaster_addr = ata_setup_busmaster(&adisk);
+    dma_start(adisk->ata_channel, busmaster_addr, write);
+
+    /*sleep*/
+    sched_cancellable_sleep_on(&adisk->ata_waitq);
+
+    /*
+     *wake up
+     */
+
+    /*read the status of the DMA operation*/
+    uint8_t status = ata_inb_reg(adisk->ata_channel, ATA_REG_STATUS);
+    uint8_t error = 0;
+
+    /*check if there is error*/
+    if (ATA_SR_ERR == status) {
+        /*read the error code and return*/
+        error = ata_inb_reg(adisk->ata_channel, ATA_REG_ERROR);
+
+        /*clear the error bit*/
+        dma_reset(busmaster_addr);
+    }
+
+    /*unlock the mutex*/
+    kmutex_unlock(&adisk->ata_mutex);
+    /*restore the IPL*/
+    intr_setipl(old_ipl);
+
+    return -error;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: ata_do_operation");*/
+        /*return -1;*/
 }
 
 /**
