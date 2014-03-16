@@ -107,6 +107,7 @@ sched_sleep_on(ktqueue_t *q)
 
     ktqueue_enqueue(q, curthr);
     sched_switch();
+    return;
         /*NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");*/
 }
 

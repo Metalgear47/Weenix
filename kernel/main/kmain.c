@@ -70,6 +70,7 @@ static void *terminate_out_of_order(int arg1, void *arg2);
 /*drivers_tests*/
 static void *alternately_read(int arg1, void *arg2);
 static void *alternately_write(int arg1, void *arg2);
+static void *write_then_read(int arg1, void *arg2);
 /*drivers_tests*/
 
 static context_t bootstrap_context;
@@ -308,16 +309,8 @@ initproc_run(int arg1, void *arg2)
      *print_proc_list();
      */
 
-    char *data = (char *)page_alloc();
-    memset(data, 0, PAGE_SIZE);
-    data[0] = 'u';
-    data[PAGE_SIZE-1] = '\0';
-    blockdev_t *bd = blockdev_lookup(MKDEVID(1, 0));
-    bd->bd_ops->write_block(bd, data, 0, PAGE_SIZE);
-    
-    char *out = (char *)page_alloc();
-    bd->bd_ops->read_block(bd, out, 0, PAGE_SIZE);
-    dbg(DBG_TEST, "...%s...\n", out);
+    create_proc("Write then read", write_then_read, 0, 0);
+    do_waitpid(-1, 0, NULL);
 
     do_exit(0);
 
@@ -545,5 +538,22 @@ alternately_write(int arg1, void *arg2)
     create_proc("write No.2", write_to_terminal, 0, 0);
     do_waitpid(-1, 0, NULL);
     do_waitpid(-1, 0, NULL);
+    return 0;
+}
+
+static void *
+write_then_read(int arg1, void *arg2)
+{
+    char *data = (char *)page_alloc();
+    memset(data, 48, PAGE_SIZE);
+    data[0] = 'u';
+    data[PAGE_SIZE-1] = '\0';
+    blockdev_t *bd = blockdev_lookup(MKDEVID(1, 0));
+    bd->bd_ops->write_block(bd, data, 0, 1);
+    
+    char *out = (char *)page_alloc();
+    bd->bd_ops->read_block(bd, out, 0, 1);
+    dbg(DBG_TEST, "...%s...\n", out);
+
     return 0;
 }
