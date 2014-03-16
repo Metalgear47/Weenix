@@ -609,6 +609,7 @@ ata_intr(regs_t *regs, void *arg)
 {
     ata_disk_t *adisk = (ata_disk_t *)arg;
     sched_wakeup_on(&adisk->ata_waitq);
+    sched_switch();
         /*NOT_YET_IMPLEMENTED("DRIVERS: ata_intr");*/
 }
 

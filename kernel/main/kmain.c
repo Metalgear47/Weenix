@@ -67,6 +67,11 @@ static void *run_kmutex_test(int arg1, void *arg2);
 static void *terminate_out_of_order(int arg1, void *arg2);
 /*proc_tests*/
 
+/*drivers_tests*/
+static void *alternately_read(int arg1, void *arg2);
+static void *alternately_write(int arg1, void *arg2);
+/*drivers_tests*/
+
 static context_t bootstrap_context;
 
 /**
@@ -283,10 +288,36 @@ initproc_run(int arg1, void *arg2)
  *    do_waitpid(-1, 0, NULL);
  */
     /*end tests*/
-    kshell_t *ksh = kshell_create(0);
-    KASSERT(NULL != ksh);
-    while (kshell_execute_next(ksh));
-    kshell_destroy(ksh);
+
+    /*
+     *kshell_t *ksh = kshell_create(0);
+     *KASSERT(NULL != ksh);
+     *while (kshell_execute_next(ksh));
+     *kshell_destroy(ksh);
+     */
+
+    /*
+     *create_proc("Alternately reading", alternately_read, 0, 0);
+     *do_waitpid(-1, 0, NULL);
+     *print_proc_list();
+     */
+
+    /*
+     *create_proc("Alternately writing", alternately_write, 0, 0);
+     *do_waitpid(-1, 0, NULL);
+     *print_proc_list();
+     */
+
+    char *data = (char *)page_alloc();
+    memset(data, 0, PAGE_SIZE);
+    data[0] = 'u';
+    data[PAGE_SIZE-1] = '\0';
+    blockdev_t *bd = blockdev_lookup(MKDEVID(1, 0));
+    bd->bd_ops->write_block(bd, data, 0, PAGE_SIZE);
+    
+    char *out = (char *)page_alloc();
+    bd->bd_ops->read_block(bd, out, 0, PAGE_SIZE);
+    dbg(DBG_TEST, "...%s...\n", out);
 
     do_exit(0);
 
@@ -465,4 +496,54 @@ terminate_out_of_order(int arg1, void *arg2)
 
     panic("Should not be here.\n");
     return NULL;
+}
+
+/*---------------------DRIVERS-------------------------*/
+static void *
+read_from_terminal(int arg1, void *arg2)
+{
+    bytedev_t *bd = bytedev_lookup(MKDEVID(2, 0));
+    char *buff = (char *)kmalloc(sizeof(char) * 128);
+    while (bd->cd_ops->read(bd, 0, buff, 100)) {
+        dbg(DBG_TEST, "Thread: %s\n", curproc->p_comm);
+        dbg(DBG_TEST, "Read: %s", buff);
+    }
+    do_exit(0);
+    return 0;
+}
+
+static void *
+alternately_read(int arg1, void *arg2)
+{
+    create_proc("read No.1", read_from_terminal, 0, 0);
+    create_proc("read No.2", read_from_terminal, 0, 0);
+    do_waitpid(-1, 0, NULL);
+    do_waitpid(-1, 0, NULL);
+    return 0;
+}
+
+static void *
+write_to_terminal(int arg1, void *arg2)
+{
+    bytedev_t *bd = bytedev_lookup(MKDEVID(2, 0));
+    char *buff = (char *)kmalloc(sizeof(char) * 128);
+    buff = strcpy(buff, curproc->p_comm);
+    int i;
+    for (i = 0 ; i < 3 ; i++) {
+        bd->cd_ops->write(bd, 0, buff, 100);
+        sched_make_runnable(curthr);
+        sched_switch();
+    }
+    do_exit(0);
+    return 0;
+}
+
+static void *
+alternately_write(int arg1, void *arg2)
+{
+    create_proc("write No.1", write_to_terminal, 0, 0);
+    create_proc("write No.2", write_to_terminal, 0, 0);
+    do_waitpid(-1, 0, NULL);
+    do_waitpid(-1, 0, NULL);
+    return 0;
 }

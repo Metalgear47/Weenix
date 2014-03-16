@@ -14,7 +14,7 @@
 
 /* helpful macros */
 #define EOFC            '\x4'
-#define TTY_BUF_SIZE    8
+#define TTY_BUF_SIZE    128
 #define ldisc_to_ntty(ldisc) \
         CONTAINER_OF(ldisc, n_tty_t, ntty_ldisc)
 
