@@ -567,7 +567,8 @@ ata_do_operation(ata_disk_t *adisk, char *data, blocknum_t blocknum, int write)
 
     /*sleep*/
     dbg(DBG_TERM, "do_operation about to go to sleep\n");
-    sched_sleep_on(&adisk->ata_waitq);
+    /*sched_sleep_on(&adisk->ata_waitq);*/
+    sched_cancellable_sleep_on(&adisk->ata_waitq);
     dbg(DBG_TERM, "do_operation gets woken up\n");
 
     /*

@@ -70,7 +70,8 @@ static void *terminate_out_of_order(int arg1, void *arg2);
 /*drivers_tests*/
 static void *alternately_read(int arg1, void *arg2);
 static void *alternately_write(int arg1, void *arg2);
-static void *write_then_read(int arg1, void *arg2);
+/*static void *write_then_read(int arg1, void *arg2);*/
+static void *multi_verify(int arg1, void *arg2);
 /*drivers_tests*/
 
 static context_t bootstrap_context;
@@ -309,7 +310,7 @@ initproc_run(int arg1, void *arg2)
      *print_proc_list();
      */
 
-    create_proc("Write then read", write_then_read, 0, 0);
+    create_proc("Multi thread verifying", multi_verify, 0, 0);
     do_waitpid(-1, 0, NULL);
 
     do_exit(0);
@@ -544,16 +545,38 @@ alternately_write(int arg1, void *arg2)
 static void *
 write_then_read(int arg1, void *arg2)
 {
-    char *data = (char *)page_alloc();
-    memset(data, 48, PAGE_SIZE);
-    data[0] = 'u';
-    data[PAGE_SIZE-1] = '\0';
-    blockdev_t *bd = blockdev_lookup(MKDEVID(1, 0));
-    bd->bd_ops->write_block(bd, data, 0, 1);
-    
-    char *out = (char *)page_alloc();
-    bd->bd_ops->read_block(bd, out, 0, 1);
-    dbg(DBG_TEST, "...%s...\n", out);
+    int i;
+    for (i = 0 ; i < 3 ; i++) {
+        char *data = (char *)page_alloc();
+        memset(data, 0, PAGE_SIZE);
+        data = strcat(data, curproc->p_comm);
+        blockdev_t *bd = blockdev_lookup(MKDEVID(1, 0));
 
+        dbg(DBG_TEST, "%s currently writing...\n", curproc->p_comm);
+        bd->bd_ops->write_block(bd, data, arg1, 1);
+        
+        char *out = (char *)page_alloc();
+        dbg(DBG_TEST, "%s currently reading...\n", curproc->p_comm);
+        bd->bd_ops->read_block(bd, out, arg1, 1);
+        KASSERT(strcmp(out, curproc->p_comm) == 0);
+        dbg(DBG_TEST, "Verifying succeed,\n");
+
+        page_free(data);
+
+        sched_make_runnable(curthr);
+        sched_switch();
+    }
+    return 0;
+}
+
+static void *
+multi_verify(int arg1, void *arg2)
+{
+    create_proc("Verify No.1", write_then_read, 0, 0);
+    create_proc("Verify No.2", write_then_read, 1, 0);
+    create_proc("Verify No.3", write_then_read, 2, 0);
+    do_waitpid(-1, 0, NULL);
+    do_waitpid(-1, 0, NULL);
+    do_waitpid(-1, 0, NULL);
     return 0;
 }
