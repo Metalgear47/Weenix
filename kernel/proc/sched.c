@@ -106,6 +106,7 @@ sched_sleep_on(ktqueue_t *q)
     curthr->kt_state = KT_SLEEP;
 
     ktqueue_enqueue(q, curthr);
+    dbg(DBG_PROC, "%s sleep on some queue.\n", curproc->p_comm);
     sched_switch();
     return;
         /*NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");*/
