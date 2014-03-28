@@ -281,9 +281,8 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
         }
         if (is_ctrl_d(inbuf[convert(rhead+i)])) {
             if (0 == i) {
-                dbg(DBG_TERM, "First character is CTRL-D\n");
                 outbuf[i] = '\0';
-                ntty->ntty_rhead = convert(rhead+1);
+                ntty->ntty_rhead = convert(i);
                 return i;
             }
             outbuf[i] = '\n';
@@ -299,7 +298,6 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
     /*unlock*/
     kmutex_unlock(&ntty->ntty_rlock);
 
-    n_tty_print_inbuf(ldisc);
     return i;
 }
         /**
