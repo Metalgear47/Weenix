@@ -37,7 +37,7 @@ typedef struct file {
 } file_t;
 
 /*
- * Returns the file_t assiciated with the given file descriptor for the
+ * Returns the file_t associated with the given file descriptor for the
  * current process. If there is no associated file_t, returns NULL.
  *
  * If the passed fd == -1, a new file_t, not associated with any process
