@@ -33,6 +33,7 @@ kmutex_lock(kmutex_t *mtx)
     } else {
         sched_sleep_on(&mtx->km_waitq);
     }
+    KASSERT(mtx->km_holder = curthr);
 }
 
 /*

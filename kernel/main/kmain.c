@@ -498,10 +498,13 @@ read_from_terminal(int arg1, void *arg2)
 {
     bytedev_t *bd = bytedev_lookup(MKDEVID(2, 0));
     char *buff = (char *)kmalloc(sizeof(char) * 128);
-    while (bd->cd_ops->read(bd, 0, buff, 100)) {
+    int size;
+    while (size = bd->cd_ops->read(bd, 0, buff, 100) != 0) {
+        dbg(DBG_TEST, "Reading size: %d\n", size);
         dbg(DBG_TEST, "Thread: %s\n", curproc->p_comm);
         dbg(DBG_TEST, "Read: %s", buff);
     }
+    dbg(DBG_TEST, "Exiting.\n");
     do_exit(0);
     return 0;
 }
