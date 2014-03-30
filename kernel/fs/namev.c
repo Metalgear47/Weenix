@@ -69,30 +69,41 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
     /*get the intermediate vnode and vput?*/
 
     KASSERT(pathname);
+
+    /*stores errno*/
     int err = 0;
+    /*stores pointer to current searching dir*/
     vnode_t *curdir;
+    /*index in pathname*/
     int i = 0;
+    /*index in (base)name*/
+    *namelen = 0;
 
     if (pathname[0] == '/') {
-        KASSERT(pathname[1] != '\0' && "Only a slash in the pathname?\n");
-
         curdir = vfs_root_vn;
 
-        /*skip the first'/'*/
-        i = 1;
-    } else {
+        /*skip the first '/'*/
+        while (pathname[i] == '/') {
+            i++;
+        }
         
-    }
+        KASSERT(pathname[i] != '\0' && "Only slashes in the pathname?\n");
 
-    *namelen = 0;
+        basename[(*namelen)++] = pathname[i++];
+    } else {
+        if (base == NULL) {
+            curdir = base;
+        } else {
+            /*find vnode for p_cwd*/
+        }
+    }
 
     /*convert it to a non-const pointer*/
     char *basename = (char *)*name;
 
     while (pathname[i] != '\0') {
         if (pathname[i] == '/') {
-            if (pathname[i-1] != '/') {
-            }
+            /*do nothing for now*/
         } else {
             if (i == 0 || pathname[i-1] == '/') {
                 /*just for dbg printing in lookup*/
