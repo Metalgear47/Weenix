@@ -91,10 +91,19 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
 
         basename[(*namelen)++] = pathname[i++];
     } else {
-        if (base == NULL) {
+        if (base != NULL) {
             curdir = base;
         } else {
             /*find vnode for p_cwd*/
+            KASSERT(curproc->p_cwd[0] == '/');
+
+            size_t len = strlen(curproc->p_cwd);
+            /*get parent dir*/
+            dir_namev(curproc->p_cwd, &len, name, NULL, &curdir);
+
+            vnode_t tempdir = curdir;
+            /*get THE dir, stores it in curdir*/
+            lookup(tempdir, *name, len, &curdir);
         }
     }
 
