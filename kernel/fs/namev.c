@@ -69,23 +69,50 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
     /*get the intermediate vnode and vput?*/
 
     KASSERT(pathname);
+    int err = 0;
 
     if (pathname[0] == '/') {
+        KASSERT(pathname[1] != '\0' && "Only a slash in the pathname?\n");
+
         int i = 1;
         *namelen = 0;
-        base = vfs_root_vn;
+
+        /*convert it to a non-const pointer*/
+        char *basename = (char *)*name;
+
+        vnode_t *curdir = vfs_root_vn;
+        /*TODO: handle dir as base? */
+        /*last item is not a file*/
         while (pathname[i] != '\0') {
             if (pathname[i] == '/') {
-                if ((err = lookup(base, &name, *namelen, &base)) < 0) {
-                    (*name)[*namelen] = '\0';
-                    dbg(DBG_VFS, "dir_namev: lookup")
+                if (pathname[i-1] != '/') {
+                    /*just for dbg printing in lookup*/
+                    basename[*namelen] = '\0';
+                    if ((err = lookup(curdir, (const char *)&name, *namelen, res_vnode)) < 0) {
+                        dbg(DBG_VFS, "dir_namev: lookup fail, errno is: %d\n", err);
+                        vput(curdir);
+                        return err;
+                    }
+
+                    vput(curdir);
+                    curdir = *res_vnode;
+                    *namelen = 0;
+                }
+            } else {
+                basename[*namelen] = pathname[i];
+                (*namelen)++;
+            }
             i++;
         }
     } else {
         
     }
-        NOT_YET_IMPLEMENTED("VFS: dir_namev");
-        return 0;
+
+    return 0;
+        /*
+         *NOT_YET_IMPLEMENTED("VFS: dir_namev");
+         *return 0;
+         */
 }
 
 /* This returns in res_vnode the vnode requested by the other parameters.
