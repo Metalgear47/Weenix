@@ -70,42 +70,48 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
 
     KASSERT(pathname);
     int err = 0;
+    vnode_t *curdir;
+    int i = 0;
 
     if (pathname[0] == '/') {
         KASSERT(pathname[1] != '\0' && "Only a slash in the pathname?\n");
 
-        int i = 1;
-        *namelen = 0;
+        curdir = vfs_root_vn;
 
-        /*convert it to a non-const pointer*/
-        char *basename = (char *)*name;
+        /*skip the first'/'*/
+        i = 1;
+    } else {
+        
+    }
 
-        vnode_t *curdir = vfs_root_vn;
-        /*TODO: handle dir as base? */
-        /*last item is not a file*/
-        while (pathname[i] != '\0') {
-            if (pathname[i] == '/') {
-                if (pathname[i-1] != '/') {
-                    /*just for dbg printing in lookup*/
-                    basename[*namelen] = '\0';
-                    if ((err = lookup(curdir, (const char *)&name, *namelen, res_vnode)) < 0) {
-                        dbg(DBG_VFS, "dir_namev: lookup fail, errno is: %d\n", err);
-                        vput(curdir);
-                        return err;
-                    }
+    *namelen = 0;
 
+    /*convert it to a non-const pointer*/
+    char *basename = (char *)*name;
+
+    while (pathname[i] != '\0') {
+        if (pathname[i] == '/') {
+            if (pathname[i-1] != '/') {
+            }
+        } else {
+            if (i == 0 || pathname[i-1] == '/') {
+                /*just for dbg printing in lookup*/
+                basename[*namelen] = '\0';
+                if ((err = lookup(curdir, *name, *namelen, res_vnode)) < 0) {
+                    dbg(DBG_VFS, "dir_namev: lookup fail, errno is: %d\n", err);
                     vput(curdir);
-                    curdir = *res_vnode;
-                    *namelen = 0;
+                    return err;
                 }
+
+                vput(curdir);
+                curdir = *res_vnode;
+                *namelen = 0;
             } else {
                 basename[*namelen] = pathname[i];
                 (*namelen)++;
             }
-            i++;
         }
-    } else {
-        
+        i++;
     }
 
     return 0;
