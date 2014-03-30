@@ -28,6 +28,8 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
     KASSERT(dir != NULL);
     KASSERT(name != NULL);
 
+    dbg(DBG_VFS, "lookup: 0x%p, name is: %s.\n", dir, name);
+
     if (dir->vn_ops->lookup == NULL) {
         return -ENOTDIR;
     }
@@ -64,6 +66,24 @@ int
 dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
 {
+    /*get the intermediate vnode and vput?*/
+
+    KASSERT(pathname);
+
+    if (pathname[0] == '/') {
+        int i = 1;
+        *namelen = 0;
+        base = vfs_root_vn;
+        while (pathname[i] != '\0') {
+            if (pathname[i] == '/') {
+                if ((err = lookup(base, &name, *namelen, &base)) < 0) {
+                    (*name)[*namelen] = '\0';
+                    dbg(DBG_VFS, "dir_namev: lookup")
+            i++;
+        }
+    } else {
+        
+    }
         NOT_YET_IMPLEMENTED("VFS: dir_namev");
         return 0;
 }
