@@ -72,12 +72,18 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
 
     /*stores errno*/
     int err = 0;
+
     /*stores pointer to current searching dir*/
     vnode_t *curdir;
+    
     /*index in pathname*/
     int i = 0;
+
     /*index in (base)name*/
     *namelen = 0;
+
+    /*convert it to a non-const pointer*/
+    char *basename = (char *)*name;
 
     if (pathname[0] == '/') {
         curdir = vfs_root_vn;
@@ -94,21 +100,9 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         if (base != NULL) {
             curdir = base;
         } else {
-            /*find vnode for p_cwd*/
-            KASSERT(curproc->p_cwd[0] == '/');
-
-            size_t len = strlen(curproc->p_cwd);
-            /*get parent dir*/
-            dir_namev(curproc->p_cwd, &len, name, NULL, &curdir);
-
-            vnode_t tempdir = curdir;
-            /*get THE dir, stores it in curdir*/
-            lookup(tempdir, *name, len, &curdir);
+            curdir = curproc->p_cwd;
         }
     }
-
-    /*convert it to a non-const pointer*/
-    char *basename = (char *)*name;
 
     while (pathname[i] != '\0') {
         if (pathname[i] == '/') {
@@ -152,6 +146,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
 int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
+    /*what if you don't successfully find all the way down the leaf*/
         NOT_YET_IMPLEMENTED("VFS: open_namev");
         return 0;
 }
