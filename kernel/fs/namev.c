@@ -25,8 +25,20 @@
 int
 lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 {
-        NOT_YET_IMPLEMENTED("VFS: lookup");
-        return 0;
+    KASSERT(dir != NULL);
+    KASSERT(name != NULL);
+
+    if (dir->vn_ops->lookup == NULL) {
+        return -ENOTDIR;
+    }
+
+    return dir->vn_ops->lookup(dir, name, len, result);
+
+    /*don't know why I need to special case "." and ".."*/
+        /*
+         *NOT_YET_IMPLEMENTED("VFS: lookup");
+         *return 0;
+         */
 }
 
 
