@@ -14,7 +14,7 @@
 #include "fs/vnode.h"
 
 #include "mm/kmalloc.h"
-
+/*kmalloc is included by myself*/
 
 /* This takes a base 'dir', a 'name', its 'len', and a result vnode.
  * Most of the work should be done by the vnode's implementation

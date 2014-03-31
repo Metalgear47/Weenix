@@ -51,11 +51,11 @@ get_empty_fd(proc_t *p)
  * error.
  *
  * Error cases you must handle for this function at the VFS level:
- *      o EINVAL
+ *      x EINVAL
  *        oflags is not valid.
- *      o EMFILE
+ *      x EMFILE
  *        The process already has the maximum number of files open.
- *      o ENOMEM
+ *      x ENOMEM
  *        Insufficient kernel memory was available.
  *      o ENAMETOOLONG
  *        A component of filename was too long.
@@ -73,6 +73,31 @@ get_empty_fd(proc_t *p)
 int
 do_open(const char *filename, int oflags)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_open");
-        return -1;
+    /*validate oflags*/
+    int lower_mask = 0x100 - 1;
+    int higher_mask = ~0x7FF;
+    if (oflags < 0 || oflags & mask > 2 || oflags & higher_mask) {
+        return -EINVAL;
+    }
+
+    /*get file descriptor*/
+    int fd;
+    if ((fd = get_empty_fd(curproc)) == -EMFILE) {
+        return -EMFILE;
+    }
+
+    /*get a fresh file_t*/
+    file_t *f = fget(-1);
+    if (f == NULL) {
+        return -ENOMEM;
+    }
+
+    /*save file_t in file descriptor table*/
+    curproc->[fd] = f;
+
+
+        /*
+         *NOT_YET_IMPLEMENTED("VFS: do_open");
+         *return -1;
+         */
 }
