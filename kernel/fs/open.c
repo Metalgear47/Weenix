@@ -73,10 +73,12 @@ get_empty_fd(proc_t *p)
 int
 do_open(const char *filename, int oflags)
 {
+    KASSERT(filename);
+
     /*validate oflags*/
     int lower_mask = 0x100 - 1;
     int higher_mask = ~0x7FF;
-    if (oflags < 0 || oflags & mask > 2 || oflags & higher_mask) {
+    if (oflags < 0 || oflags & lower_mask > 2 || oflags & higher_mask) {
         return -EINVAL;
     }
 
@@ -95,7 +97,47 @@ do_open(const char *filename, int oflags)
     /*save file_t in file descriptor table*/
     curproc->[fd] = f;
 
+    /*set f_mode*/
+    int rw = oflags & lower_mask;
+    if (rw == O_RDONLY) {
+        f->f_mode |= FMODE_READ;
+    } else if (rw == O_WRONLY) {
+        f->f_mode |= FMODE_WRITE;
+    } else {
+        f->f_mode |= FMODE_READ | FMODE_WRITE;
+    }
 
+    if (oflags & O_APPEND) {
+        f->f_mode |= FMODE_APPEND;
+    }
+
+    /*get the vnode*/
+    vnode_t *vn;
+    int err = open_namev(filename, oflags, &vn, NULL);
+    if (err < 0) {
+        /*clean up*/
+        return ENOENT;
+    }
+
+    /*initialize fields of file_t*/
+
+    /*f_pos*/
+    if (oflags & O_TRUNC) {
+        f->f_pos = 0;
+    } else if (oflags & O_APPEND) {
+        f->f_pos = vn->vn_len;
+    } else {
+        dbg(DBG_VFS, "do_open: strange oflags: %d\n", oflags);
+    }
+
+    /*f_mode: already set before*/
+
+    /*f_refcount: already incremented in fget*/
+
+    /*f_vnode*/
+    f->f_vnode = vn;
+
+    return fd;
         /*
          *NOT_YET_IMPLEMENTED("VFS: do_open");
          *return -1;

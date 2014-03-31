@@ -155,7 +155,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
     vnode_t *vn_dir;
     int err;
 
-    if ((err = dir_namev(pathname, &namelen, &name, NULL, &vn_dir)) < 0) {
+    if ((err = dir_namev(pathname, &namelen, &name, base, &vn_dir)) < 0) {
         return err;
     }
 
