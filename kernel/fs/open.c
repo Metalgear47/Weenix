@@ -57,9 +57,9 @@ get_empty_fd(proc_t *p)
  *        The process already has the maximum number of files open.
  *      x ENOMEM
  *        Insufficient kernel memory was available.
- *      o ENAMETOOLONG
+ *      m ENAMETOOLONG
  *        A component of filename was too long.
- *      o ENOENT
+ *      x ENOENT
  *        O_CREAT is not set and the named file does not exist.  Or, a
  *        directory component in pathname does not exist.
  *      o EISDIR
@@ -116,7 +116,12 @@ do_open(const char *filename, int oflags)
     int err = open_namev(filename, oflags, &vn, NULL);
     if (err < 0) {
         /*clean up*/
-        return ENOENT;
+        curproc->f_files[fd] = NULL;
+        fput(f);
+        if (err == -ENAMETOOLONG) {
+            return err;
+        }
+        return -ENOENT;
     }
 
     /*initialize fields of file_t*/

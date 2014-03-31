@@ -124,6 +124,9 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                 curdir = *res_vnode;
                 *namelen = 0;
             } else {
+                if ((*namelen) >= NAME_LEN) {
+                    return -ENAMETOOLONG;
+                }
                 basename[*namelen] = pathname[i];
                 (*namelen)++;
             }
@@ -150,7 +153,7 @@ int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
     size_t namelen;
-    /*const char *name = (const char *)kmalloc(sizeof(char) * NAME_LEN);*/
+    /*const char *name = (const char *)kmalloc(sizeof(char) * (NAME_LEN + 1));*/
     const char *name;
     vnode_t *vn_dir;
     int err;
