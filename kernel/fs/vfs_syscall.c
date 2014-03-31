@@ -278,11 +278,13 @@ do_mkdir(const char *path)
     int err = 0;
     size_t namelen;
     const char *name = (const char*) kmalloc(sizeof(char) * (NAME_LEN + 1));
+    KASSERT(name && "Ran out of kernel memory.\n");
     vnode_t *dir_vnode;
 
     err = dir_namev(path, &namelen, &name, NULL, &dir_vnode);
     if (err < 0) {
         /*seems no need to worry about vput(dir_vnode) here*/
+        kfree((void *)name);
         return err;
     }
 
@@ -291,12 +293,15 @@ do_mkdir(const char *path)
     if (err == 0) {
         KASSERT(file_vnode);
         vput(file_vnode);
+        kfree((void *)name);
         return -EEXIST;
     }
 
     KASSERT(err == ENOENT);
 
-    return dir_vnode->vn_ops->mkdir(dir_vnode, name, namelen);
+    err = dir_vnode->vn_ops->mkdir(dir_vnode, name, namelen);
+    kfree((void *)name);
+    return err;
         /*NOT_YET_IMPLEMENTED("VFS: do_mkdir");*/
         /*return -1;*/
 }
@@ -325,23 +330,28 @@ do_rmdir(const char *path)
     int err = 0;
     size_t namelen;
     const char *name = (const char *) kmalloc(sizeof(char) * (NAME_LEN + 1));
+    KASSERT(name && "Ran out of kernel memory.\n");
     vnode_t *dir_vnode;
 
     err = dir_namev(path, &namelen, &name, NULL, &dir_vnode);
     if (err < 0) {
+        kfree((void *)name);
         return err;
     }
 
     if name_match(".", name, namelen) {
         vput(dir_vnode);
+        kfree((void *)name);
         return -EINVAL;
     }
 
     if name_match("..", name, namelen) {
         vput(dir_vnode);
+        kfree((void *)name);
         return -ENOTEMPTY;
     }
 
+    kfree((void *)name);
     return dir_vnode->vn_ops->rmdir(dir_vnode, name, namelen);
         /*NOT_YET_IMPLEMENTED("VFS: do_rmdir");*/
         /*return -1;*/
@@ -389,8 +399,51 @@ do_unlink(const char *path)
 int
 do_link(const char *from, const char *to)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_link");
-        return -1;
+    int err = 0;
+    vnode_t *from_vnode;
+
+    /*get the vnode for from*/
+    err = open_namev(from, O_RDONLY, &from_vnode, NULL);
+    if (err < 0) {
+        return err;
+    }
+
+    size_t namelen;
+    const char *name = (const char *)kmalloc(sizeof(char) * (NAME_LEN + 1));
+    KASSERT(name && "Ran out of kernel memory.\n");
+    vnode_t *todir_vnode;
+
+    /*get the vnode for to's containing dir*/
+    err = dir_namev(to, &namelen, &name, NULL, &todir_vnode);
+    if (err < 0) {
+        vput(from_vnode);
+        kfree((void *)name);
+
+        return err;
+    }
+
+    vnode_t *to_vnode;
+    err = lookup(todir_vnode, name, namelen, &to_vnode);
+    if (err == 0) {
+        KASSERT(to_vnode);
+
+        vput(from_vnode);
+        vput(todir_vnode);
+        vput(to_vnode);
+        kfree((void *)name);
+
+        return -EEXIST;
+    }
+
+    err = todir_vnode->vn_ops->link(from_vnode, todir_vnode, name, namelen);
+
+    vput(from_vnode);
+    vput(todir_vnode);
+    kfree((void *)name);
+
+    return err;
+        /*NOT_YET_IMPLEMENTED("VFS: do_link");*/
+        /*return -1;*/
 }
 
 /*      o link newname to oldname
