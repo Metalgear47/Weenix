@@ -89,8 +89,34 @@ do_read(int fd, void *buf, size_t nbytes)
 int
 do_write(int fd, const void *buf, size_t nbytes)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_write");
-        return -1;
+    /*do I really need it?*/
+    KASSERT(fd != -1);
+    KASSERT(buf);
+
+    file_t *f;
+    f = fget(fd);
+
+    if (f == NULL) {
+        return -EBADF;
+    }
+
+    if ((f->f_mode & FMODE_WRITE) == 0) {
+        fput(f);
+        return -EBADF;
+    }
+
+    if (f->f_mode & FMODE_APPEND) {
+        do_lseek(fd, 0, SEEK_END);
+    }
+
+    int writelen = f->f_vnode->vn_ops->write(f->f_vnode, f->f_pos, buf, nbytes);
+    f->f_pos += writelen;
+
+    fput(f);
+
+    return writelen;
+        /*NOT_YET_IMPLEMENTED("VFS: do_write");*/
+        /*return -1;*/
 }
 
 /*
