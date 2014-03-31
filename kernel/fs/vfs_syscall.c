@@ -50,8 +50,8 @@ do_read(int fd, void *buf, size_t nbytes)
 
     if (f == NULL) {
         /*not a valid fd*/
-        fput(f);
         return -EBADF;
+        /*no need to fput*/
     }
 
     /*how about not open for reading*/
@@ -340,8 +340,46 @@ do_getdent(int fd, struct dirent *dirp)
 int
 do_lseek(int fd, int offset, int whence)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_lseek");
-        return -1;
+    KASSERT(fd != -1);
+
+    file_t *f;
+    f = fget(fd);
+
+    if (f) {
+        /*not an open fd*/
+        return -EBADF;
+    }
+
+    /*invalid whence*/
+    if (whence < 0 || whence > 2) {
+        fput(f);
+        return -EINVAL;
+    }
+
+    /*compute new offset according to whence*/
+    int result;
+    if (whence == SEEK_SET) {
+        result = offset;
+    }
+    if (whence == SEEK_CUR) {
+        result = f->f_pos + offset;
+    }
+    if (whence == SEEK_END) {
+        result = f->f_vnode->vn_len + offset;
+    }
+
+    /*invalid offset*/
+    if (result < 0) {
+        fput(f);
+        return -EINVAL;
+    }
+
+    /*update offset and return*/
+    f->f_pos = result;
+    fput(f);
+    return result;
+        /*NOT_YET_IMPLEMENTED("VFS: do_lseek");*/
+        /*return -1;*/
 }
 
 /*
