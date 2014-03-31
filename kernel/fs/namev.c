@@ -13,6 +13,9 @@
 #include "fs/vfs.h"
 #include "fs/vnode.h"
 
+#include "mm/kmalloc.h"
+
+
 /* This takes a base 'dir', a 'name', its 'len', and a result vnode.
  * Most of the work should be done by the vnode's implementation
  * specific lookup() function, but you may want to special case
@@ -146,9 +149,9 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
 int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
-    /*what if you don't successfully find all the way down the leaf*/
     size_t namelen;
-    const char *name = (const char *)kmalloc(sizeof(char) * NAME_LEN);
+    /*const char *name = (const char *)kmalloc(sizeof(char) * NAME_LEN);*/
+    const char *name;
     vnode_t *vn_dir;
     int err;
 
