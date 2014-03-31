@@ -78,7 +78,7 @@ do_open(const char *filename, int oflags)
     /*validate oflags*/
     int lower_mask = 0x100 - 1;
     int higher_mask = ~0x7FF;
-    if (oflags < 0 || oflags & lower_mask > 2 || oflags & higher_mask) {
+    if (oflags < 0 || (oflags & lower_mask) > 2 || (oflags & higher_mask)) {
         return -EINVAL;
     }
 
@@ -95,7 +95,7 @@ do_open(const char *filename, int oflags)
     }
 
     /*save file_t in file descriptor table*/
-    curproc->[fd] = f;
+    curproc->p_files[fd] = f;
 
     /*set f_mode*/
     int rw = oflags & lower_mask;
@@ -116,7 +116,7 @@ do_open(const char *filename, int oflags)
     int err = open_namev(filename, oflags, &vn, NULL);
     if (err < 0) {
         /*clean up*/
-        curproc->f_files[fd] = NULL;
+        curproc->p_files[fd] = NULL;
         fput(f);
         if (err == -ENAMETOOLONG) {
             return err;

@@ -43,6 +43,7 @@ do_read(int fd, void *buf, size_t nbytes)
 {
     /*do I really need to do it?*/
     KASSERT(fd != -1);
+    KASSERT(buf);
 
     file_t *f;
     f = fget(fd);
@@ -54,6 +55,10 @@ do_read(int fd, void *buf, size_t nbytes)
     }
 
     /*how about not open for reading*/
+    if ((f->f_mode & FMODE_READ) == 0) {
+        fput(f);
+        return -EBADF;
+    }
 
     /*examine if it's dir*/
     if (f->f_vnode->vn_ops->lookup != NULL) {
@@ -62,13 +67,13 @@ do_read(int fd, void *buf, size_t nbytes)
     }
 
     /*call virtual read op*/
-    int result = f->f_vnode->vn_ops->read(f->f_vnode, f->f_pos, buf, nbytes);
-    f->f_pos += result;
+    int readlen = f->f_vnode->vn_ops->read(f->f_vnode, f->f_pos, buf, nbytes);
+    f->f_pos += readlen;
 
     /*fput it*/
     fput(f);
 
-    return result;
+    return readlen;
         /*NOT_YET_IMPLEMENTED("VFS: do_read");*/
         /*return -1;*/
 }
