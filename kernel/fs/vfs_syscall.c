@@ -41,8 +41,36 @@
 int
 do_read(int fd, void *buf, size_t nbytes)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_read");
-        return -1;
+    /*do I really need to do it?*/
+    KASSERT(fd != -1);
+
+    file_t *f;
+    f = fget(fd);
+
+    if (f == NULL) {
+        /*not a valid fd*/
+        fput(f);
+        return -EBADF;
+    }
+
+    /*how about not open for reading*/
+
+    /*examine if it's dir*/
+    if (f->f_vnode->vn_ops->lookup != NULL) {
+        fput(f);
+        return -EISDIR;
+    }
+
+    /*call virtual read op*/
+    int result = f->f_vnode->vn_ops->read(f->f_vnode, f->f_pos, buf, nbytes);
+    f->f_pos += result;
+
+    /*fput it*/
+    fput(f);
+
+    return result;
+        /*NOT_YET_IMPLEMENTED("VFS: do_read");*/
+        /*return -1;*/
 }
 
 /* Very similar to do_read.  Check f_mode to be sure the file is writable.  If
