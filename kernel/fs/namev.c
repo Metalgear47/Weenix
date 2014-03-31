@@ -40,6 +40,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
     return dir->vn_ops->lookup(dir, name, len, result);
 
     /*don't know why I need to special case "." and ".."*/
+
         /*
          *NOT_YET_IMPLEMENTED("VFS: lookup");
          *return 0;

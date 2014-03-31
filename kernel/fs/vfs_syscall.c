@@ -275,8 +275,30 @@ do_mknod(const char *path, int mode, unsigned devid)
 int
 do_mkdir(const char *path)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_mkdir");
-        return -1;
+    int err = 0;
+    size_t namelen;
+    const char *name = (const char*) kmalloc(sizeof(char) * (NAME_LEN + 1));
+    vnode_t *dir_vnode;
+
+    err = dir_namev(path, &namelen, &name, NULL, &dir_vnode);
+    if (err < 0) {
+        /*seems no need to worry about vput(dir_vnode) here*/
+        return err;
+    }
+
+    vnode_t *file_vnode;
+    err = lookup(dir_vnode, name, namelen, &file_vnode);
+    if (err == 0) {
+        KASSERT(file_vnode);
+        vput(file_vnode);
+        return -EEXIST;
+    }
+
+    KASSERT(err == ENOENT);
+
+    return dir_vnode->vn_ops->mkdir(dir_vnode, name, namelen);
+        /*NOT_YET_IMPLEMENTED("VFS: do_mkdir");*/
+        /*return -1;*/
 }
 
 /* Use dir_namev() to find the vnode of the directory containing the dir to be
