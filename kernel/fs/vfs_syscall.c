@@ -322,8 +322,29 @@ do_mkdir(const char *path)
 int
 do_rmdir(const char *path)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_rmdir");
-        return -1;
+    int err = 0;
+    size_t namelen;
+    const char *name = (const char *) kmalloc(sizeof(char) * (NAME_LEN + 1));
+    vnode_t *dir_vnode;
+
+    err = dir_namev(path, &namelen, &name, NULL, &dir_vnode);
+    if (err < 0) {
+        return err;
+    }
+
+    if name_match(".", name, namelen) {
+        vput(dir_vnode);
+        return -EINVAL;
+    }
+
+    if name_match("..", name, namelen) {
+        vput(dir_vnode);
+        return -ENOTEMPTY;
+    }
+
+    return dir_vnode->vn_ops->rmdir(dir_vnode, name, namelen);
+        /*NOT_YET_IMPLEMENTED("VFS: do_rmdir");*/
+        /*return -1;*/
 }
 
 /*

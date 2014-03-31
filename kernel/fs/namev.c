@@ -73,6 +73,9 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
     /*get the intermediate vnode and vput?*/
 
     KASSERT(pathname);
+    KASSERT(namelen);
+    KASSERT(name);
+    KASSERT(res_vnode);
 
     /*stores errno*/
     int err = 0;
@@ -97,7 +100,11 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
             i++;
         }
         
-        KASSERT(pathname[i] != '\0' && "Only slashes in the pathname?\n");
+        if (pathname[i] == '\0') {
+            *res_vnode = vfs_root_vn;
+            vref(*ref_vnode);
+            return 0;
+        }
 
         basename[(*namelen)++] = pathname[i++];
     } else {
@@ -108,6 +115,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         }
     }
 
+    vref(curdir);
     while (pathname[i] != '\0') {
         if (pathname[i] == '/') {
             /*do nothing for now*/
@@ -126,6 +134,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                 *namelen = 0;
             } else {
                 if ((*namelen) >= NAME_LEN) {
+                    vput(curdir);
                     return -ENAMETOOLONG;
                 }
                 basename[*namelen] = pathname[i];
