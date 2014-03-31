@@ -165,8 +165,24 @@ do_close(int fd)
 int
 do_dup(int fd)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_dup");
-        return -1;
+    KASSERT(fd != -1);
+
+    file_t *f = fget(fd);
+    if (!f) {
+        return -EBADF;
+    }
+
+    int newfd = get_empty_fd(curproc);
+    if (newfd < 0) {
+        fput(f);
+        return -EMFILE;
+    }
+
+    curproc->p_files[newfd] = f;
+
+    return newfd;
+        /*NOT_YET_IMPLEMENTED("VFS: do_dup");*/
+        /*return -1;*/
 }
 
 /* Same as do_dup, but insted of using get_empty_fd() to get the new fd,
