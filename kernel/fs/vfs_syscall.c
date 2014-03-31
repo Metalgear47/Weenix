@@ -197,8 +197,33 @@ do_dup(int fd)
 int
 do_dup2(int ofd, int nfd)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_dup2");
-        return -1;
+    KASSERT(ofd != -1);
+
+    file_t *f = fget(ofd);
+    if (!f) {
+        return -EBADF;
+    }
+
+    if (nfd < 0 || nfd >= NFILES) {
+        fput(f);
+        return -EBADF;
+    }
+
+    if (ofd == nfd) {
+        return nfd;
+    }
+
+    /*look it up in the table or fget?*/
+    file_t *nf = curproc->p_files[nfd];
+    if (nf) {
+        do_close(nfd);
+    }
+
+    curproc->p_files[nfd] = f;
+
+    return nfd;
+        /*NOT_YET_IMPLEMENTED("VFS: do_dup2");*/
+        /*return -1;*/
 }
 
 /*
