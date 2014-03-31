@@ -147,8 +147,29 @@ int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
     /*what if you don't successfully find all the way down the leaf*/
-        NOT_YET_IMPLEMENTED("VFS: open_namev");
-        return 0;
+    size_t namelen;
+    const char *name = (const char *)kmalloc(sizeof(char) * NAME_LEN);
+    vnode_t *vn_dir;
+    int err;
+
+    if ((err = dir_namev(pathname, &namelen, &name, NULL, &vn_dir)) < 0) {
+        return err;
+    }
+
+    if ((err = lookup(vn_dir, name, namelen, res_vnode)) < 0) {
+        /*examine errno?*/
+        if (flag & O_CREAT) {
+            if ((err = vn_dir->vn_ops->create(vn_dir, name, namelen, res_vnode)) < 0) {
+                return err;
+            }
+        } else {
+            return err;
+        }
+    }
+
+    return 0;
+        /*NOT_YET_IMPLEMENTED("VFS: open_namev");*/
+        /*return 0;*/
 }
 
 #ifdef __GETCWD__
