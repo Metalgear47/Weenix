@@ -129,8 +129,21 @@ do_write(int fd, const void *buf, size_t nbytes)
 int
 do_close(int fd)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_close");
-        return -1;
+    if (fd < 0 || fd >= NFILES ) {
+        return -EBADF;
+    }
+
+    file_t *f = curproc->p_files[fd];
+    if (!f) {
+        return -EBADF;
+    }
+
+    curproc->p_files[fd] = NULL;
+    fput(f);
+
+    return 0;
+        /*NOT_YET_IMPLEMENTED("VFS: do_close");*/
+        /*return -1;*/
 }
 
 /* To dup a file:
