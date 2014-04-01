@@ -275,6 +275,8 @@ do_mknod(const char *path, int mode, unsigned devid)
 int
 do_mkdir(const char *path)
 {
+    KASSERT(path);
+
     int err = 0;
     size_t namelen;
     const char *name = (const char*) kmalloc(sizeof(char) * (NAME_LEN + 1));
@@ -327,6 +329,8 @@ do_mkdir(const char *path)
 int
 do_rmdir(const char *path)
 {
+    KASSERT(path);
+
     int err = 0;
     size_t namelen;
     const char *name = (const char *) kmalloc(sizeof(char) * (NAME_LEN + 1));
@@ -374,6 +378,8 @@ do_rmdir(const char *path)
 int
 do_unlink(const char *path)
 {
+    KASSERT(path);
+
     int err = 0;
     size_t namelen;
     const char *name = (const char *) kmalloc(sizeof(char) * (NAME_LEN + 1));
@@ -415,6 +421,9 @@ do_unlink(const char *path)
 int
 do_link(const char *from, const char *to)
 {
+    KASSERT(from);
+    KASSERT(to);
+
     int err = 0;
     vnode_t *from_vnode;
 
@@ -473,8 +482,19 @@ do_link(const char *from, const char *to)
 int
 do_rename(const char *oldname, const char *newname)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_rename");
-        return -1;
+    KASSERT(oldname);
+    KASSERT(newname);
+
+    int err = 0;
+
+    err = do_link(oldname, newname);
+    if (err < 0) {
+        return err;
+    }
+
+    return do_unlink(oldname);
+        /*NOT_YET_IMPLEMENTED("VFS: do_rename");*/
+        /*return -1;*/
 }
 
 /* Make the named directory the current process's cwd (current working
