@@ -351,8 +351,9 @@ do_rmdir(const char *path)
         return -ENOTEMPTY;
     }
 
+    err = dir_vnode->vn_ops->rmdir(dir_vnode, name, namelen);
     kfree((void *)name);
-    return dir_vnode->vn_ops->rmdir(dir_vnode, name, namelen);
+    return err;
         /*NOT_YET_IMPLEMENTED("VFS: do_rmdir");*/
         /*return -1;*/
 }
@@ -373,8 +374,23 @@ do_rmdir(const char *path)
 int
 do_unlink(const char *path)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_unlink");
-        return -1;
+    int err = 0;
+    size_t namelen;
+    const char *name = (const char *) kmalloc(sizeof(char) * (NAME_LEN + 1));
+    KASSERT(name && "Ran out of kernel memory.\n");
+    vnode_t *dir_vnode;
+
+    err = dir_namev(path, &namelen, &name, NULL, &dir_vnode);
+    if (err < 0) {
+        kfree((void *)name);
+        return err;
+    }
+
+    err = dir_vnode->vn_ops->unlink(dir_vnode, name, namelen);
+    kfree((void *)name);
+    return err;
+        /*NOT_YET_IMPLEMENTED("VFS: do_unlink");*/
+        /*return -1;*/
 }
 
 /* To link:

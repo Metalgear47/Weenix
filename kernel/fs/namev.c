@@ -102,7 +102,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         
         if (pathname[i] == '\0') {
             *res_vnode = vfs_root_vn;
-            vref(*ref_vnode);
+            vref(*res_vnode);
             return 0;
         }
 
@@ -163,12 +163,13 @@ int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
     size_t namelen;
-    /*const char *name = (const char *)kmalloc(sizeof(char) * (NAME_LEN + 1));*/
-    const char *name;
+    const char *name = (const char *)kmalloc(sizeof(char) * (NAME_LEN + 1));
+    KASSERT(name && "Ran out of kernel memory.\n");
     vnode_t *vn_dir;
     int err;
 
     if ((err = dir_namev(pathname, &namelen, &name, base, &vn_dir)) < 0) {
+        kfree((void *)name);
         return err;
     }
 
@@ -176,13 +177,18 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
         /*examine errno?*/
         if (flag & O_CREAT) {
             if ((err = vn_dir->vn_ops->create(vn_dir, name, namelen, res_vnode)) < 0) {
+                vput(vn_dir);
+                kfree((void *)name);
                 return err;
             }
         } else {
+            vput(vn_dir);
+            kfree((void *)name);
             return err;
         }
     }
 
+    kfree((void *)name);
     return 0;
         /*NOT_YET_IMPLEMENTED("VFS: open_namev");*/
         /*return 0;*/
