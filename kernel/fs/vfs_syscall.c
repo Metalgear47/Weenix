@@ -608,8 +608,20 @@ do_lseek(int fd, int offset, int whence)
 int
 do_stat(const char *path, struct stat *buf)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_stat");
-        return -1;
+    KASSERT(path);
+    KASSERT(buf);
+
+    vnode_t *vnode;
+    int err = 0;
+
+    err = open_namev(path, O_RDONLY, &vnode, NULL);
+    if (err < 0) {
+        return err;
+    }
+
+    return vnode->vn_ops->stat(vnode, buf);
+        /*NOT_YET_IMPLEMENTED("VFS: do_stat");*/
+        /*return -1;*/
 }
 
 #ifdef __MOUNTING__
