@@ -513,8 +513,27 @@ do_rename(const char *oldname, const char *newname)
 int
 do_chdir(const char *path)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_chdir");
-        return -1;
+    KASSERT(path);
+
+    int err = 0;
+    vnode_t *new_vnode;
+    
+    err = open_namev(path, O_RDONLY, &new_vnode, NULL);
+    if (err < 0) {
+        return err;
+    }
+
+    if (!S_ISDIR(new_vnode->vn_mode)) {
+        vput(new_vnode);
+        return -ENOTDIR;
+    }
+
+    vput(curproc->p_cwd);
+    curproc->p_cwd = new_vnode;
+
+    return 0;
+        /*NOT_YET_IMPLEMENTED("VFS: do_chdir");*/
+        /*return -1;*/
 }
 
 /* Call the readdir f_op on the given fd, filling in the given dirent_t*.
