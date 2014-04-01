@@ -554,8 +554,32 @@ do_chdir(const char *path)
 int
 do_getdent(int fd, struct dirent *dirp)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_getdent");
-        return -1;
+    KASSERT(dirp);
+    
+    file_t *f = fget(fd);
+    if (!f) {
+        return -EBADF;
+    }
+
+    vnode_t *dir_vn = f->f_vnode;
+    KASSERT(dir_vn);
+    if (!S_ISDIR(dir_vn->vn_mode)) {
+        fput(f);
+        return -ENOTDIR;
+    }
+
+    if (dir_vn->vn_ops->readdir) {
+        fput(f);
+        return -ENOTDIR;
+    }
+
+    int offset = dir_vn->vn_ops->readdir(dir_vn, f->f_pos, dirp);
+    f->f_pos += offset;
+
+    fput(f);
+    return sizeof(dirent_t);
+        /*NOT_YET_IMPLEMENTED("VFS: do_getdent");*/
+        /*return -1;*/
 }
 
 /*

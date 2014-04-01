@@ -104,7 +104,7 @@ typedef struct vnode_ops {
          * readdir reads one directory entry from the dir into the struct
          * dirent. On success, it returns the amount that offset should be
          * increased by to obtain the next directory entry with a
-         * subsequent call to readdir. If the end of the file as been
+         * subsequent call to readdir. If the end of the file has been
          * reached (offset == file->vn_len), no directory entry will be
          * read and 0 will be returned.
          */
