@@ -43,6 +43,7 @@
 #include "fs/stat.h"
 
 #include "test/kshell/kshell.h"
+#include "test/vfstest/vfstest.h"
 
 GDB_DEFINE_HOOK(boot)
 GDB_DEFINE_HOOK(initialized)
@@ -100,7 +101,7 @@ kmain()
 
         acpi_init();
         apic_init();
-	      pci_init();
+	    pci_init();
         intr_init();
 
         gdt_init();
@@ -310,8 +311,10 @@ initproc_run(int arg1, void *arg2)
      *print_proc_list();
      */
 
-    create_proc("Multi thread verifying", multi_verify, 0, 0);
-    do_waitpid(-1, 0, NULL);
+    /*
+     *create_proc("Multi thread verifying", multi_verify, 0, 0);
+     *do_waitpid(-1, 0, NULL);
+     */
 
     do_exit(0);
 
@@ -499,11 +502,13 @@ read_from_terminal(int arg1, void *arg2)
     bytedev_t *bd = bytedev_lookup(MKDEVID(2, 0));
     char *buff = (char *)kmalloc(sizeof(char) * 128);
     int size;
-    while ((size = bd->cd_ops->read(bd, 0, buff, 100)) != 0) {
-        dbg(DBG_TEST, "Reading size: %d\n", size);
-        dbg(DBG_TEST, "Thread: %s\n", curproc->p_comm);
-        dbg(DBG_TEST, "Read: %s", buff);
-    }
+    /*
+     *while ((size = bd->cd_ops->read(bd, 0, buff, 100)) != 0) {
+     *    dbg(DBG_TEST, "Reading size: %d\n", size);
+     *    dbg(DBG_TEST, "Thread: %s\n", curproc->p_comm);
+     *    dbg(DBG_TEST, "Read: %s", buff);
+     *}
+     */
     dbg(DBG_TEST, "Exiting.\n");
     do_exit(0);
     return 0;
@@ -526,11 +531,13 @@ write_to_terminal(int arg1, void *arg2)
     char *buff = (char *)kmalloc(sizeof(char) * 128);
     buff = strcpy(buff, curproc->p_comm);
     int i;
-    for (i = 0 ; i < 3 ; i++) {
-        bd->cd_ops->write(bd, 0, buff, 100);
-        sched_make_runnable(curthr);
-        sched_switch();
-    }
+    /*
+     *for (i = 0 ; i < 3 ; i++) {
+     *    bd->cd_ops->write(bd, 0, buff, 100);
+     *    sched_make_runnable(curthr);
+     *    sched_switch();
+     *}
+     */
     do_exit(0);
     return 0;
 }

@@ -573,7 +573,7 @@ do_getdent(int fd, struct dirent *dirp)
         return -ENOTDIR;
     }
 
-    int offset = dir_vn->vn_ops->readdir(dir_vn, f->f_pos, dirp);
+    int offset = dir_vn->vn_ops->readdir(dir_vn, 0, dirp);
     f->f_pos += offset;
 
     fput(f);

@@ -1,5 +1,8 @@
 #pragma once
 
+#include "errno.h"
+#include "limits.h"
+
 /* "kernel" utility things */
 
 /* fprintf */
@@ -42,34 +45,36 @@ ksyscall(open, (const char *filename, int flags), (filename, flags))
 #define ksys_exit do_exit
 
 /* Kill me now */
-int ksys_getdents(int fd, struct dirent *dirp, unsigned int count)
-{
-        size_t numbytesread = 0;
-        int nbr = 0;
-        dirent_t tempdirent;
-
-        if (count < sizeof(dirent_t)) {
-                curthr->kt_errno = EINVAL;
-                return -1;
-        }
-
-        while (numbytesread < count) {
-                if ((nbr = do_getdent(fd, &tempdirent)) < 0) {
-                        curthr->kt_errno = -nbr;
-                        return -1;
-                }
-                if (nbr == 0) {
-                        return numbytesread;
-                }
-                memcpy(dirp, &tempdirent, sizeof(dirent_t));
-
-                KASSERT(nbr == sizeof(dirent_t));
-
-                dirp++;
-                numbytesread += nbr;
-        }
-        return numbytesread;
-}
+/*
+ *int ksys_getdents(int fd, struct dirent *dirp, unsigned int count)
+ *{
+ *        size_t numbytesread = 0;
+ *        int nbr = 0;
+ *        dirent_t tempdirent;
+ *
+ *        if (count < sizeof(dirent_t)) {
+ *                curthr->kt_errno = EINVAL;
+ *                return -1;
+ *        }
+ *
+ *        while (numbytesread < count) {
+ *                if ((nbr = do_getdent(fd, &tempdirent)) < 0) {
+ *                        curthr->kt_errno = -nbr;
+ *                        return -1;
+ *                }
+ *                if (nbr == 0) {
+ *                        return numbytesread;
+ *                }
+ *                memcpy(dirp, &tempdirent, sizeof(dirent_t));
+ *
+ *                KASSERT(nbr == sizeof(dirent_t));
+ *
+ *                dirp++;
+ *                numbytesread += nbr;
+ *        }
+ *        return numbytesread;
+ *}
+ */
 
 /*
  * Redirect system calls to kernel system calls.
