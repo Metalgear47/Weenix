@@ -434,8 +434,20 @@ init_special_vnode(vnode_t *vn)
 static int
 special_file_read(vnode_t *file, off_t offset, void *buf, size_t count)
 {
-        NOT_YET_IMPLEMENTED("VFS: special_file_read");
-        return 0;
+    KASSERT(file);
+    KASSERT(buf);
+
+    if (S_ISBLK(file->vn_mode)) {
+        return -ENOTSUP;
+    } else {
+        KASSERT(S_ISCHR(file->vn_mode));
+        bytedev_t *bdev = file->vn_cdev;
+        return bdev->cd_ops->read(bdev, offset, buf, count);
+    }
+        /*
+         *NOT_YET_IMPLEMENTED("VFS: special_file_read");
+         *return 0;
+         */
 }
 
 /*
