@@ -254,8 +254,38 @@ do_dup2(int ofd, int nfd)
 int
 do_mknod(const char *path, int mode, unsigned devid)
 {
-        NOT_YET_IMPLEMENTED("VFS: do_mknod");
-        return -1;
+    KASSERT(path);
+
+    if (!S_ISCHR(mode) && !S_ISBLK(mode)) {
+        return -EINVAL;
+    }
+
+    int err = 0;
+    size_t namelen;
+    const char *name = (const char *) kmalloc(sizeof(char) * (NAME_LEN + 1));
+    KASSERT(name && "Ran out of kernel memory.\n");
+    vnode_t *dir_vnode;
+
+    err = dir_namev(path, &namelen, &name, NULL, &dir_vnode);
+    if (err < 0) {
+        return err;
+    }
+
+    vnode_t *file_vnode;
+    err = lookup(dir_vnode, name, namelen, &file_vnode);
+    if (err == 0) {
+        vput(dir_vnode);
+        vput(file_vnode);
+        return -EEXIST;
+    }
+
+    err = dir_vnode->vn_ops->mknod(dir_vnode, name, namelen, mode, devid);
+    vput(dir_vnode);
+    return err;
+        /*
+         *NOT_YET_IMPLEMENTED("VFS: do_mknod");
+         *return -1;
+         */
 }
 
 /* Use dir_namev() to find the vnode of the dir we want to make the new
