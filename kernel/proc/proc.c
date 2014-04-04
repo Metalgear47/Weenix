@@ -127,6 +127,9 @@ proc_create(char *name)
     }
 
     proc_struct->p_cwd = vfs_root_vn;
+    if (vfs_root_vn) {
+        vref(vfs_root_vn);
+    }
 
     dbg(DBG_PROC, "Created process with name: %s\n", name);
     dbginfo(DBG_PROC, proc_info, proc_struct);
