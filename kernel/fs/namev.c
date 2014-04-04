@@ -122,7 +122,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         } else {
             if (i == 0 || pathname[i-1] == '/') {
                 /*just for dbg printing in lookup*/
-                basename[*namelen] = '\0';
+                basename[*namelen] = NULL;
                 if ((err = lookup(curdir, *name, *namelen, res_vnode)) < 0) {
                     dbg(DBG_VFS, "dir_namev: lookup fail, errno is: %d\n", err);
                     vput(curdir);
@@ -142,6 +142,17 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
             }
         }
         i++;
+    }
+
+    if (pathname[i-2] != '/') {
+        basename[*namelen] = '\0';
+        if ((err = lookup(curdir, *name, *namelen, res_vnode)) < 0) {
+            dbg(DBG_VFS, "dir_namev: lookup fail, errno is: %d\n", err);
+            vput(curdir);
+            return err;
+        }
+
+        vput(curdir);
     }
 
     return 0;
