@@ -33,7 +33,8 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
 
     dbg(DBG_VFS, "lookup: 0x%p, name is: %s.\n", dir, name);
 
-    if (dir->vn_ops->lookup == NULL) {
+    KASSERT(dir->vn_ops);
+    if (dir->vn_ops == NULL || dir->vn_ops->lookup == NULL) {
         return -ENOTDIR;
     }
 
@@ -144,16 +145,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         i++;
     }
 
-    if (pathname[i-2] != '/') {
-        basename[*namelen] = '\0';
-        if ((err = lookup(curdir, *name, *namelen, res_vnode)) < 0) {
-            dbg(DBG_VFS, "dir_namev: lookup fail, errno is: %d\n", err);
-            vput(curdir);
-            return err;
-        }
-
-        vput(curdir);
-    }
+    basename[*namelen] = '\0';
 
     return 0;
         /*
