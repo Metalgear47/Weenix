@@ -116,6 +116,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         }
     }
 
+    *res_vnode = curdir;
     vref(curdir);
     while (pathname[i] != '\0') {
         if (pathname[i] == '/') {
