@@ -57,12 +57,12 @@ get_empty_fd(proc_t *p)
  *        The process already has the maximum number of files open.
  *      x ENOMEM
  *        Insufficient kernel memory was available.
- *      m ENAMETOOLONG
+ *      x ENAMETOOLONG
  *        A component of filename was too long.
  *      x ENOENT
  *        O_CREAT is not set and the named file does not exist.  Or, a
  *        directory component in pathname does not exist.
- *      o EISDIR
+ *      x EISDIR
  *        pathname refers to a directory and the access requested involved
  *        writing (that is, O_WRONLY or O_RDWR is set).
  *      o ENXIO
@@ -113,15 +113,19 @@ do_open(const char *filename, int oflags)
 
     /*get the vnode*/
     vnode_t *vn;
-    int err = open_namev(filename, oflags, &vn, NULL);
+    int err = open_namev(filename, f->f_mode, &vn, NULL);
     if (err < 0) {
         /*clean up*/
         curproc->p_files[fd] = NULL;
         fput(f);
-        if (err == -ENAMETOOLONG) {
-            return err;
+        return err;
+    }
+
+    /*handle if it's a directory*/
+    if (S_ISDIR(vn->vn_mode)) {
+        if ((oflags & O_WRONLY) || (oflags & O_RDWR)) {
+            return -EISDIR;
         }
-        return -ENOENT;
     }
 
     /*initialize fields of file_t*/
