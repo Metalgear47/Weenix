@@ -334,7 +334,6 @@ do_mkdir(const char *path)
 
     err = dir_vnode->vn_ops->mkdir(dir_vnode, name, namelen);
     kfree((void *)name);
-    vput(file_vnode);
     return err;
         /*NOT_YET_IMPLEMENTED("VFS: do_mkdir");*/
         /*return -1;*/
