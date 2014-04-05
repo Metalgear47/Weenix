@@ -31,10 +31,10 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
     KASSERT(dir != NULL);
     KASSERT(name != NULL);
 
-    dbg(DBG_VFS, "lookup: 0x%p, name is: %s.\n", dir, name);
+    dbg(DBG_VFS, "lookup: vnode 0x%p, name is: %s.\n", dir, name);
 
     KASSERT(dir->vn_ops);
-    if (dir->vn_ops == NULL || dir->vn_ops->lookup == NULL) {
+    if (dir->vn_ops->lookup == NULL) {
         return -ENOTDIR;
     }
 
@@ -92,6 +92,8 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
 
     /*convert it to a non-const pointer*/
     char *basename = (char *)*name;
+
+    KASSERT(pathname[0] != '\0');
 
     if (pathname[0] == '/') {
         curdir = vfs_root_vn;
