@@ -329,7 +329,8 @@ do_mkdir(const char *path)
         return -EEXIST;
     }
 
-    KASSERT(err == ENOENT);
+    /*dbg(DBG_VFS, "The err no for lookup is: %d\n", err);*/
+    KASSERT(err == -ENOENT);
 
     err = dir_vnode->vn_ops->mkdir(dir_vnode, name, namelen);
     kfree((void *)name);
