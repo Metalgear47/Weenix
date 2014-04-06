@@ -187,7 +187,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
     const char *name = (const char *)kmalloc(sizeof(char) * (NAME_LEN + 1));
     KASSERT(name && "Ran out of kernel memory.\n");
     vnode_t *vn_dir;
-    int err;
+    int err = 0;
 
     if ((err = dir_namev(pathname, &namelen, &name, base, &vn_dir)) < 0) {
         kfree((void *)name);

@@ -75,22 +75,27 @@ do_open(const char *filename, int oflags)
 {
     KASSERT(filename);
 
+    dbg(DBG_VFS, "called with filename: %s, oflags: 0x%12x\n", filename, oflags);
+
     /*validate oflags*/
     int lower_mask = 0x100 - 1;
     int higher_mask = ~0x7FF;
     if (oflags < 0 || (oflags & lower_mask) > 2 || (oflags & higher_mask)) {
+        dbg(DBG_VFS, "oflags are invalid\n");
         return -EINVAL;
     }
 
     /*get file descriptor*/
     int fd;
     if ((fd = get_empty_fd(curproc)) == -EMFILE) {
+        dbg(DBG_VFS, "too many open files.\n");
         return -EMFILE;
     }
 
     /*get a fresh file_t*/
     file_t *f = fget(-1);
     if (f == NULL) {
+        dbg(DBG_VFS, "not enough memory\n");
         return -ENOMEM;
     }
 
@@ -113,6 +118,7 @@ do_open(const char *filename, int oflags)
 
     /*get the vnode*/
     vnode_t *vn;
+    dbg(DBG_VFS, "about to call open_namev\n");
     int err = open_namev(filename, f->f_mode, &vn, NULL);
     if (err < 0) {
         /*clean up*/
@@ -124,6 +130,10 @@ do_open(const char *filename, int oflags)
     /*handle if it's a directory*/
     if (S_ISDIR(vn->vn_mode)) {
         if ((oflags & O_WRONLY) || (oflags & O_RDWR)) {
+            vput(vn);
+            fput(f);
+            curproc->p_files[fd] = NULL;
+            dbg(DBG_VFS, "it's a directory and write flag set\n");
             return -EISDIR;
         }
     }
@@ -137,6 +147,7 @@ do_open(const char *filename, int oflags)
         f->f_pos = vn->vn_len;
     } else {
         dbg(DBG_VFS, "do_open: strange oflags: %d\n", oflags);
+        panic("Hmm..\n");
     }
 
     /*f_mode: already set before*/
@@ -146,6 +157,7 @@ do_open(const char *filename, int oflags)
     /*f_vnode*/
     f->f_vnode = vn;
 
+    dbg(DBG_VFS, "succeed, the file discriptor is %d", fd);
     return fd;
         /*
          *NOT_YET_IMPLEMENTED("VFS: do_open");
