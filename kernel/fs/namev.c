@@ -31,13 +31,15 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
     KASSERT(dir != NULL);
     KASSERT(name != NULL);
 
-    dbg(DBG_VFS, "lookup: vnode 0x%p, name is: %s.\n", dir, name);
+    dbg(DBG_VFS, "lookup: vnode 0x%p, name is: %s, namelen is: %u.\n", dir, name, len);
 
     KASSERT(dir->vn_ops);
-    if (dir->vn_ops->lookup == NULL) {
+    if (!S_ISDIR(dir->vn_mode)) {
+        dbg(DBG_VFS, "lookup: vnode_t *dir is not a directory.\n");
         return -ENOTDIR;
     }
 
+    dbg(DBG_VFS, "lookup: gonna call vnode's lookup function.\n");
     return dir->vn_ops->lookup(dir, name, len, result);
 
     /*don't know why I need to special case "." and ".."*/
@@ -105,9 +107,12 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         
         if (pathname[i] == '\0') {
             *res_vnode = vfs_root_vn;
-            vref(*res_vnode);
+            /*vref(*res_vnode);*/
+            dbg(DBG_VFS, "pathname is just root.\n");
             return 0;
         }
+
+        basename[(*namelen)++] = pathname[i++];
     } else {
         if (base != NULL) {
             curdir = base;
@@ -122,11 +127,20 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         if (pathname[i] == '/') {
             /*do nothing for now*/
         } else {
-            if (i != 0 && pathname[i-1] == '/') {
+            if (i == 0 || pathname[i-1] != '/'){
+                if ((*namelen) >= NAME_LEN) {
+                    vput(curdir);
+                    dbg(DBG_VFS, "dir_namev: the name is too long.\n");
+                    return -ENAMETOOLONG;
+                }
+                basename[*namelen] = pathname[i];
+                (*namelen)++;
+            } else {
                 /*just for dbg printing in lookup*/
                 basename[*namelen] = pathname[i];
                 (*namelen)++;
                 basename[*namelen] = NULL;
+                dbg(DBG_VFS, "dir_namev: start lookup.\n");
                 if ((err = lookup(curdir, *name, *namelen, res_vnode)) < 0) {
                     dbg(DBG_VFS, "dir_namev: lookup fail, errno is: %d\n", err);
                     vput(curdir);
@@ -136,13 +150,6 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                 vput(curdir);
                 curdir = *res_vnode;
                 *namelen = 0;
-            } else {
-                if ((*namelen) >= NAME_LEN) {
-                    vput(curdir);
-                    return -ENAMETOOLONG;
-                }
-                basename[*namelen] = pathname[i];
-                (*namelen)++;
             }
         }
         i++;
@@ -150,6 +157,8 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
 
     basename[*namelen] = '\0';
 
+    dbg(DBG_VFS, "dir_namev: successfully find the parent directory\n");
+    dbg(DBG_VFS, "name: %s, namelen: %u\n", basename, *namelen);
     return 0;
         /*
          *NOT_YET_IMPLEMENTED("VFS: dir_namev");

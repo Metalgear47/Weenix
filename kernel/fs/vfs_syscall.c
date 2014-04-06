@@ -313,6 +313,7 @@ do_mkdir(const char *path)
     KASSERT(name && "Ran out of kernel memory.\n");
     vnode_t *dir_vnode;
 
+    dbg(DBG_VFS, "do_mkdir: call dir_namev with path: %s.\n", path);
     err = dir_namev(path, &namelen, &name, NULL, &dir_vnode);
     if (err < 0) {
         /*seems no need to worry about vput(dir_vnode) here*/
@@ -321,6 +322,7 @@ do_mkdir(const char *path)
     }
 
     vnode_t *file_vnode;
+    dbg(DBG_VFS, "do_mkdir: call lookup.\n");
     err = lookup(dir_vnode, name, namelen, &file_vnode);
     if (err == 0) {
         KASSERT(file_vnode);
@@ -332,8 +334,10 @@ do_mkdir(const char *path)
     /*dbg(DBG_VFS, "The err no for lookup is: %d\n", err);*/
     KASSERT(err == -ENOENT);
 
+    dbg(DBG_VFS, "do_mkdir: call vnode's mkdir\n");
     err = dir_vnode->vn_ops->mkdir(dir_vnode, name, namelen);
     kfree((void *)name);
+    vput(dir_vnode);
     return err;
         /*NOT_YET_IMPLEMENTED("VFS: do_mkdir");*/
         /*return -1;*/
