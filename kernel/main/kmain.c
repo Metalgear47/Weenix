@@ -330,6 +330,9 @@ initproc_run(int arg1, void *arg2)
      *create_proc("Multi thread verifying", multi_verify, 0, 0);
      *do_waitpid(-1, 0, NULL);
      */
+     /*========================*/
+    vfstest_main(1, NULL);
+     /*========================*/
 
     do_exit(0);
 

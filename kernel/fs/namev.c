@@ -181,7 +181,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
     KASSERT(pathname);
     
-    dbg(DBG_VFS, "called with pathname %s, flag 0x%12x", pathname, flag);
+    dbg(DBG_VFS, "called with pathname %s, flag 0x%12x\n", pathname, flag);
 
     size_t namelen;
     const char *name = (const char *)kmalloc(sizeof(char) * (NAME_LEN + 1));

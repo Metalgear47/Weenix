@@ -89,9 +89,11 @@ do_read(int fd, void *buf, size_t nbytes)
 int
 do_write(int fd, const void *buf, size_t nbytes)
 {
-    /*do I really need it?*/
-    KASSERT(fd != -1);
     KASSERT(buf);
+
+    if (fd < 0) {
+        return -EBADF;
+    }
 
     file_t *f;
     f = fget(fd);
