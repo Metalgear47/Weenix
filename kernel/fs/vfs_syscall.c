@@ -407,6 +407,16 @@ do_rmdir(const char *path)
         return -ENOTEMPTY;
     }
 
+    vnode_t *child_vnode;
+    err = lookup(dir_vnode, name, namelen, &child_vnode);
+    if (err < 0) {
+        return err;
+    }
+
+    if (!S_ISDIR(child_vnode->vn_mode)) {
+        return -ENOTDIR;
+    }
+
     err = dir_vnode->vn_ops->rmdir(dir_vnode, name, namelen);
     kfree((void *)name);
     return err;
