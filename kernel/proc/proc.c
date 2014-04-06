@@ -126,6 +126,10 @@ proc_create(char *name)
         proc_struct->p_pproc = NULL;
     }
 
+    int i = 0;
+    for (i = 0 ; i < NFILES ; i++) {
+        proc_struct->p_files[i] = NULL;
+    }
     proc_struct->p_cwd = vfs_root_vn;
     if (vfs_root_vn) {
         vref(vfs_root_vn);
