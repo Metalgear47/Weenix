@@ -344,7 +344,10 @@ do_mkdir(const char *path)
         return -EEXIST;
     }
 
-    /*dbg(DBG_VFS, "The err no for lookup is: %d\n", err);*/
+    dbg(DBG_VFS, "The err no for lookup is: %d\n", err);
+    if (err != -ENOENT) {
+        return err;
+    }
     KASSERT(err == -ENOENT);
 
     dbg(DBG_VFS, "do_mkdir: call vnode's mkdir\n");

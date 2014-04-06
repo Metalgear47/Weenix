@@ -119,7 +119,7 @@ do_open(const char *filename, int oflags)
     /*get the vnode*/
     vnode_t *vn;
     dbg(DBG_VFS, "about to call open_namev\n");
-    int err = open_namev(filename, f->f_mode, &vn, NULL);
+    int err = open_namev(filename, oflags, &vn, NULL);
     if (err < 0) {
         /*clean up*/
         curproc->p_files[fd] = NULL;
@@ -146,8 +146,7 @@ do_open(const char *filename, int oflags)
     } else if (oflags & O_APPEND) {
         f->f_pos = vn->vn_len;
     } else {
-        dbg(DBG_VFS, "do_open: strange oflags: %d\n", oflags);
-        panic("Hmm..\n");
+        dbg(DBG_VFS, "do_open: strange oflags: 0x%12x\n", oflags);
     }
 
     /*f_mode: already set before*/

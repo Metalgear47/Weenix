@@ -34,7 +34,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
     dbg(DBG_VFS, "lookup: vnode 0x%p, name is: %s, namelen is: %u.\n", dir, name, len);
 
     KASSERT(dir->vn_ops);
-    if (!S_ISDIR(dir->vn_mode)) {
+    if (dir->vn_ops->lookup == NULL) {
         dbg(DBG_VFS, "lookup: vnode_t *dir is not a directory.\n");
         return -ENOTDIR;
     }
