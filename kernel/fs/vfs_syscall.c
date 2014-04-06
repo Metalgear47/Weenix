@@ -255,7 +255,7 @@ int
 do_mknod(const char *path, int mode, unsigned devid)
 {
     KASSERT(path);
-    dbg(DBG_VFS, "called with path %s, mode %d\n", path, mode);
+    dbg(DBG_VFS, "called with path %s, mode 0x%12x\n", path, mode);
 
     if (!S_ISCHR(mode) && !S_ISBLK(mode)) {
         dbg(DBG_VFS, "invalid mode argument\n");
@@ -268,21 +268,30 @@ do_mknod(const char *path, int mode, unsigned devid)
     KASSERT(name && "Ran out of kernel memory.\n");
     vnode_t *dir_vnode;
 
+    dbg(DBG_VFS, "about to call dir_namev\n");
     err = dir_namev(path, &namelen, &name, NULL, &dir_vnode);
     if (err < 0) {
+        dbg(DBG_VFS, "dir_namev failed, errno is %d.\n", err);
         return err;
     }
 
     vnode_t *file_vnode;
+    dbg(DBG_VFS, "about to call lookup\n");
     err = lookup(dir_vnode, name, namelen, &file_vnode);
     if (err == 0) {
         vput(dir_vnode);
         vput(file_vnode);
+        dbg(DBG_VFS, "the file already exists\n");
         return -EEXIST;
     }
 
+    dbg(DBG_VFS, "about to call vnode->mknod\n");
     err = dir_vnode->vn_ops->mknod(dir_vnode, name, namelen, mode, devid);
+    if (err < 0) {
+        dbg(DBG_VFS, "vnode->mknod failed, errno is %d\n", err);
+    }
     vput(dir_vnode);
+    dbg(DBG_VFS, "vnode->mknod succeed\n");
     return err;
         /*
          *NOT_YET_IMPLEMENTED("VFS: do_mknod");
@@ -338,8 +347,12 @@ do_mkdir(const char *path)
 
     dbg(DBG_VFS, "do_mkdir: call vnode's mkdir\n");
     err = dir_vnode->vn_ops->mkdir(dir_vnode, name, namelen);
+    if (err < 0) {
+        dbg(DBG_VFS, "call vnode->mkdir failed, errno is %d\n", err);
+    }
     kfree((void *)name);
     vput(dir_vnode);
+    dbg(DBG_VFS, "mkdir succeed.\n");
     return err;
         /*NOT_YET_IMPLEMENTED("VFS: do_mkdir");*/
         /*return -1;*/

@@ -206,13 +206,13 @@ idleproc_run(int arg1, void *arg2)
         do_mkdir(devpath);
         do_mknod("/dev/null", S_IFCHR, MEM_NULL_DEVID);
         do_mknod("/dev/zero", S_IFCHR, MEM_ZERO_DEVID);
-        /*
-         *int nterms = vt_num_terminals();
-         *int i = 0;
-         *for (int i = 0 ; i < nterms ; i++) {
-         *    char *path = 
-         *    do_mknod("/dev/")
-         */
+        int nterms = vt_num_terminals();
+        int i = 0;
+        char *path = "/dev/tty0";
+        for (i = 0 ; i < nterms ; i++) {
+            path[8] = '0' + i;
+            do_mknod((const char *)path, S_IFCHR, MKDEVID(2, i));
+        }
 #endif
 
         /* Finally, enable interrupts (we want to make sure interrupts

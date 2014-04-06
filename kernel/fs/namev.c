@@ -139,8 +139,6 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                 (*namelen)++;
             } else {
                 /*just for dbg printing in lookup*/
-                basename[*namelen] = pathname[i];
-                (*namelen)++;
                 basename[*namelen] = NULL;
                 dbg(DBG_VFS, "dir_namev: start lookup.\n");
                 if ((err = lookup(curdir, *name, *namelen, res_vnode)) < 0) {
@@ -152,6 +150,8 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                 vput(curdir);
                 curdir = *res_vnode;
                 *namelen = 0;
+                basename[*namelen] = pathname[i];
+                (*namelen)++;
             }
         }
         i++;
