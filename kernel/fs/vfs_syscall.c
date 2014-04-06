@@ -61,7 +61,7 @@ do_read(int fd, void *buf, size_t nbytes)
     }
 
     /*examine if it's dir*/
-    if (f->f_vnode->vn_ops->lookup != NULL) {
+    if (S_ISDIR(f->f_vnode->vn_mode)) {
         fput(f);
         return -EISDIR;
     }
@@ -255,8 +255,10 @@ int
 do_mknod(const char *path, int mode, unsigned devid)
 {
     KASSERT(path);
+    dbg(DBG_VFS, "called with path %s, mode %d\n", path, mode);
 
     if (!S_ISCHR(mode) && !S_ISBLK(mode)) {
+        dbg(DBG_VFS, "invalid mode argument\n");
         return -EINVAL;
     }
 

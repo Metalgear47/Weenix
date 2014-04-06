@@ -80,6 +80,8 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
     KASSERT(name);
     KASSERT(res_vnode);
 
+    dbg(DBG_VFS, "called with pathname %s\n", pathname);
+
     /*stores errno*/
     int err = 0;
 
@@ -177,6 +179,10 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
 int
 open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 {
+    KASSERT(pathname);
+    
+    dbg(DBG_VFS, "called with pathname %s, flag 0x%12x", pathname, flag);
+
     size_t namelen;
     const char *name = (const char *)kmalloc(sizeof(char) * (NAME_LEN + 1));
     KASSERT(name && "Ran out of kernel memory.\n");
@@ -185,25 +191,30 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
 
     if ((err = dir_namev(pathname, &namelen, &name, base, &vn_dir)) < 0) {
         kfree((void *)name);
+        dbg(DBG_VFS, "The dir doesn't exist\n");
         return err;
     }
 
     if ((err = lookup(vn_dir, name, namelen, res_vnode)) < 0) {
         /*examine errno?*/
         if (flag & O_CREAT) {
+            dbg(DBG_VFS, "file doesn't exist, call vnode->create function\n");
             if ((err = vn_dir->vn_ops->create(vn_dir, name, namelen, res_vnode)) < 0) {
                 vput(vn_dir);
                 kfree((void *)name);
+                dbg(DBG_VFS, "call vnode->create failed\n");
                 return err;
             }
         } else {
             vput(vn_dir);
             kfree((void *)name);
+            dbg(DBG_VFS, "file doesn't exist, and no O_CREAT flag\n");
             return err;
         }
     }
 
     kfree((void *)name);
+    dbg(DBG_VFS, "Successfully open the file.\n");
     return 0;
         /*NOT_YET_IMPLEMENTED("VFS: open_namev");*/
         /*return 0;*/
