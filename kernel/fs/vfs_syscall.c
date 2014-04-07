@@ -666,11 +666,16 @@ do_getdent(int fd, struct dirent *dirp)
         return -ENOTDIR;
     }
 
-    int offset = dir_vn->vn_ops->readdir(dir_vn, 0, dirp);
+    int offset = 0;
+    offset = dir_vn->vn_ops->readdir(dir_vn, f->f_pos, dirp);
+    /*offset = dir_vn->vn_ops->readdir(dir_vn, 0, dirp);*/
     f->f_pos += offset;
     dbg(DBG_VFS, "the returning offset is: %d\n", offset);
 
     fput(f);
+    if (offset == 0) {
+        return 0;
+    }
     return sizeof(dirent_t);
         /*NOT_YET_IMPLEMENTED("VFS: do_getdent");*/
         /*return -1;*/
