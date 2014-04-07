@@ -41,9 +41,11 @@
 int
 do_read(int fd, void *buf, size_t nbytes)
 {
-    /*do I really need to do it?*/
-    KASSERT(fd != -1);
     KASSERT(buf);
+
+    if (fd <= -1 || fd >= NFILES) {
+        return -EBADF;
+    }
 
     file_t *f;
     f = fget(fd);
