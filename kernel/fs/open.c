@@ -141,13 +141,7 @@ do_open(const char *filename, int oflags)
     /*initialize fields of file_t*/
 
     /*f_pos*/
-    if (oflags & O_TRUNC) {
-        f->f_pos = 0;
-    } else if (oflags & O_APPEND) {
-        f->f_pos = vn->vn_len;
-    } else {
-        dbg(DBG_VFS, "do_open: strange oflags: 0x%12x\n", oflags);
-    }
+    f->f_pos = 0;
 
     /*f_mode: already set before*/
 
