@@ -40,7 +40,15 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
     }
 
     dbg(DBG_VFS, "lookup: gonna call vnode's lookup function.\n");
-    return dir->vn_ops->lookup(dir, name, len, result);
+    int err = dir->vn_ops->lookup(dir, name, len, result);
+    if (err < 0) {
+        dbg(DBG_VFS, "dir_vnode's lookup did not find out the vnode\n");
+        return err;
+    }
+    if (name_match(".", name, 1) == 0 || name_match("..", name, 2) == 0) {
+        dbg(DBG_VFS, "the name matches '.' or '..'\n");
+    }
+    return err;
 
     /*don't know why I need to special case "." and ".."*/
 

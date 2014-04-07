@@ -150,7 +150,7 @@ do_open(const char *filename, int oflags)
     /*f_vnode*/
     f->f_vnode = vn;
 
-    dbg(DBG_VFS, "succeed, the file discriptor is %d", fd);
+    dbg(DBG_VFS, "succeed, the file discriptor is %d\n", fd);
     return fd;
         /*
          *NOT_YET_IMPLEMENTED("VFS: do_open");

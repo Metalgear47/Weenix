@@ -641,28 +641,34 @@ do_getdent(int fd, struct dirent *dirp)
 {
     KASSERT(dirp);
     if (fd == -1) {
+        dbg(DBG_VFS, "Bad file descriptor\n");
         return -EBADF;
     }
     
     file_t *f = fget(fd);
-    if (!f) {
+    if (f == NULL) {
+        dbg(DBG_VFS, "Bad file descriptor\n");
         return -EBADF;
     }
+    dbg(DBG_VFS, "the fd is %d\n", fd);
 
     vnode_t *dir_vn = f->f_vnode;
     KASSERT(dir_vn);
     if (!S_ISDIR(dir_vn->vn_mode)) {
         fput(f);
+        dbg(DBG_VFS, "fd %d is not pointing to a directory.\n", fd);
         return -ENOTDIR;
     }
 
-    if (dir_vn->vn_ops->readdir) {
+    if (dir_vn->vn_ops->readdir == NULL) {
         fput(f);
+        dbg(DBG_VFS, "The readdir function pointer is NULL\n");
         return -ENOTDIR;
     }
 
     int offset = dir_vn->vn_ops->readdir(dir_vn, 0, dirp);
     f->f_pos += offset;
+    dbg(DBG_VFS, "the returning offset is: %d\n", offset);
 
     fput(f);
     return sizeof(dirent_t);
