@@ -138,7 +138,7 @@ do_close(int fd)
     }
 
     file_t *f = curproc->p_files[fd];
-    if (!f) {
+    if (f == NULL) {
         return -EBADF;
     }
 
@@ -174,7 +174,7 @@ do_dup(int fd)
     }
 
     file_t *f = fget(fd);
-    if (!f) {
+    if (f == NULL) {
         return -EBADF;
     }
 
@@ -208,7 +208,7 @@ do_dup2(int ofd, int nfd)
     }
 
     file_t *f = fget(ofd);
-    if (!f) {
+    if (f == NULL) {
         return -EBADF;
     }
 
@@ -296,7 +296,9 @@ do_mknod(const char *path, int mode, unsigned devid)
     dbg(DBG_VFS, "about to call vnode->mknod\n");
     err = dir_vnode->vn_ops->mknod(dir_vnode, name, namelen, mode, devid);
     if (err < 0) {
+        vput(dir_vnode);
         dbg(DBG_VFS, "vnode->mknod failed, errno is %d\n", err);
+        return err;
     }
     vput(dir_vnode);
     dbg(DBG_VFS, "vnode->mknod succeed\n");
@@ -345,6 +347,7 @@ do_mkdir(const char *path)
     err = lookup(dir_vnode, name, namelen, &file_vnode);
     if (err == 0) {
         KASSERT(file_vnode);
+        vput(dir_vnode);
         vput(file_vnode);
         kfree((void *)name);
         return -EEXIST;
@@ -352,6 +355,7 @@ do_mkdir(const char *path)
 
     dbg(DBG_VFS, "The err no for lookup is: %d\n", err);
     if (err != -ENOENT) {
+        vput(dir_vnode);
         return err;
     }
     KASSERT(err == -ENOENT);
@@ -359,8 +363,12 @@ do_mkdir(const char *path)
     dbg(DBG_VFS, "do_mkdir: call vnode's mkdir\n");
     err = dir_vnode->vn_ops->mkdir(dir_vnode, name, namelen);
     if (err < 0) {
+        vput(dir_vnode);
+        kfree((void *)name);
         dbg(DBG_VFS, "call vnode->mkdir failed, errno is %d\n", err);
+        return err;
     }
+
     kfree((void *)name);
     vput(dir_vnode);
     dbg(DBG_VFS, "mkdir succeed.\n");
