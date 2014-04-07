@@ -676,12 +676,14 @@ do_getdent(int fd, struct dirent *dirp)
 int
 do_lseek(int fd, int offset, int whence)
 {
-    KASSERT(fd != -1);
+    if (fd < 0 || fd >= NFILES) {
+        return -EBADF;
+    }
 
     file_t *f;
     f = fget(fd);
 
-    if (f) {
+    if (f == NULL) {
         /*not an open fd*/
         return -EBADF;
     }
