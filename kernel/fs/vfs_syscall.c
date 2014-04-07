@@ -492,6 +492,7 @@ do_unlink(const char *path)
 
     err = dir_vnode->vn_ops->unlink(dir_vnode, name, namelen);
     kfree((void *)name);
+    vput(dir_vnode);
     return err;
         /*NOT_YET_IMPLEMENTED("VFS: do_unlink");*/
         /*return -1;*/
