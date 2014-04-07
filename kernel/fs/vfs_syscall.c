@@ -427,15 +427,20 @@ do_rmdir(const char *path)
     vnode_t *child_vnode;
     err = lookup(dir_vnode, name, namelen, &child_vnode);
     if (err < 0) {
+        vput(dir_vnode);
+        kfree((void *)name);
         return err;
     }
 
     if (!S_ISDIR(child_vnode->vn_mode)) {
+        vput(dir_vnode);
+        kfree((void *)name);
         return -ENOTDIR;
     }
 
     err = dir_vnode->vn_ops->rmdir(dir_vnode, name, namelen);
     kfree((void *)name);
+    vput(dir_vnode);
     return err;
         /*NOT_YET_IMPLEMENTED("VFS: do_rmdir");*/
         /*return -1;*/
