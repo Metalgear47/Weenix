@@ -188,6 +188,15 @@ proc_cleanup(int status)
     /*setting state and status*/
     curproc->p_state = PROC_DEAD;
     curproc->p_status = status;
+
+    /*clean up file descriptors*/
+    /*VFS*/
+    int i = 0;
+    for (i = 0 ; i < NFILES ; i++) {
+        if (curproc->p_files[i]) {
+            fput(curproc->p_files[i]);
+        }
+    }
 }
 
 /*

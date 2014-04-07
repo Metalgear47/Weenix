@@ -777,6 +777,7 @@ do_stat(const char *path, struct stat *buf)
         return err;
     }
 
+    /*vput(vnode);*/
     return vnode->vn_ops->stat(vnode, buf);
         /*NOT_YET_IMPLEMENTED("VFS: do_stat");*/
         /*return -1;*/
