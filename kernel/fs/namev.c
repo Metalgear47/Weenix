@@ -97,7 +97,10 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
     /*convert it to a non-const pointer*/
     char *basename = (char *)*name;
 
-    KASSERT(pathname[0] != '\0');
+    if (pathname[0] == '\0') {
+        dbg(DBG_VFS, "the pathname is empty\n");
+        return -EINVAL;
+    }
 
     if (pathname[0] == '/') {
         curdir = vfs_root_vn;
@@ -193,6 +196,13 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
         kfree((void *)name);
         dbg(DBG_VFS, "The dir doesn't exist\n");
         return err;
+    }
+
+    if (!S_ISDIR(vn_dir->vn_mode)) {
+        kfree((void *)name);
+        dbg(DBG_VFS, "it's not a directory.\n");
+        vput(vn_dir);
+        return -ENOTDIR;
     }
 
     if ((err = lookup(vn_dir, name, namelen, res_vnode)) < 0) {
