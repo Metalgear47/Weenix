@@ -169,7 +169,9 @@ do_close(int fd)
 int
 do_dup(int fd)
 {
-    KASSERT(fd != -1);
+    if (fd == -1) {
+        return -EBADF;
+    }
 
     file_t *f = fget(fd);
     if (!f) {
@@ -201,7 +203,9 @@ do_dup(int fd)
 int
 do_dup2(int ofd, int nfd)
 {
-    KASSERT(ofd != -1);
+    if (ofd == -1) {
+        return -EBADF;
+    }
 
     file_t *f = fget(ofd);
     if (!f) {
@@ -636,6 +640,9 @@ int
 do_getdent(int fd, struct dirent *dirp)
 {
     KASSERT(dirp);
+    if (fd == -1) {
+        return -EBADF;
+    }
     
     file_t *f = fget(fd);
     if (!f) {
