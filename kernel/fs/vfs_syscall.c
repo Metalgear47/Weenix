@@ -457,6 +457,20 @@ do_unlink(const char *path)
         return err;
     }
 
+    vnode_t *file_vnode;
+    err = lookup(dir_vnode, name, namelen, &file_vnode);
+    if (err < 0) {
+        vput(dir_vnode);
+        kfree((void *)name);
+        return err;
+    }
+    if (S_ISDIR(file_vnode->vn_mode)) {
+        vput(dir_vnode);
+        kfree((void *)name);
+        vput(file_vnode);
+        return -EPERM;
+    }
+
     err = dir_vnode->vn_ops->unlink(dir_vnode, name, namelen);
     kfree((void *)name);
     return err;
