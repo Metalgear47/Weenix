@@ -36,17 +36,24 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
     KASSERT(dir->vn_ops);
     if (dir->vn_ops->lookup == NULL) {
         dbg(DBG_VFS, "lookup: vnode_t *dir is not a directory.\n");
+        *result = NULL;
         return -ENOTDIR;
     }
+    /*if (name_match(".", name, 1) == 0 || name_match("..", name, 2) == 0) {*/
+    /*
+     *if (name_match(".", name, 1) == 0) {
+     *    dbg(DBG_VFS, "the name matches '.' \n");
+     *    *result = dir;
+     *    return 0;
+     *}
+     */
 
     dbg(DBG_VFS, "lookup: gonna call vnode's lookup function.\n");
     int err = dir->vn_ops->lookup(dir, name, len, result);
     if (err < 0) {
         dbg(DBG_VFS, "dir_vnode's lookup did not find out the vnode\n");
+        *result = NULL;
         return err;
-    }
-    if (name_match(".", name, 1) == 0 || name_match("..", name, 2) == 0) {
-        dbg(DBG_VFS, "the name matches '.' or '..'\n");
     }
     return err;
 
@@ -107,6 +114,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
 
     if (pathname[0] == '\0') {
         dbg(DBG_VFS, "the pathname is empty\n");
+        *res_vnode = NULL;
         return -EINVAL;
     }
 
@@ -120,7 +128,8 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
         
         if (pathname[i] == '\0') {
             *res_vnode = vfs_root_vn;
-            /*vref(*res_vnode);*/
+            /*some doubt about it*/
+            vref(*res_vnode);
             dbg(DBG_VFS, "pathname is just root.\n");
             return 0;
         }
@@ -144,6 +153,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                 if ((*namelen) >= NAME_LEN) {
                     vput(curdir);
                     dbg(DBG_VFS, "dir_namev: the name is too long.\n");
+                    *res_vnode = NULL;
                     return -ENAMETOOLONG;
                 }
                 basename[*namelen] = pathname[i];
@@ -155,6 +165,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                 if ((err = lookup(curdir, *name, *namelen, res_vnode)) < 0) {
                     dbg(DBG_VFS, "dir_namev: lookup fail, errno is: %d\n", err);
                     vput(curdir);
+                    *res_vnode = NULL;
                     return err;
                 }
 
@@ -203,6 +214,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
     if ((err = dir_namev(pathname, &namelen, &name, base, &vn_dir)) < 0) {
         kfree((void *)name);
         dbg(DBG_VFS, "The dir doesn't exist\n");
+        *res_vnode = NULL;
         return err;
     }
 
@@ -210,6 +222,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
         kfree((void *)name);
         dbg(DBG_VFS, "it's not a directory.\n");
         vput(vn_dir);
+        *res_vnode = NULL;
         return -ENOTDIR;
     }
 
@@ -221,12 +234,14 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
                 vput(vn_dir);
                 kfree((void *)name);
                 dbg(DBG_VFS, "call vnode->create failed\n");
+                *res_vnode = NULL;
                 return err;
             }
         } else {
             vput(vn_dir);
             kfree((void *)name);
             dbg(DBG_VFS, "file doesn't exist, and no O_CREAT flag\n");
+            *res_vnode = NULL;
             return err;
         }
     }

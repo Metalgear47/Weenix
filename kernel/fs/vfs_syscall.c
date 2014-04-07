@@ -41,6 +41,7 @@
 int
 do_read(int fd, void *buf, size_t nbytes)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     KASSERT(buf);
 
     if (fd <= -1 || fd >= NFILES) {
@@ -91,6 +92,7 @@ do_read(int fd, void *buf, size_t nbytes)
 int
 do_write(int fd, const void *buf, size_t nbytes)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     KASSERT(buf);
 
     if (fd < 0) {
@@ -133,6 +135,7 @@ do_write(int fd, const void *buf, size_t nbytes)
 int
 do_close(int fd)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     if (fd < 0 || fd >= NFILES ) {
         return -EBADF;
     }
@@ -169,6 +172,7 @@ do_close(int fd)
 int
 do_dup(int fd)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     if (fd == -1) {
         return -EBADF;
     }
@@ -203,6 +207,7 @@ do_dup(int fd)
 int
 do_dup2(int ofd, int nfd)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     if (ofd == -1) {
         return -EBADF;
     }
@@ -326,6 +331,7 @@ do_mknod(const char *path, int mode, unsigned devid)
 int
 do_mkdir(const char *path)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     KASSERT(path);
 
     int err = 0;
@@ -398,6 +404,7 @@ do_mkdir(const char *path)
 int
 do_rmdir(const char *path)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     KASSERT(path);
 
     int err = 0;
@@ -462,6 +469,7 @@ do_rmdir(const char *path)
 int
 do_unlink(const char *path)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     KASSERT(path);
 
     int err = 0;
@@ -520,6 +528,7 @@ do_unlink(const char *path)
 int
 do_link(const char *from, const char *to)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     KASSERT(from);
     KASSERT(to);
 
@@ -581,6 +590,7 @@ do_link(const char *from, const char *to)
 int
 do_rename(const char *oldname, const char *newname)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     KASSERT(oldname);
     KASSERT(newname);
 
@@ -612,6 +622,7 @@ do_rename(const char *oldname, const char *newname)
 int
 do_chdir(const char *path)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     KASSERT(path);
 
     int err = 0;
@@ -653,6 +664,7 @@ do_chdir(const char *path)
 int
 do_getdent(int fd, struct dirent *dirp)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     KASSERT(dirp);
     if (fd == -1) {
         dbg(DBG_VFS, "Bad file descriptor\n");
@@ -708,6 +720,7 @@ do_getdent(int fd, struct dirent *dirp)
 int
 do_lseek(int fd, int offset, int whence)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     if (fd < 0 || fd >= NFILES) {
         return -EBADF;
     }
@@ -766,6 +779,7 @@ do_lseek(int fd, int offset, int whence)
 int
 do_stat(const char *path, struct stat *buf)
 {
+    dbg(DBG_VFS, "syscall hook\n");
     KASSERT(path);
     KASSERT(buf);
 
