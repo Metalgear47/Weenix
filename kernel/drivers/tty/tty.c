@@ -209,7 +209,7 @@ tty_read(bytedev_t *dev, int offset, void *buf, int count)
     KASSERT(NULL != ldisc);
 
     char *buff = (char *)buf;
-    int read = ldisc->ld_ops->read(ldisc, &buff[offset], count);
+    int read = ldisc->ld_ops->read(ldisc, buf, count);
 
     /*unblock IO*/
     ttyd->ttd_ops->unblock_io(ttyd, ret);
@@ -247,10 +247,10 @@ tty_write(bytedev_t *dev, int offset, const void *buf, int count)
     dbg(DBG_TERM, "tty_write: the string is: %s\n", buff);
     int i = 0;
     for (i = 0 ; i < count; i++) {
-        if ('\0' == buff[i+offset]) {
+        if ('\0' == buff[i]) {
             break;
         }
-        const char *s = ldisc->ld_ops->process_char(ldisc, buff[i+offset]);
+        const char *s = ldisc->ld_ops->process_char(ldisc, buff[i]);
         tty_echo(ttyd, s);
     }
     int write = i;
