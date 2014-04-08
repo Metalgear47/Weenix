@@ -563,6 +563,7 @@ do_link(const char *from, const char *to)
     /*get the vnode for from*/
     err = open_namev(from, O_RDONLY, &from_vnode, NULL);
     if (err < 0) {
+        KASSERT(from_vnode == NULL);
         return err;
     }
 
@@ -576,7 +577,7 @@ do_link(const char *from, const char *to)
     if (err < 0) {
         vput(from_vnode);
         kfree((void *)name);
-
+        KASSERT(todir_vnode == NULL);
         return err;
     }
 
@@ -592,6 +593,7 @@ do_link(const char *from, const char *to)
 
         return -EEXIST;
     }
+    KASSERT(to_vnode == NULL);
 
     err = todir_vnode->vn_ops->link(from_vnode, todir_vnode, name, namelen);
 
@@ -655,6 +657,7 @@ do_chdir(const char *path)
     
     err = open_namev(path, O_RDONLY, &new_vnode, NULL);
     if (err < 0) {
+        KASSERT(new_vnode == NULL);
         return err;
     }
 
@@ -813,11 +816,13 @@ do_stat(const char *path, struct stat *buf)
 
     err = open_namev(path, O_RDONLY, &vnode, NULL);
     if (err < 0) {
+        KASSERT(vnode == NULL);
         return err;
     }
 
-    /*vput(vnode);*/
-    return vnode->vn_ops->stat(vnode, buf);
+    err = vnode->vn_ops->stat(vnode, buf);
+    vput(vnode);
+    return err;
         /*NOT_YET_IMPLEMENTED("VFS: do_stat");*/
         /*return -1;*/
 }
