@@ -95,7 +95,7 @@ do_write(int fd, const void *buf, size_t nbytes)
     dbg(DBG_VFS, "syscall hook\n");
     KASSERT(buf);
 
-    if (fd < 0) {
+    if (fd < 0 || fd >= NFILES) {
         return -EBADF;
     }
 
@@ -173,7 +173,7 @@ int
 do_dup(int fd)
 {
     dbg(DBG_VFS, "syscall hook\n");
-    if (fd == -1) {
+    if (fd < 0 || fd >= NFILES) {
         return -EBADF;
     }
 
@@ -208,7 +208,7 @@ int
 do_dup2(int ofd, int nfd)
 {
     dbg(DBG_VFS, "syscall hook\n");
-    if (ofd == -1) {
+    if (ofd <= -1 || ofd >= NFILES) {
         return -EBADF;
     }
 
@@ -229,7 +229,11 @@ do_dup2(int ofd, int nfd)
     /*look it up in the table or fget?*/
     file_t *nf = curproc->p_files[nfd];
     if (nf) {
-        do_close(nfd);
+        int err = do_close(nfd);
+        if (err < 0) {
+            fput(f);
+            return err;
+        }
     }
 
     curproc->p_files[nfd] = f;
@@ -284,6 +288,7 @@ do_mknod(const char *path, int mode, unsigned devid)
     dbg(DBG_VFS, "about to call dir_namev\n");
     err = dir_namev(path, &namelen, &name, NULL, &dir_vnode);
     if (err < 0) {
+        KASSERT(dir_vnode == NULL);
         dbg(DBG_VFS, "dir_namev failed, errno is %d.\n", err);
         return err;
     }
@@ -298,6 +303,15 @@ do_mknod(const char *path, int mode, unsigned devid)
         return -EEXIST;
     }
 
+    if (err == -ENOTDIR) {
+        vput(dir_vnode);
+        dbg(DBG_VFS, "the vnode is not a directory\n.");
+        KASSERT(file_vnode == NULL);
+        return -ENOTDIR;
+    }
+    KASSERT(err == -ENOENT);
+    KASSERT(file_vnode == NULL);
+
     dbg(DBG_VFS, "about to call vnode->mknod\n");
     err = dir_vnode->vn_ops->mknod(dir_vnode, name, namelen, mode, devid);
     if (err < 0) {
@@ -305,6 +319,7 @@ do_mknod(const char *path, int mode, unsigned devid)
         dbg(DBG_VFS, "vnode->mknod failed, errno is %d\n", err);
         return err;
     }
+
     vput(dir_vnode);
     dbg(DBG_VFS, "vnode->mknod succeed\n");
     return err;
@@ -345,6 +360,7 @@ do_mkdir(const char *path)
     if (err < 0) {
         /*seems no need to worry about vput(dir_vnode) here*/
         kfree((void *)name);
+        KASSERT(dir_vnode == NULL);
         return err;
     }
 
@@ -362,9 +378,12 @@ do_mkdir(const char *path)
     dbg(DBG_VFS, "The err no for lookup is: %d\n", err);
     if (err != -ENOENT) {
         vput(dir_vnode);
+        kfree((void *)name);
+        KASSERT(file_vnode == NULL);
         return err;
     }
     KASSERT(err == -ENOENT);
+    KASSERT(file_vnode == NULL);
 
     dbg(DBG_VFS, "do_mkdir: call vnode's mkdir\n");
     err = dir_vnode->vn_ops->mkdir(dir_vnode, name, namelen);
@@ -416,6 +435,7 @@ do_rmdir(const char *path)
     err = dir_namev(path, &namelen, &name, NULL, &dir_vnode);
     if (err < 0) {
         kfree((void *)name);
+        KASSERT(dir_vnode == NULL);
         return err;
     }
 
@@ -435,16 +455,19 @@ do_rmdir(const char *path)
     err = lookup(dir_vnode, name, namelen, &child_vnode);
     if (err < 0) {
         vput(dir_vnode);
+        KASSERT(child_vnode == NULL);
         kfree((void *)name);
         return err;
     }
 
     if (!S_ISDIR(child_vnode->vn_mode)) {
         vput(dir_vnode);
+        vput(child_vnode);
         kfree((void *)name);
         return -ENOTDIR;
     }
 
+    vput(child_vnode);
     err = dir_vnode->vn_ops->rmdir(dir_vnode, name, namelen);
     kfree((void *)name);
     vput(dir_vnode);
@@ -488,6 +511,7 @@ do_unlink(const char *path)
     err = lookup(dir_vnode, name, namelen, &file_vnode);
     if (err < 0) {
         vput(dir_vnode);
+        KASSERT(file_vnode == NULL);
         kfree((void *)name);
         return err;
     }
@@ -498,6 +522,7 @@ do_unlink(const char *path)
         return -EPERM;
     }
 
+    vput(file_vnode);
     err = dir_vnode->vn_ops->unlink(dir_vnode, name, namelen);
     kfree((void *)name);
     vput(dir_vnode);
