@@ -127,15 +127,13 @@ do_open(const char *filename, int oflags)
         return err;
     }
 
-    /*handle if it's a directory*/
-    if (S_ISDIR(vn->vn_mode)) {
-        if ((oflags & O_WRONLY) || (oflags & O_RDWR)) {
-            vput(vn);
-            fput(f);
-            curproc->p_files[fd] = NULL;
-            dbg(DBG_VFS, "it's a directory and write flag set\n");
-            return -EISDIR;
-        }
+    /*handle if it's a directory and WRITE requested*/
+    if (S_ISDIR(vn->vn_mode) && ((oflags & O_WRONLY) || (oflags & O_RDWR))) {
+        vput(vn);
+        fput(f);
+        curproc->p_files[fd] = NULL;
+        dbg(DBG_VFS, "it's a directory and write flag set\n");
+        return -EISDIR;
     }
 
     /*initialize fields of file_t*/
@@ -149,6 +147,10 @@ do_open(const char *filename, int oflags)
 
     /*f_vnode*/
     f->f_vnode = vn;
+
+    /*fd points to file, file points to vn. Their refcount sould stay incremente*/
+    /*fput(f);*/
+    /*vput(vn);*/
 
     dbg(DBG_VFS, "succeed, the file discriptor is %d\n", fd);
     return fd;
