@@ -246,6 +246,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
         }
     }
 
+    vput(vn_dir);
     kfree((void *)name);
     dbg(DBG_VFS, "Successfully open the file.\n");
     return 0;

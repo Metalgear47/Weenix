@@ -202,7 +202,7 @@ idleproc_run(int arg1, void *arg2)
         curproc->p_cwd = vfs_root_vn;
 
         initthr->kt_proc->p_cwd = vfs_root_vn;
-        /*vref(vfs_root_vn);*/
+        vref(vfs_root_vn);
 
         /* Here you need to make the null, zero, and tty devices using mknod */
         /* You can't do this until you have VFS, check the include/drivers/dev.h
@@ -337,7 +337,7 @@ initproc_run(int arg1, void *arg2)
      */
      /*========================*/
     vfstest_main(1, NULL);
-    vfs_test();
+    /*vfs_test();*/
      /*========================*/
 
     do_exit(0);
@@ -614,15 +614,38 @@ multi_verify(int arg1, void *arg2)
     do_waitpid(-1, 0, NULL);
     return 0;
 }
+
 /*---------------------VFS-------------------------*/
+
 void
 vfs_test()
 {
-    do_mkdir("/test");
-    int fd = do_open("/test", O_RDONLY);
-    file_t *file = curproc->p_files[fd];
-    KASSERT(file->f_refcount == 1);
-    KASSERT(file->f_vnode->vn_refcount == 1);
+    do_open("/1", O_RDONLY);
+    do_mkdir("/1");
+    do_mkdir("/2");
+    do_mkdir("/3");
+    do_mkdir("/4");
+    
+    int fd = do_open("/1", O_RDONLY);
+    do_open("/1/noexist", O_RDONLY);
+
+    file_t *dir_file = curproc->p_files[fd];
+    KASSERT(dir_file->f_refcount == 1);
+    KASSERT(dir_file->f_vnode->vn_refcount == 1);
+
+    do_mkdir("/1/2");
+    int fd_dir1 = do_open("/1/2", O_RDONLY);
+    KASSERT(dir_file->f_refcount == 1);
+    KASSERT(dir_file->f_vnode->vn_refcount == 1);
+    KASSERT(curproc->p_files[fd_dir1]->f_refcount == 1);
+    KASSERT(curproc->p_files[fd_dir1]->f_vnode->vn_refcount == 1);
+
+    do_close(fd_dir1);
     do_close(fd);
-    do_close(do_mkdir("/123"));
+    do_close(do_open("/2", O_RDONLY));
+    do_close(do_open("/2", O_RDONLY));
+    do_close(do_open("/2", O_RDONLY));
+    do_close(do_open("/2", O_RDONLY));
+    do_close(do_open("/2", O_RDONLY));
+    do_close(do_open("/2", O_RDONLY));
 }
