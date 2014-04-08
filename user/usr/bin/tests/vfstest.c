@@ -58,9 +58,6 @@
 #define SHORTSTR "Quidquid latine dictum, altum videtur"
 
 static char root_dir[64];
-/*
- *static int getdent(const char *dir, dirent_t *dirent);
- */
 
 static int
 makedirs(const char *dir)

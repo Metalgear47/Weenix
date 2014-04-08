@@ -41,7 +41,8 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
     }
     /*if (name_match(".", name, 1) == 0 || name_match("..", name, 2) == 0) {*/
     /*
-     *if (name_match(".", name, 1) == 0) {
+     *if name_match(".", name, len) {
+     *    dbg(DBG_VFS, "%s\n", name);
      *    dbg(DBG_VFS, "the name matches '.' \n");
      *    *result = dir;
      *    return 0;
@@ -88,8 +89,6 @@ int
 dir_namev(const char *pathname, size_t *namelen, const char **name,
           vnode_t *base, vnode_t **res_vnode)
 {
-    /*get the intermediate vnode and vput?*/
-
     KASSERT(pathname);
     KASSERT(namelen);
     KASSERT(name);
@@ -121,14 +120,13 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
     if (pathname[0] == '/') {
         curdir = vfs_root_vn;
 
-        /*skip the first '/'*/
+        /*skip the first several '/'*/
         while (pathname[i] == '/') {
             i++;
         }
         
         if (pathname[i] == '\0') {
             *res_vnode = vfs_root_vn;
-            /*some doubt about it*/
             vref(*res_vnode);
             dbg(DBG_VFS, "pathname is just root.\n");
             return 0;

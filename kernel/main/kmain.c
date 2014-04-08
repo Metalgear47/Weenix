@@ -336,8 +336,8 @@ initproc_run(int arg1, void *arg2)
      *do_waitpid(-1, 0, NULL);
      */
      /*========================*/
-    vfstest_main(1, NULL);
-    /*vfs_test();*/
+    /*vfstest_main(1, NULL);*/
+    vfs_test();
      /*========================*/
 
     do_exit(0);
@@ -639,6 +639,8 @@ vfs_test()
     KASSERT(dir_file->f_vnode->vn_refcount == 1);
     KASSERT(curproc->p_files[fd_dir1]->f_refcount == 1);
     KASSERT(curproc->p_files[fd_dir1]->f_vnode->vn_refcount == 1);
+    do_close(do_open("1/2/./.", O_RDONLY));
+    do_close(do_open("1/2/./././././../../1", O_RDONLY));
 
     do_close(fd_dir1);
     do_close(fd);
@@ -647,5 +649,5 @@ vfs_test()
     do_close(do_open("/2", O_RDONLY));
     do_close(do_open("/2", O_RDONLY));
     do_close(do_open("/2", O_RDONLY));
-    do_close(do_open("/2", O_RDONLY));
+    do_close(do_open("/2/././", O_RDONLY));
 }
