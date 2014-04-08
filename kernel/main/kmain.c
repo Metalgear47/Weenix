@@ -41,6 +41,7 @@
 #include "fs/vfs_syscall.h"
 #include "fs/fcntl.h"
 #include "fs/stat.h"
+#include "fs/file.h"
 
 #include "test/kshell/kshell.h"
 /*#include "test/vfstest/vfstest.h"*/
@@ -74,6 +75,10 @@ static void *alternately_write(int arg1, void *arg2);
 /*static void *write_then_read(int arg1, void *arg2);*/
 static void *multi_verify(int arg1, void *arg2);
 /*drivers_tests*/
+
+/*vfs_tests*/
+void vfs_test();
+/*vfs_tests*/
 
 static context_t bootstrap_context;
 
@@ -197,7 +202,7 @@ idleproc_run(int arg1, void *arg2)
         curproc->p_cwd = vfs_root_vn;
 
         initthr->kt_proc->p_cwd = vfs_root_vn;
-        vref(vfs_root_vn);
+        /*vref(vfs_root_vn);*/
 
         /* Here you need to make the null, zero, and tty devices using mknod */
         /* You can't do this until you have VFS, check the include/drivers/dev.h
@@ -307,10 +312,12 @@ initproc_run(int arg1, void *arg2)
  */
     /*end tests*/
 
-    kshell_t *ksh = kshell_create(0);
-    KASSERT(NULL != ksh);
-    while (kshell_execute_next(ksh));
-    kshell_destroy(ksh);
+    /*
+     *kshell_t *ksh = kshell_create(0);
+     *KASSERT(NULL != ksh);
+     *while (kshell_execute_next(ksh));
+     *kshell_destroy(ksh);
+     */
 
     /*
      *create_proc("Alternately reading", alternately_read, 0, 0);
@@ -329,7 +336,8 @@ initproc_run(int arg1, void *arg2)
      *do_waitpid(-1, 0, NULL);
      */
      /*========================*/
-    /*vfstest_main(1, NULL);*/
+    vfstest_main(1, NULL);
+    vfs_test();
      /*========================*/
 
     do_exit(0);
@@ -605,4 +613,16 @@ multi_verify(int arg1, void *arg2)
     do_waitpid(-1, 0, NULL);
     do_waitpid(-1, 0, NULL);
     return 0;
+}
+/*---------------------VFS-------------------------*/
+void
+vfs_test()
+{
+    do_mkdir("/test");
+    int fd = do_open("/test", O_RDONLY);
+    file_t *file = curproc->p_files[fd];
+    KASSERT(file->f_refcount == 1);
+    KASSERT(file->f_vnode->vn_refcount == 1);
+    do_close(fd);
+    do_close(do_mkdir("/123"));
 }
