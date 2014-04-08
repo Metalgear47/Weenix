@@ -163,7 +163,7 @@ dir_namev(const char *pathname, size_t *namelen, const char **name,
                 if ((err = lookup(curdir, *name, *namelen, res_vnode)) < 0) {
                     dbg(DBG_VFS, "dir_namev: lookup fail, errno is: %d\n", err);
                     vput(curdir);
-                    *res_vnode = NULL;
+                    KASSERT(*res_vnode == NULL);
                     return err;
                 }
 
@@ -212,6 +212,7 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
     if ((err = dir_namev(pathname, &namelen, &name, base, &vn_dir)) < 0) {
         kfree((void *)name);
         dbg(DBG_VFS, "The dir doesn't exist\n");
+        KASSERT(vn_dir == NULL);
         *res_vnode = NULL;
         return err;
     }
@@ -225,7 +226,9 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
     }
 
     if ((err = lookup(vn_dir, name, namelen, res_vnode)) < 0) {
-        /*examine errno?*/
+        /*assertion for ramfs_lookup*/
+        KASSERT(err == -ENOENT);
+
         if (flag & O_CREAT) {
             dbg(DBG_VFS, "file doesn't exist, call vnode->create function\n");
             if ((err = vn_dir->vn_ops->create(vn_dir, name, namelen, res_vnode)) < 0) {
@@ -235,6 +238,8 @@ open_namev(const char *pathname, int flag, vnode_t **res_vnode, vnode_t *base)
                 *res_vnode = NULL;
                 return err;
             }
+            /*vput(vn_dir);*/
+            /*no need, handled on line 250*/
         } else {
             vput(vn_dir);
             kfree((void *)name);
