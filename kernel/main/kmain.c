@@ -209,6 +209,7 @@ idleproc_run(int arg1, void *arg2)
          * file for macros with the device ID's you will need to pass to mknod */
         char *devpath = "/dev";
         do_mkdir(devpath);
+        /*still need to figure out how to set the vnode for special device*/
         do_mknod("/dev/null", S_IFCHR, MEM_NULL_DEVID);
         do_mknod("/dev/zero", S_IFCHR, MEM_ZERO_DEVID);
         int nterms = vt_num_terminals();

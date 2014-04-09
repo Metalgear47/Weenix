@@ -6,5 +6,7 @@ break bootstrap
 # break dir_namev
 # break lookup
 # break ramfs_lookup
+# break special_file_write
+# break null_write
 
 continue
