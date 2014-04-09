@@ -504,12 +504,14 @@ vfstest_infinite(void)
         int res, fd;
         char buf[4096];
 
-        res = 1;
-        syscall_success(fd = open("/dev/null", O_WRONLY, 0));
-        while (0 < res) {
-                syscall_success(res = write(fd, buf, sizeof(buf)));
-        }
-        syscall_success(close(fd));
+        /*
+         *res = 1;
+         *syscall_success(fd = open("/dev/null", O_WRONLY, 0));
+         *while (0 < res) {
+         *        syscall_success(res = write(fd, buf, sizeof(buf)));
+         *}
+         *syscall_success(close(fd));
+         */
 
         res = 1;
         syscall_success(fd = open("/dev/zero", O_RDONLY, 0));
