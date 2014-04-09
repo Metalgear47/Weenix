@@ -1,12 +1,3 @@
-  Not yet implemented:
-
-   drivers/disk/ata.c:408                       ata_read()  DRIVERS
-   drivers/disk/ata.c:437                      ata_write()  DRIVERS
-   drivers/disk/ata.c:615                       ata_intr()  DRIVERS
-            fs/namev.c:64                         lookup()      VFS
-           fs/namev.c:186                      dir_namev()      VFS
-           fs/namev.c:256                     open_namev()      VFS
-            fs/open.c:158                        do_open()      VFS
        fs/s5fs/s5fs.c:216                s5fs_read_vnode()     S5FS
        fs/s5fs/s5fs.c:230              s5fs_delete_vnode()     S5FS
        fs/s5fs/s5fs.c:243               s5fs_query_vnode()     S5FS
@@ -32,26 +23,6 @@
   fs/s5fs/s5fs_subr.c:389               s5_remove_dirent()     S5FS
   fs/s5fs/s5fs_subr.c:407                        s5_link()     S5FS
   fs/s5fs/s5fs_subr.c:423                s5_inode_blocks()     S5FS
-      fs/vfs_syscall.c:81                        do_read()      VFS
-     fs/vfs_syscall.c:132                       do_write()      VFS
-     fs/vfs_syscall.c:160                       do_close()      VFS
-     fs/vfs_syscall.c:202                         do_dup()      VFS
-     fs/vfs_syscall.c:251                        do_dup2()      VFS
-     fs/vfs_syscall.c:336                       do_mknod()      VFS
-     fs/vfs_syscall.c:410                       do_mkdir()      VFS
-     fs/vfs_syscall.c:484                       do_rmdir()      VFS
-     fs/vfs_syscall.c:539                      do_unlink()      VFS
-     fs/vfs_syscall.c:614                        do_link()      VFS
-     fs/vfs_syscall.c:641                      do_rename()      VFS
-     fs/vfs_syscall.c:682                       do_chdir()      VFS
-     fs/vfs_syscall.c:743                     do_getdent()      VFS
-     fs/vfs_syscall.c:801                       do_lseek()      VFS
-     fs/vfs_syscall.c:835                        do_stat()      VFS
-           fs/vnode.c:448              special_file_read()      VFS
-           fs/vnode.c:473             special_file_write()      VFS
           mm/pframe.c:300                     pframe_get()     S5FS
           mm/pframe.c:360                     pframe_pin()     S5FS
           mm/pframe.c:376                   pframe_unpin()     S5FS
-         proc/sched.c:112                 sched_sleep_on()    PROCS
-         proc/sched.c:141     sched_cancellable_sleep_on()    PROCS
-         proc/sched.c:188                   sched_cancel()    PROCS

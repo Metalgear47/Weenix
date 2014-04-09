@@ -597,6 +597,7 @@ ata_do_operation(ata_disk_t *adisk, char *data, blocknum_t blocknum, int write)
     intr_setipl(old_ipl);
 
     return -error;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: ata_do_operation");*/
 }
 
 /**

@@ -132,6 +132,7 @@ n_tty_attach(tty_ldisc_t *ldisc, tty_device_t *tty)
     ntty->ntty_rawtail = 0;
     ntty->ntty_ckdtail = 0;
     ntty->ntty_initial = 1;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_attach");*/
 }
 
 /*
@@ -153,6 +154,7 @@ n_tty_detach(tty_ldisc_t *ldisc, tty_device_t *tty)
 
     /*not sure about freeing it*/
     /*n_tty_destroy(ldisc);*/
+        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_detach");*/
 }
 
 /*
@@ -301,6 +303,7 @@ n_tty_read(tty_ldisc_t *ldisc, void *buf, int len)
 
     n_tty_print_inbuf(ldisc);
     return i;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_read");*/
 }
         /**
          * Read bytes from the line discipline into the buffer.
@@ -384,6 +387,7 @@ n_tty_receive_char(tty_ldisc_t *ldisc, char c)
     s[0] = c;
     n_tty_print_inbuf(ldisc);
     return s;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_receive_char");*/
 }
         /**
          * Receive a character and return a string to be echoed to the
@@ -413,6 +417,7 @@ n_tty_process_char(tty_ldisc_t *ldisc, char c)
         s[1] = '\0';
         return s;
     }
+        /*NOT_YET_IMPLEMENTED("DRIVERS: n_tty_process_char");*/
 }
         /**
          * Process a character and return a string to be echoed to the

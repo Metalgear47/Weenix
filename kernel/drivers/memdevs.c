@@ -56,6 +56,7 @@ memdevs_init()
     null_dev->cd_id = MEM_ZERO_DEVID;
     null_dev->cd_ops = &zero_dev_ops;
     bytedev_register(null_dev);
+        /*NOT_YET_IMPLEMENTED("DRIVERS: memdevs_init");*/
 }
 
 /**
@@ -74,6 +75,7 @@ null_read(bytedev_t *dev, int offset, void *buf, int count)
     char *buff = (char *)buf;
     buff[0] = '\x4';
     return 0;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: null_read");*/
 }
 
 /**
@@ -98,6 +100,7 @@ null_write(bytedev_t *dev, int offset, const void *buf, int count)
         }
     }
     return i;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: null_write");*/
 }
 
 /**
@@ -120,6 +123,7 @@ zero_read(bytedev_t *dev, int offset, void *buf, int count)
         buff[i] = '\0';
     }
     return count;
+        /*NOT_YET_IMPLEMENTED("DRIVERS: zero_read");*/
 }
 
 /* Don't worry about these until VM. Once you're there, they shouldn't be hard. */

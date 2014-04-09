@@ -140,6 +140,8 @@ proc_create(char *name)
     dbginfo(DBG_PROC, proc_list_info, NULL);
     
     return proc_struct;
+
+        /*NOT_YET_IMPLEMENTED("PROCS: proc_create");*/
 }
 
 /**
@@ -197,6 +199,8 @@ proc_cleanup(int status)
             fput(curproc->p_files[i]);
         }
     }
+
+        /*NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");*/
 }
 
 /*
@@ -224,6 +228,8 @@ proc_kill(proc_t *p, int status)
         } list_iterate_end();
         /*proc_cleanup? -maybe not here, wait till syscall*/
     }
+
+        /*NOT_YET_IMPLEMENTED("PROCS: proc_kill");*/
 }
 
 /*
@@ -247,6 +253,8 @@ proc_kill_all()
 
     /*kill current process*/
     do_exit(0);
+
+        /*NOT_YET_IMPLEMENTED("PROCS: proc_kill_all");*/
 }
 
 proc_t *
@@ -293,6 +301,8 @@ proc_thread_exited(void *retval)
     dbg(DBG_PROC, "Exiting process: [%s], now gonna make the switch and never return.\n", curproc->p_comm);
 
     sched_switch();
+
+        /*NOT_YET_IMPLEMENTED("PROCS: proc_thread_exited");*/
 }
 
 /* If pid is -1 dispose of one of the exited children of the current
@@ -406,6 +416,8 @@ CheckAgain:
     slab_obj_free(proc_allocator, child_proc);
 
     return child_pid;
+
+        /*NOT_YET_IMPLEMENTED("PROCS: do_waitpid");*/
 }
 
 /*
@@ -419,6 +431,8 @@ do_exit(int status)
 {
     /*implementation for now, only one thread*/
     kthread_exit((void *)(&status));
+
+        /*NOT_YET_IMPLEMENTED("PROCS: do_exit");*/
 }
 
 size_t

@@ -110,6 +110,8 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     dbg(DBG_THR, "Created thread for process: %s\n", p->p_comm);
     dbginfo(DBG_THR, &proc_info, p);
     return kthread_struct;
+
+        /*NOT_YET_IMPLEMENTED("PROCS: kthread_create");*/
 }
 
 void
@@ -151,6 +153,8 @@ kthread_cancel(kthread_t *kthr, void *retval)
             list_remove(&kthr->kt_qlink);
         }
     }
+
+        /*NOT_YET_IMPLEMENTED("PROCS: kthread_cancel");*/
 }
 
 /*
@@ -172,6 +176,8 @@ kthread_exit(void *retval)
     /*not setting state to exited here*/
 
     proc_thread_exited(retval);
+
+        /*NOT_YET_IMPLEMENTED("PROCS: kthread_exit");*/
 }
 
 /*

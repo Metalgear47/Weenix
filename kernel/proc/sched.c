@@ -152,6 +152,7 @@ sched_wakeup_on(ktqueue_t *q)
         sched_make_runnable(kthr_tmp);
     }
     return kthr_tmp;
+        /*NOT_YET_IMPLEMENTED("PROCS: sched_wakeup_on");*/
 }
 
 void
@@ -162,6 +163,7 @@ sched_broadcast_on(ktqueue_t *q)
     while (!sched_queue_empty(q)) {
         kthread_t *kthr_tmp = sched_wakeup_on(q);
     }
+        /*NOT_YET_IMPLEMENTED("PROCS: sched_broadcast_on");*/
 }
 
 /*
@@ -254,6 +256,7 @@ sched_switch(void)
     dbg(DBG_SCHED, "Going back to proc: %s\n", curproc->p_comm);
 
     return;
+        /*NOT_YET_IMPLEMENTED("PROCS: sched_switch");*/
 }
 
 /*
@@ -280,4 +283,5 @@ sched_make_runnable(kthread_t *thr)
 
     intr_setipl(old_ipl);
     return;
+        /*NOT_YET_IMPLEMENTED("PROCS: sched_make_runnable");*/
 }
