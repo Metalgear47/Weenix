@@ -298,15 +298,18 @@ int
 pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
 {
     KASSERT(o);
+    dbg(DBG_PFRAME, "called with mmobj %p, pagenum %u\n", o, pagenum);
 
     /*do I have to pin the pf if it's busy?*/
 get_resident:
     *result = pframe_get_resident(o, pagenum);
     if (*result) {
         if pframe_is_busy(*result) {
+            dbg(DBG_PFRAME, "the pframe is resident and BUSY, gonna sleep on it.\n");
             sched_sleep_on(&((*result)->pf_waitq));
             goto get_resident;
         } else {
+            dbg(DBG_PFRAME, "the pframe is resident and not busy, just return it.\n");
             return 0;
         }
     } else {
@@ -316,19 +319,28 @@ get_resident:
 allocate:
     *result = pframe_alloc(o, pagenum);
     if (*result == NULL) {
+        dbg(DBG_PFRAME, "not enough pframes there, gonna call pageout deamon.\n");
+
         sched_wakeup_on(&pageoutd_waitq);
         sched_make_runnable(curthr);
         sched_switch();
+        dbg(DBG_PFRAME, "after pageout deamon reclaimed pframes.\n");
         
         goto allocate;
     } else {
+        dbg(DBG_PFRAME, "got a pframe, now gonna fill it.\n");
         pframe_pin(*result);
         /*this may block*/
-        int ret = pframe_fill(*result);
+        int err = pframe_fill(*result);
         pframe_unpin(*result);
 
-        return ret;
+        if (err < 0) {
+            dbg(DBG_PFRAME, "some error when trying to fill the page, error number is %d\n", err);
+        return err;
     }
+
+    panic("should not reach here.\n");
+    return 0;
 
         /*NOT_YET_IMPLEMENTED("S5FS: pframe_get");*/
         /*return 0;*/
@@ -391,7 +403,7 @@ void
 pframe_pin(pframe_t *pf)
 {
     KASSERT(pf->pf_pincount >= 0 && "Bad thing happened, pincount is negative.\n");
-    dbg(DBG_PFRAME, "called on pframe %p.\n with pincount: %d", pf, pf_pincount);
+    dbg(DBG_PFRAME, "called on pframe %p.\n with pincount: %d", pf, pf->pf_pincount);
 
     if (pf->pf_pincount > 0) {
         pf->pf_pincount++;
@@ -427,7 +439,7 @@ void
 pframe_unpin(pframe_t *pf)
 {
     KASSERT(pf->pf_pincount > 0);
-    dbg(DBG_PFRAME, "called on pframe %p.\n with pincount: %d", pf, pf_pincount);
+    dbg(DBG_PFRAME, "called on pframe %p.\n with pincount: %d", pf, pf->pf_pincount);
 
     pf->pf_pincount--;
     if (pf->pf_pincount == 0) {
