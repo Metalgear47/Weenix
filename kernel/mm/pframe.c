@@ -303,7 +303,7 @@ pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
 get_resident:
     *result = pframe_get_resident(o, pagenum);
     if (*result) {
-        if (pframe_is_busy(*result)) {
+        if pframe_is_busy(*result) {
             sched_sleep_on(&((*result)->pf_waitq));
             goto get_resident;
         } else {
@@ -391,10 +391,12 @@ void
 pframe_pin(pframe_t *pf)
 {
     KASSERT(pf->pf_pincount >= 0 && "Bad thing happened, pincount is negative.\n");
+    dbg(DBG_PFRAME, "called on pframe %p.\n with pincount: %d", pf, pf_pincount);
 
     if (pf->pf_pincount > 0) {
         pf->pf_pincount++;
     } else {
+        dbg(DBG_PFRAME, "this pfram is first pinned, add it to correct list.\n");
         pf->pf_pincount++;
         KASSERT(pf->pf_pincount == 1);
 
@@ -406,6 +408,8 @@ pframe_pin(pframe_t *pf)
         list_insert_head(&pinned_list, &pf->pf_link);
         npinned++;
     }
+
+    KASSERT(pf->pf_pincount > 0);
         /*NOT_YET_IMPLEMENTED("S5FS: pframe_pin");*/
 }
 
@@ -423,9 +427,12 @@ void
 pframe_unpin(pframe_t *pf)
 {
     KASSERT(pf->pf_pincount > 0);
+    dbg(DBG_PFRAME, "called on pframe %p.\n with pincount: %d", pf, pf_pincount);
 
     pf->pf_pincount--;
     if (pf->pf_pincount == 0) {
+        dbg(DBG_PFRAME, "pincount reaches 0, gonna add it to correct list.\n");
+
         /*remove it from pinned list*/
         list_remove(&pf->pf_link);
         npinned--;
