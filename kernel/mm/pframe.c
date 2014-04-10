@@ -389,7 +389,22 @@ pframe_pin(pframe_t *pf)
 void
 pframe_unpin(pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("S5FS: pframe_unpin");
+    KASSERT(pf->pf_pincount > 0);
+
+    pf->pf_pincount--;
+    if (pf->pf_pincount == 0) {
+        /*remove it from pinned list*/
+        list_remove(&pf->pf_link);
+        npinned--;
+
+        /*add it to allocated list*/
+        list_insert_head(&alloc_list, &pf->pf_link);
+        /*a little bit shaky about insert head(LRU)*/
+        nallocated++;
+    }
+
+    KASSERT(pf->pf_pincount >= 0);
+        /*NOT_YET_IMPLEMENTED("S5FS: pframe_unpin");*/
 }
 
 /*
