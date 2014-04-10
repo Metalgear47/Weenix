@@ -336,6 +336,7 @@ allocate:
 
         if (err < 0) {
             dbg(DBG_PFRAME, "some error when trying to fill the page, error number is %d\n", err);
+        }
         return err;
     }
 
