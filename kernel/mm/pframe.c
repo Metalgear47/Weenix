@@ -297,6 +297,26 @@ pframe_fill(pframe_t *pf)
 int
 pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
 {
+    KASSERT(o);
+
+    /*do I have to pin the pf if it's busy?*/
+get_resident:
+    *result = pframe_get_resident(o, pagenum);
+    if (*result) {
+        if (pframe_is_busy(*result)) {
+            sched_sleep_on(&pf->pf_waitq);
+            goto get_resident;
+        } else {
+            return 0;
+        }
+    } else {
+        KASSERT(*result == NULL);
+    }
+
+    *result = pframe_alloc(o, pagenum);
+    if (*result == NULL) {
+        return -ENOMEM;
+    }
         NOT_YET_IMPLEMENTED("S5FS: pframe_get");
         return 0;
 }
