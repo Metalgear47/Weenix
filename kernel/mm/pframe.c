@@ -304,7 +304,7 @@ get_resident:
     *result = pframe_get_resident(o, pagenum);
     if (*result) {
         if (pframe_is_busy(*result)) {
-            sched_sleep_on(&pf->pf_waitq);
+            sched_sleep_on(&((*result)->pf_waitq));
             goto get_resident;
         } else {
             return 0;
@@ -313,12 +313,25 @@ get_resident:
         KASSERT(*result == NULL);
     }
 
+allocate:
     *result = pframe_alloc(o, pagenum);
     if (*result == NULL) {
-        return -ENOMEM;
+        sched_wakeup_on(&pageoutd_waitq);
+        sched_make_runnable(curthr);
+        sched_switch();
+        
+        goto allocate;
+    } else {
+        pframe_pin(*result);
+        /*this may block*/
+        int ret = pframe_fill(*result);
+        pframe_unpin(*result);
+
+        return ret;
     }
-        NOT_YET_IMPLEMENTED("S5FS: pframe_get");
-        return 0;
+
+        /*NOT_YET_IMPLEMENTED("S5FS: pframe_get");*/
+        /*return 0;*/
 }
 
 int
