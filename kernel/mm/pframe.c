@@ -357,7 +357,23 @@ pframe_migrate(pframe_t *pf, mmobj_t *dest)
 void
 pframe_pin(pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("S5FS: pframe_pin");
+    KASSERT(pf->pf_pincount >= 0 && "Bad thing happened, pincount is negative.\n");
+
+    if (pf->pf_pincount > 0) {
+        pf->pf_pincount++;
+    } else {
+        pf->pf_pincount++;
+        KASSERT(pf->pf_pincount == 1);
+
+        /*remove it from allocated list*/
+        list_remove(&pf->pf_link);
+        nallocated--;
+
+        /*add it to pinned list*/
+        list_insert_head(&pinned_list, &pf->pf_link);
+        npinned++;
+    }
+        /*NOT_YET_IMPLEMENTED("S5FS: pframe_pin");*/
 }
 
 /*
