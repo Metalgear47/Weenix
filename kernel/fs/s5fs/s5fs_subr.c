@@ -155,6 +155,33 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                 if (alloc == 0) {
                     return 0;
                 } else {
+                    int indirect_block = s5_alloc_block(fs);
+                    if (indirect_block < 0) {
+                        return indirect_block;
+                    }
+
+                    KASSERT(indirect_block);
+                    mmobj_t *o = S5FS_TO_VMOBJ(fs);
+                    KASSERT(o);
+
+                    pframe_t *ibp = pframe_alloc(o, (uint32_t)indirect_block);
+                    if (ibp == NULL) {
+                        s5_free_block(fs, (uint32_t)indirect_block);
+                        return -ENOMEM;
+                    }
+                    inode->s5_indirect_block = (uint32_t)indirect_block;
+
+                    uint32_t *b = (uint32_t*)(ibp->pf_addr);
+                    memset(b, 0, S5_NIDIRECT_BLOCKS * sizeof(int));
+
+                    blockno = s5_alloc_block(fs);
+                    if (blockno < 0) {
+                        return blockno;
+                    }
+                    /*blockno should not be 0*/
+                    KASSERT(blockno);
+                    b[blockno_indirect] = blockno;
+                    return blockno;
                 }
             }
         } else {
