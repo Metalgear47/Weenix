@@ -161,8 +161,36 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
 static int
 s5_alloc_block(s5fs_t *fs)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5_alloc_block");
-        return -1;
+    KASSERT(fs);
+
+    s5_super_t *s = fs->s5f_super;
+
+    lock_s5(fs);
+
+    KASSERT(S5_NBLKS_PER_FNODE > s->s5s_nfree);
+
+    if (s->s5s_nfree == 0 && s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1] == -1) {
+        dprintf("there are no free blocks\n");
+        return -ENOSPC;
+    }
+
+    int blockno = 0;
+
+    if (s->s5s_nfree == 0) {
+        /*get the pframe where we will copy free block nums from*/
+        pframe_t *next_free_blocks = NULL;
+        KASSERT(fs->s5f_bdev);
+        blockno = s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1];
+        KASSERT(blockno > 0);
+        pframe_get(&fs->s5f_bdev->bd_mmobj, blockno, &next_free_blocks);
+
+        memcpy((void *)(s->s5s_free_blocks), next_free_blocks->pf_addr, 
+                S5_NBLKS_PER_FNODE * sizeof(int));
+        /*not sure if I need to dirty the page here*/
+
+        s->s5s_nfree = S5_NBLKS_PER_FNODE - 1;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5_alloc_block");*/
+        /*return -1;*/
 }
 
 
