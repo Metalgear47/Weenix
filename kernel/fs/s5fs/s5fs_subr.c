@@ -73,9 +73,35 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
         /*not sure about the return value here*/
         return -EINVAL;
     }
+
+    int blockno = 0;
+    s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
+    KASSERT(inode);
+
+    if (block_in_file < S5_NDIRECT_BLOCKS) {
+        blockno = inode->s5_direct_blocks[block_in_file];
+        if (blockno == 0) {
+            if (alloc == 0) {
+                return 0;
+            } else {
+                s5fs_t *fs = VNODE_TO_S5FS(vnode);
+                KASSERT(fs);
+                blockno = s5_alloc_block(fs);
+                if (blockno < 0) {
+                    return blockno;
+                }
+                /*blockno should not be 0*/
+                KASSERT(blockno);
+                inode->s5_direct_blocks[block_in_file] = blockno;
+                return blockno;
+            }
+        } else {
+            return blockno;
+        }
+    }
     
-        NOT_YET_IMPLEMENTED("S5FS: s5_seek_to_block");
-        return -1;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5_seek_to_block");*/
+        /*return -1;*/
 }
 
 
