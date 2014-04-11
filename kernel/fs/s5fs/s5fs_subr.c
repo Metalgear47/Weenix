@@ -86,6 +86,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
     KASSERT(fs);
 
     if (blockno_file < S5_NDIRECT_BLOCKS) {
+        /*direct block*/
         blockno = inode->s5_direct_blocks[blockno_file];
         if (blockno == 0) {
             if (alloc == 0) {
@@ -111,6 +112,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
             uint32_t blockno_indirect = blockno_file - S5_NDIRECT_BLOCKS;
 
             if (inode->s5_indirect_block) {
+                /*indirect block points to a block*/
                 pframe_t *ibp;
                 uint32_t *b;
 
@@ -124,16 +126,40 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 
                 b = (uint32_t *)(ibp->pf_addr);
                 blockno = b[blockno_indirect];
+                if (blockno == 0) {
+                    if (alloc == 0) {
+                        pframe_unpin(ibp);
+                        return 0;
+                    } else {
+                        blockno = s5_alloc_block(fs);
+                        if (blockno < 0) {
+                            pframe_unpin(ibp);
+                            return blockno;
+                        } else {
+                            /*blockno should not be 0*/
+                            KASSERT(blockno);
+                            inode->s5_direct_blocks[blockno_file] = blockno;
+                            pframe_unpin(ibp);
+                            return blockno;
+                        }
+                    }
+                } else {
+                    pframe_unpin(ibp);
+                    return blockno;
+                }
 
-                pframe_unpin(ibp);
+                /*pframe_unpin(ibp);*/
             } else {
+                /*indirect block is all 0s*/
                 KASSERT(inode->s5_indirect_block == 0);
                 if (alloc == 0) {
                     return 0;
                 } else {
-                    panic("I don't believe this really happened.\n");
                 }
             }
+        } else {
+            panic("file is corrupted: not a dir or file but have idirect blocks?\n");
+            return -EINVAL;
         }
     }
     
