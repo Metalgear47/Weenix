@@ -162,6 +162,7 @@ static int
 s5_alloc_block(s5fs_t *fs)
 {
     KASSERT(fs);
+    dprintf("s5_alloc_block called\n");
 
     s5_super_t *s = fs->s5f_super;
 
@@ -177,12 +178,15 @@ s5_alloc_block(s5fs_t *fs)
     int blockno = 0;
 
     if (s->s5s_nfree == 0) {
+        dprintf("no free block nums in superblock, gonna copy a whole from the next one.\n");
+
         /*get the pframe where we will copy free block nums from*/
         pframe_t *next_free_blocks = NULL;
         KASSERT(fs->s5f_bdev);
         blockno = s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1];
         KASSERT(blockno > 0);
         pframe_get(&fs->s5f_bdev->bd_mmobj, blockno, &next_free_blocks);
+        KASSERT(next_free_blocks->pf_addr);
 
         memcpy((void *)(s->s5s_free_blocks), next_free_blocks->pf_addr, 
                 S5_NBLKS_PER_FNODE * sizeof(int));
@@ -198,6 +202,7 @@ s5_alloc_block(s5fs_t *fs)
     unlock_s5(fs);
 
     KASSERT(blockno > 0);
+    dprintf("block allocated, the block number is %d", blockno);
     return blockno;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_alloc_block");*/
         /*return -1;*/
