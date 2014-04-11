@@ -63,6 +63,17 @@ static int s5_alloc_block(s5fs_t *);
 int
 s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 {
+    KASSERT(vnode);
+
+    uint32_t block_in_file = S5_DATA_BLOCK(seekptr);
+    dprintf("s5_seek_to_block is called, vnode is %p, seekptr is %u, alloc is %d, requesting for block No.%u\n", vnode, seekptr, alloc, block_in_file);
+
+    if (block_in_file > S5_MAX_FILE_BLOCKS) {
+        dprintf("request a block exceeding max file blocks.\n");
+        /*not sure about the return value here*/
+        return -EINVAL;
+    }
+    
         NOT_YET_IMPLEMENTED("S5FS: s5_seek_to_block");
         return -1;
 }
