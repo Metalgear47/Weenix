@@ -169,7 +169,7 @@ s5_alloc_block(s5fs_t *fs)
 
     KASSERT(S5_NBLKS_PER_FNODE > s->s5s_nfree);
 
-    if (s->s5s_nfree == 0 && s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1] == -1) {
+    if (s->s5s_nfree == 0 && s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1] == (uint32_t) -1) {
         dprintf("there are no free blocks\n");
         return -ENOSPC;
     }
@@ -189,6 +189,16 @@ s5_alloc_block(s5fs_t *fs)
         /*not sure if I need to dirty the page here*/
 
         s->s5s_nfree = S5_NBLKS_PER_FNODE - 1;
+    } else {
+        blockno = s->s5s_free_blocks[--(s->s5s_nfree)];
+    }
+
+    s5_dirty_super(fs);
+
+    unlock_s5(fs);
+
+    KASSERT(blockno > 0);
+    return blockno;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_alloc_block");*/
         /*return -1;*/
 }
