@@ -65,10 +65,10 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 {
     KASSERT(vnode);
 
-    uint32_t block_in_file = S5_DATA_BLOCK(seekptr);
-    dprintf("s5_seek_to_block is called, vnode is %p, seekptr is %u, alloc is %d, requesting for block No.%u\n", vnode, seekptr, alloc, block_in_file);
+    uint32_t blockno_file = S5_DATA_BLOCK(seekptr);
+    dprintf("s5_seek_to_block is called, vnode is %p, seekptr is %u, alloc is %d, requesting for block No.%u\n", vnode, seekptr, alloc, blockno_file);
 
-    if (block_in_file > S5_MAX_FILE_BLOCKS) {
+    if (blockno_file > S5_MAX_FILE_BLOCKS) {
         dprintf("request a block exceeding max file blocks.\n");
         /*not sure about the return value here*/
         return -EINVAL;
@@ -77,26 +77,63 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
     int blockno = 0;
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
     KASSERT(inode);
+    KASSERT((S5_TYPE_DATA == inode->s5_type)
+            || (S5_TYPE_DIR == inode->s5_type)
+            || (S5_TYPE_CHR == inode->s5_type)
+            || (S5_TYPE_BLK == inode->s5_type));
 
-    if (block_in_file < S5_NDIRECT_BLOCKS) {
-        blockno = inode->s5_direct_blocks[block_in_file];
+    s5fs_t *fs = VNODE_TO_S5FS(vnode);
+    KASSERT(fs);
+
+    if (blockno_file < S5_NDIRECT_BLOCKS) {
+        blockno = inode->s5_direct_blocks[blockno_file];
         if (blockno == 0) {
             if (alloc == 0) {
                 return 0;
             } else {
-                s5fs_t *fs = VNODE_TO_S5FS(vnode);
-                KASSERT(fs);
                 blockno = s5_alloc_block(fs);
                 if (blockno < 0) {
                     return blockno;
                 }
                 /*blockno should not be 0*/
                 KASSERT(blockno);
-                inode->s5_direct_blocks[block_in_file] = blockno;
+                inode->s5_direct_blocks[blockno_file] = blockno;
                 return blockno;
             }
         } else {
             return blockno;
+        }
+    } else {
+        /*indirect block*/
+        if (((S5_TYPE_DATA == inode->s5_type)
+             || (S5_TYPE_DIR == inode->s5_type))) {
+            /*the index in indirect blocks*/
+            uint32_t blockno_indirect = blockno_file - S5_NDIRECT_BLOCKS;
+
+            if (inode->s5_indirect_block) {
+                pframe_t *ibp;
+                uint32_t *b;
+
+                pframe_get(S5FS_TO_VMOBJ(fs),
+                           (unsigned)inode->s5_indirect_block,
+                           &ibp);
+                KASSERT(ibp
+                        && "because never fails for block_device "
+                        "vm_objects");
+                pframe_pin(ibp);
+
+                b = (uint32_t *)(ibp->pf_addr);
+                blockno = b[blockno_indirect];
+
+                pframe_unpin(ibp);
+            } else {
+                KASSERT(inode->s5_indirect_block == 0);
+                if (alloc == 0) {
+                    return 0;
+                } else {
+                    panic("I don't believe this really happened.\n");
+                }
+            }
         }
     }
     
