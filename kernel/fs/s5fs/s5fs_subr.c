@@ -113,6 +113,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                 /*blockno should not be 0*/
                 KASSERT(blockno);
                 inode->s5_direct_blocks[blockno_file] = blockno;
+                s5_dirty_inode(fs, inode);
                 dprintf("the newly allocated block is %d\n", blockno);
                 return blockno;
             }
@@ -169,6 +170,8 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                             pframe_unpin(ibp);
                             /*since indirect block is modified, dirty it*/
                             pframe_dirty(ibp);
+                            /*since inode is also modified*/
+                            s5_dirty_inode(fs, inode);
                             dprintf("the newly allocated block number is %d\n", blockno);
                             return blockno;
                         }
@@ -236,6 +239,8 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     pframe_unpin(ibp);
                     /*dirty the page for indirect block*/
                     pframe_dirty(ibp);
+                    /*dirty the inode*/
+                    s5_dirty_inode(fs, inode);
                     return blockno;
                 }
             }
