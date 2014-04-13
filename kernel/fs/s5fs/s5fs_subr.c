@@ -186,7 +186,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                 dprintf("indirect block is a sparse block.\n");
 
                 if (alloc == 0) {
-                    dprinf("no need to allocate, just return 0\n");
+                    dprintf("no need to allocate, just return 0\n");
                     return 0;
                 } else {
                     dprintf("no choice but to allocate\n");
@@ -204,6 +204,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     KASSERT(o);
 
                     pframe_t *ibp = NULL;
+                    /*load the page frame for indirect block*/
                     int err = pframe_get(o, (uint32_t)indirect_block, &ibp);
                     if (ibp == NULL || err < 0) {
                         s5_free_block(fs, (uint32_t)indirect_block);
@@ -212,9 +213,11 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     }
 
                     pframe_pin(ibp);
+                    /*get the pointer to indirect blocks array*/
                     uint32_t *b = (uint32_t*)(ibp->pf_addr);
                     memset(b, 0, S5_NIDIRECT_BLOCKS * sizeof(int));
 
+                    /*allocate the block for the real data*/
                     blockno = s5_alloc_block(fs);
                     if (blockno < 0) {
                         s5_free_block(fs, (uint32_t)indirect_block);
@@ -225,7 +228,9 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 
                     /*blockno should not be 0*/
                     KASSERT(blockno);
+                    /*update the indirect block number*/
                     inode->s5_indirect_block = (uint32_t)indirect_block;
+                    /*update the block number in indirect block*/
                     b[blockno_indirect] = blockno;
 
                     pframe_unpin(ibp);
