@@ -298,15 +298,37 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     KASSERT((S5_TYPE_DATA == inode->s5_type)
              || (S5_TYPE_DIR == inode->s5_type));
 
+/*
+ *    s5fs_t *fs = VNODE_TO_S5FS(vnode);
+ *    KASSERT(fs);
+ *
+ *    mmobj_t *o = S5FS_TO_VMOBJ(fs);
+ *    KASSERT(o);
+ */
+
+    /*get the block number*/
     uint32_t block_start = S5_DATA_BLOCK(seek);
-    off_t end = seek + len;
+    off_t end = seek + len - 1;
+    /*write to [start, end]*/
     if (end >= S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE) {
         end = S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE - 1;
-        len = end - seek;
+        len = end - seek + 1;
     }
-    uint32_t block_end = S5_DATA_BLOCK(seek);
+    uint32_t block_end = S5_DATA_BLOCK(end);
+
+    /*get the offset inside block*/
     off_t offset_start = S5_DATA_OFFSET(seek);
     off_t offset_end = S5_DATA_OFFSET(end);
+
+    if (block_start == block_end) {
+        pframe_t block_pframe = NULL;
+        int err = pframe_get(&vnode->vn_mmobj, block_start, block_pframe);
+        if (err < 0) {
+            KASSERT(block_pframe == NULL;
+            return err;
+        }
+        KASSERT(offset_end - offset_start + 1 == len);
+        memcpy(block_pframe->pf_addr, bytes, len);
 
         NOT_YET_IMPLEMENTED("S5FS: s5_write_file");
         return -1;
