@@ -65,9 +65,11 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 {
     KASSERT(vnode);
 
+    /*the block number in the file*/
     uint32_t blockno_file = S5_DATA_BLOCK(seekptr);
     dprintf("s5_seek_to_block is called, vnode is %p, seekptr is %u, alloc is %d, requesting for block No.%u\n", vnode, seekptr, alloc, blockno_file);
 
+    /*block number exceeds the max number*/
     if (blockno_file > S5_MAX_FILE_BLOCKS) {
         /*I guess I don't need to care about it now because it should be checked by upper layer*/
         dprintf("request a block exceeding max file blocks.\n");
@@ -76,21 +78,27 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
     }
 
     int blockno = 0;
+    /*get the file's corresponding inode*/
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
+    /*inode should not be NULL and check the type of inode*/
     KASSERT(inode);
     KASSERT((S5_TYPE_DATA == inode->s5_type)
             || (S5_TYPE_DIR == inode->s5_type)
             || (S5_TYPE_CHR == inode->s5_type)
             || (S5_TYPE_BLK == inode->s5_type));
 
+    /*get the file system*/
     s5fs_t *fs = VNODE_TO_S5FS(vnode);
     KASSERT(fs);
 
     if (blockno_file < S5_NDIRECT_BLOCKS) {
-        dprintf("it's in direct blocks\n");
         /*direct block*/
+        dprintf("it's in direct blocks\n");
+
+        /*get the actually block number on disk*/
         blockno = inode->s5_direct_blocks[blockno_file];
         if (blockno == 0) {
+            /*sparse block*/
             dprintf("It's a sparse block\n");
             if (alloc == 0) {
                 dprintf("No need to alloc, just return 0\n");
@@ -109,12 +117,15 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                 return blockno;
             }
         } else {
+            /*not a sparse block*/
             dprintf("It's not a sparse block, block number is %d\n", blockno);
             return blockno;
         }
     } else {
-        dprintf("It's indirect blocks.\n");
         /*indirect block*/
+        dprintf("It's indirect blocks.\n");
+
+        /*not sure about check here*/
         if (((S5_TYPE_DATA == inode->s5_type)
              || (S5_TYPE_DIR == inode->s5_type))) {
             /*the index in indirect blocks*/
@@ -152,8 +163,12 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                         } else {
                             /*blockno should not be 0*/
                             KASSERT(blockno);
-                            inode->s5_direct_blocks[blockno_file] = blockno;
+                            /*store it back in the indirect blocks array*/
+                            b[blockno_indirect] = blockno;
+                            /*unpin it*/
                             pframe_unpin(ibp);
+                            /*since indirect block is modified, dirty it*/
+                            pframe_dirty(ibp);
                             dprintf("the newly allocated block number is %d\n", blockno);
                             return blockno;
                         }
@@ -166,13 +181,17 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 
                 /*pframe_unpin(ibp);*/
             } else {
-                /*indirect block is all 0s*/
                 KASSERT(inode->s5_indirect_block == 0);
+                /*indirect block is all 0s*/
+                dprintf("indirect block is a sparse block.\n");
+
                 if (alloc == 0) {
                     dprinf("no need to allocate, just return 0\n");
                     return 0;
                 } else {
                     dprintf("no choice but to allocate\n");
+                    dprintf("allocating an indirect block\n");
+
                     int indirect_block = s5_alloc_block(fs);
                     if (indirect_block < 0) {
                         dprintf("some error occured during s5_alloc_block, error number is %d\n", indirect_block);
@@ -206,6 +225,9 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     /*blockno should not be 0*/
                     KASSERT(blockno);
                     b[blockno_indirect] = blockno;
+                    /*dirty the page for indirect block*/
+                    pframe_dirty(ibp);
+
                     inode->s5_indirect_block = (uint32_t)indirect_block;
                     pframe_unpin(ibp);
                     return blockno;
@@ -345,6 +367,7 @@ s5_alloc_block(s5fs_t *fs)
         memcpy((void *)(s->s5s_free_blocks), next_free_blocks->pf_addr, 
                 S5_NBLKS_PER_FNODE * sizeof(int));
         /*not sure if I need to dirty the page here*/
+        /*and memset the whole page*/
 
         s->s5s_nfree = S5_NBLKS_PER_FNODE - 1;
     } else {
