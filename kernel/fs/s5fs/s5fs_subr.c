@@ -310,7 +310,7 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     uint32_t block_start = S5_DATA_BLOCK(seek);
     off_t end = seek + len - 1;
     /*write to [start, end]*/
-    if (end >= S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE) {
+    if ((unsigned)end >= S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE) {
         end = S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE - 1;
         len = end - seek + 1;
     }
@@ -321,14 +321,21 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     off_t offset_end = S5_DATA_OFFSET(end);
 
     if (block_start == block_end) {
-        pframe_t block_pframe = NULL;
-        int err = pframe_get(&vnode->vn_mmobj, block_start, block_pframe);
+        pframe_t *block_pframe = NULL;
+        int err = pframe_get(&vnode->vn_mmobj, block_start, &block_pframe);
         if (err < 0) {
-            KASSERT(block_pframe == NULL;
+            KASSERT(block_pframe == NULL);
             return err;
         }
-        KASSERT(offset_end - offset_start + 1 == len);
+
+        KASSERT((unsigned)(offset_end - offset_start + 1) == len);
         memcpy(block_pframe->pf_addr, bytes, len);
+
+        err = pframe_dirty(block_pframe);
+        KASSERT(!err && "should not faile here");
+
+        return len;
+    }
 
         NOT_YET_IMPLEMENTED("S5FS: s5_write_file");
         return -1;
