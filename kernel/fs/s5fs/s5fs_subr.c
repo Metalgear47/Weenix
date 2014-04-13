@@ -192,6 +192,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     dprintf("no choice but to allocate\n");
                     dprintf("allocating an indirect block\n");
 
+                    /*allocate the block for indirect block first*/
                     int indirect_block = s5_alloc_block(fs);
                     if (indirect_block < 0) {
                         dprintf("some error occured during s5_alloc_block, error number is %d\n", indirect_block);
@@ -224,12 +225,12 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 
                     /*blockno should not be 0*/
                     KASSERT(blockno);
+                    inode->s5_indirect_block = (uint32_t)indirect_block;
                     b[blockno_indirect] = blockno;
+
+                    pframe_unpin(ibp);
                     /*dirty the page for indirect block*/
                     pframe_dirty(ibp);
-
-                    inode->s5_indirect_block = (uint32_t)indirect_block;
-                    pframe_unpin(ibp);
                     return blockno;
                 }
             }
