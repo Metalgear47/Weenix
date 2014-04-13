@@ -292,6 +292,22 @@ unlock_s5(s5fs_t *fs)
 int
 s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
 {
+    KASSERT(vnode);
+    s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
+    KASSERT(inode);
+    KASSERT((S5_TYPE_DATA == inode->s5_type)
+             || (S5_TYPE_DIR == inode->s5_type));
+
+    uint32_t block_start = S5_DATA_BLOCK(seek);
+    off_t end = seek + len;
+    if (end >= S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE) {
+        end = S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE - 1;
+        len = end - seek;
+    }
+    uint32_t block_end = S5_DATA_BLOCK(seek);
+    off_t offset_start = S5_DATA_OFFSET(seek);
+    off_t offset_end = S5_DATA_OFFSET(end);
+
         NOT_YET_IMPLEMENTED("S5FS: s5_write_file");
         return -1;
 }
