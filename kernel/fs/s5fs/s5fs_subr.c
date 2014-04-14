@@ -470,13 +470,11 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
             memcpy(dest, block_pframe->pf_addr, len);
         }
 
-        KASSERT(!err && "should not fail here");
-
         return len;
     }
 
-    dprintf("read to multi blocks\n");
-    /*write to the start block*/
+    dprintf("read multi blocks\n");
+    /*read the start block*/
     pframe_t *block_pframe = NULL;
     int err = pframe_get(&vnode->vn_mmobj, block_start, &block_pframe);
     if (err < 0) {
@@ -490,7 +488,7 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
         memcpy(dest, block_pframe->pf_addr, (S5_BLOCK_SIZE - offset_start));
     }
 
-    /*write to the end block*/
+    /*read the end block*/
     block_pframe = NULL;
     err = pframe_get(&vnode->vn_mmobj, block_end, &block_pframe);
     if (err < 0) {
@@ -504,7 +502,7 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
         memcpy(&(dest[(block_end - block_start) * S5_BLOCK_SIZE]), block_pframe->pf_addr, (offset_end + 1));
     }
 
-    /*write to blocks in between*/
+    /*read blocks in between*/
     uint32_t i;
     for (i = block_start + 1 ; i < block_end ; i++) {
         pframe_t *cur_pframe = NULL;
