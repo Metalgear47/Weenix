@@ -798,16 +798,28 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
     KASSERT(inode);
     KASSERT(S5_TYPE_DIR == inode->s5_type);
 
+    KASSERT(namelen <= S5_NAME_LEN);
+
     int err = 0;
     off_t offset = 0;
     off_t filesize = vnode->vn_len;
+    KASSERT((filesize % sizeof(s5_dirent_t)) == 0);
     s5_dirent_t dirent;
 
     while (offset < filesize) {
-        s5_read_file(vnode, offset, (char *)(&dirent), sizeof(s5_dirent_t));
+        err = s5_read_file(vnode, offset, (char *)(&dirent), sizeof(s5_dirent_t));
+        if (err < 0) {
+            return err;
+        }
+
+        if (dirent.s5d_name[0] == '\0') {
+            panic("Weird, there's some inconsistency between dirents and file size\n");
+        }
+
         if name_match(dirent.s5d_name, name, namelen) {
             return dirent.s5d_inode;
         }
+
         offset += sizeof(s5_dirent_t);
     }
 
