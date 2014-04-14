@@ -800,6 +800,9 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
     KASSERT(namelen <= S5_NAME_LEN);
 
+    name[namelen] = 0;
+    dprintf("vnode address is %p, name is %s\n", vnode, name);
+
     int err = 0;
     off_t offset = 0;
     off_t filesize = vnode->vn_len;
@@ -851,8 +854,48 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
 int
 s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5_remove_dirent");
-        return -1;
+    KASSERT(vnode);
+    KASSERT(name);
+    KASSERT(S_ISDIR(vnode->vn_mode));
+
+    s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
+    KASSERT(inode);
+    KASSERT(S5_TYPE_DIR == inode->s5_type);
+
+    KASSERT(namelen <= S5_NAME_LEN);
+
+    name[namelen] = 0;
+    dprintf("vnode address is %p, name is %s\n", vnode, name);
+
+    int inodeno = 0;
+    off_t offset = 0;
+    off_t filesize = vnode->vn_len;
+    KASSERT((filesize % sizeof(s5_dirent_t)) == 0);
+    s5_dirent_t dirent;
+
+    while (offset < filesize) {
+        inodeno = s5_read_file(vnode, offset, (char *)(&dirent), sizeof(s5_dirent_t));
+        if (inodeno < 0) {
+            return inodeno;
+        }
+
+        if (dirent.s5d_name[0] == '\0') {
+            panic("Weird, there's some inconsistency between dirents and file size\n");
+        }
+
+        if name_match(dirent.s5d_name, name, namelen) {
+            break;
+        }
+
+        offset += sizeof(s5_dirent_t);
+    }
+    KASSERT(inodeno >= 0);
+
+    if (inodeno == 0) {
+        return -ENOENT;
+    }
+        /*NOT_YET_IMPLEMENTED("S5FS: s5_remove_dirent");*/
+        /*return -1;*/
 }
 
 /*
