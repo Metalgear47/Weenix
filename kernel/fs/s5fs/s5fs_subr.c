@@ -801,17 +801,20 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
     KASSERT(namelen <= S5_NAME_LEN);
 
     ((char *)name)[namelen] = 0;
-    dprintf("vnode address is %p, name is %s\n", vnode, name);
+    dprintf("vnode address is %p, name is %s, inode size is %d\n", vnode, name, vnode->vn_len);
 
     int err = 0;
     off_t offset = 0;
     off_t filesize = vnode->vn_len;
     KASSERT((filesize % sizeof(s5_dirent_t)) == 0);
+    KASSERT((unsigned)filesize == inode->s5_size);
     s5_dirent_t dirent;
 
+    /*scan thru every dirent*/
     while (offset < filesize) {
         err = s5_read_file(vnode, offset, (char *)(&dirent), sizeof(s5_dirent_t));
         if (err < 0) {
+            dprintf("some error occurs, error number is %d\n", err);
             return err;
         }
 
@@ -826,6 +829,7 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
         offset += sizeof(s5_dirent_t);
     }
 
+    dprintf("The dirent is not found in the directory.\n");
     return -ENOENT;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_find_dirent");*/
         /*return -1;*/
@@ -867,6 +871,7 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     ((char *)name)[namelen] = 0;
     dprintf("vnode address is %p, name is %s\n", vnode, name);
 
+    int err = 0;
     int inodeno = 0;
     off_t offset = 0;
     off_t filesize = vnode->vn_len;
@@ -875,9 +880,9 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
     /*search for the to-be-deleted dirent*/
     while (offset < filesize) {
-        inodeno = s5_read_file(vnode, offset, (char *)(&dirent_target), sizeof(s5_dirent_t));
-        if (inodeno < 0) {
-            return inodeno;
+        err = s5_read_file(vnode, offset, (char *)(&dirent_target), sizeof(s5_dirent_t));
+        if (err < 0) {
+            return err;
         }
 
         if (dirent_target.s5d_name[0] == '\0') {
@@ -885,6 +890,7 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
         }
 
         if name_match(dirent_target.s5d_name, name, namelen) {
+            inodeno = dirent_target.s5d_inode;
             break;
         }
 
@@ -892,19 +898,21 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     }
 
     KASSERT(inodeno >= 0);
+    KASSERT(err == 0);
     if (inodeno == 0) {
         return -ENOENT;
     }
 
     /*get the last dirent*/
     s5_dirent_t dirent_last;
-    int err = s5_read_file(vnode, filesize - sizeof(s5_dirent_t), (char *)(&dirent_last), sizeof(s5_dirent_t));
+    err = s5_read_file(vnode, filesize - sizeof(s5_dirent_t), (char *)(&dirent_last), sizeof(s5_dirent_t));
     if (err < 0) {
         return err;
     }
+    KASSERT(err == 0);
 
     /*write the last dirent into the deleted dirent position*/
-    err = s5_write_file(vnode, filesize - sizeof(s5_dirent_t), (const char *)(&dirent_last), sizeof(s5_dirent_t));
+    err = s5_write_file(vnode, offset, (const char *)(&dirent_last), sizeof(s5_dirent_t));
     if (err < 0) {
         return err;
     }
@@ -930,7 +938,7 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     vput(vnode_deleted);
     vput(vnode_deleted);
 
-    /*modified the length*/
+    /*modify the length*/
     vnode->vn_len -= sizeof(s5_dirent_t);
     inode->s5_size -= sizeof(s5_dirent_t);
 
@@ -977,7 +985,7 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
         return -EEXIST;
     }
 
-    if (err < 0 || err != -ENOENT) {
+    if (err < 0 && err != -ENOENT) {
         return err;
     }
     KASSERT(err == -ENOENT);
