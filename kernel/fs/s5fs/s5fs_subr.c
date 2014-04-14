@@ -800,7 +800,7 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
     KASSERT(namelen <= S5_NAME_LEN);
 
-    /*name[namelen] = 0;*/
+    ((char *)name)[namelen] = 0;
     dprintf("vnode address is %p, name is %s\n", vnode, name);
 
     int err = 0;
@@ -864,7 +864,7 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
     KASSERT(namelen <= S5_NAME_LEN);
 
-    /*name[namelen] = 0;*/
+    ((char *)name)[namelen] = 0;
     dprintf("vnode address is %p, name is %s\n", vnode, name);
 
     int inodeno = 0;
@@ -924,6 +924,10 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     s5_inode_t *inode_deleted = VNODE_TO_S5INODE(vnode);
     KASSERT(inode_deleted);
     inode_deleted->s5_linkcount--;
+
+    /*modified the length*/
+    vnode->vn_len -= sizeof(s5_dirent_t);
+    inode->s5_size -= sizeof(s5_dirent_t);
 
     /*which block(s) to be dirtied?*/
 
