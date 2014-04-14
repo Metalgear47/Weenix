@@ -950,6 +950,36 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 int
 s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
 {
+    KASSERT(parent);
+    KASSERT(name);
+    KASSERT(S_ISDIR(parent->vn_mode));
+
+    s5_inode_t *inode_parent = VNODE_TO_S5INODE(parent);
+    KASSERT(inode_parent);
+    KASSERT(S5_TYPE_DIR == inode_parent->s5_type);
+
+    s5_inode_t *inode_child = VNODE_TO_S5INODE(child);
+    KASSERT(inode_child);
+
+    KASSERT(namelen <= S5_NAME_LEN);
+
+    ((char *)name)[namelen] = 0;
+    dprintf("parent vnode address is %p, child vnode address is %p, name is %s\n", parent, child, name);
+
+    int err = s5_find_dirent(parent, name, namelen);
+    if (err == 0) {
+        return -EEXIST;
+    }
+
+    if (err < 0 || err != -ENOENT) {
+        return err;
+    }
+    KASSERT(err == -ENOENT);
+
+    s5_dirent_t dirent;
+    strncpy(dirent.s5d_name, name, namelen);
+    dirent.s5d_inode = inode_child->s5_number;
+
         NOT_YET_IMPLEMENTED("S5FS: s5_link");
         return -1;
 }
