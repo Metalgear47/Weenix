@@ -226,7 +226,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                         s5_free_block(fs, (uint32_t)indirect_block);
                         pframe_unpin(ibp);
                         /*not sure about free the pframe*/
-                        /*pframe_free(ibp);*/
+                        pframe_free(ibp);
                         return blockno;
                     }
 
@@ -800,7 +800,7 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
     KASSERT(namelen <= S5_NAME_LEN);
 
-    name[namelen] = 0;
+    /*name[namelen] = 0;*/
     dprintf("vnode address is %p, name is %s\n", vnode, name);
 
     int err = 0;
@@ -864,36 +864,70 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
     KASSERT(namelen <= S5_NAME_LEN);
 
-    name[namelen] = 0;
+    /*name[namelen] = 0;*/
     dprintf("vnode address is %p, name is %s\n", vnode, name);
 
     int inodeno = 0;
     off_t offset = 0;
     off_t filesize = vnode->vn_len;
     KASSERT((filesize % sizeof(s5_dirent_t)) == 0);
-    s5_dirent_t dirent;
+    s5_dirent_t dirent_target;
 
+    /*search for the to-be-deleted dirent*/
     while (offset < filesize) {
-        inodeno = s5_read_file(vnode, offset, (char *)(&dirent), sizeof(s5_dirent_t));
+        inodeno = s5_read_file(vnode, offset, (char *)(&dirent_target), sizeof(s5_dirent_t));
         if (inodeno < 0) {
             return inodeno;
         }
 
-        if (dirent.s5d_name[0] == '\0') {
+        if (dirent_target.s5d_name[0] == '\0') {
             panic("Weird, there's some inconsistency between dirents and file size\n");
         }
 
-        if name_match(dirent.s5d_name, name, namelen) {
+        if name_match(dirent_target.s5d_name, name, namelen) {
             break;
         }
 
         offset += sizeof(s5_dirent_t);
     }
-    KASSERT(inodeno >= 0);
 
+    KASSERT(inodeno >= 0);
     if (inodeno == 0) {
         return -ENOENT;
     }
+
+    /*get the last dirent*/
+    s5_dirent_t dirent_last;
+    int err = s5_read_file(vnode, filesize - sizeof(s5_dirent_t), (char *)(&dirent_last), sizeof(s5_dirent_t));
+    if (err < 0) {
+        return err;
+    }
+
+    /*write the last dirent into the deleted dirent position*/
+    err = s5_write_file(vnode, filesize - sizeof(s5_dirent_t), (const char *)(&dirent_last), sizeof(s5_dirent_t));
+    if (err < 0) {
+        return err;
+    }
+
+    s5fs_t *fs = VNODE_TO_S5FS(vnode);
+    KASSERT(fs);
+    vnode_t *vnode_deleted = vget(fs->s5f_fs, inodeno);
+    if (vnode_deleted == NULL) {
+        panic("don't know what to do here\n");
+    }
+
+    /*not sure about this, but when vget, we've already vref once*/
+    vput(vnode_deleted);
+    vput(vnode_deleted);
+
+    /*not sure about the maintainance of linkcount*/
+    s5_inode_t *inode_deleted = VNODE_TO_S5INODE(vnode);
+    KASSERT(inode_deleted);
+    inode_deleted->s5_linkcount--;
+
+    /*which block(s) to be dirtied?*/
+
+    return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_remove_dirent");*/
         /*return -1;*/
 }
