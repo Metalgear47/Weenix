@@ -396,6 +396,10 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         KASSERT(!err && "Shouldn't fail here.\n");
     }
 
+    /*update len in vnode*/
+    vnode->vn_len = end + 1;
+    /*update size in s5_inode*/
+    inode->s5_size = end + 1;
     return len;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_write_file");*/
         /*return -1;*/
