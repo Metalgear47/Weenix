@@ -916,20 +916,25 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
         panic("don't know what to do here\n");
     }
 
-    /*not sure about this, but when vget, we've already vref once*/
-    vput(vnode_deleted);
-    vput(vnode_deleted);
-
     /*not sure about the maintainance of linkcount*/
     s5_inode_t *inode_deleted = VNODE_TO_S5INODE(vnode);
     KASSERT(inode_deleted);
     inode_deleted->s5_linkcount--;
 
+    /*call s5_free_inode to free the inode*/
+    if (inode_deleted->s5_linkcount == 0) {
+        s5_free_inode(vnode_deleted);
+    }
+
+    /*not sure about this, but when vget, we've already vref once*/
+    vput(vnode_deleted);
+    vput(vnode_deleted);
+
     /*modified the length*/
     vnode->vn_len -= sizeof(s5_dirent_t);
     inode->s5_size -= sizeof(s5_dirent_t);
 
-    /*which block(s) to be dirtied?*/
+    /*still need to dirty_inode?*/
 
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_remove_dirent");*/
