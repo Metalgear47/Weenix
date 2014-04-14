@@ -352,9 +352,6 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
 
     memcpy(block_pframe->pf_addr, bytes, (S5_BLOCK_SIZE - offset_start));
 
-    err = pframe_dirty(block_pframe);
-    KASSERT(!err && "should not fail here");
-
     /*write to the end block*/
     block_pframe = NULL;
     err = pframe_get(&vnode->vn_mmobj, block_end, &block_pframe);
@@ -363,12 +360,36 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         return err;
     }
 
-    memcpy(block_pframe->pf_addr, &(bytes[(block_end + 1) * S5_BLOCK_SIZE]), (offset_end - 0 + 1));
+    memcpy(block_pframe->pf_addr, &(bytes[(block_end - block_start) * S5_BLOCK_SIZE]), (offset_end - 0 + 1));
 
-    err = pframe_dirty(block_pframe);
-    KASSERT(!err && "should not fail here");
-        NOT_YET_IMPLEMENTED("S5FS: s5_write_file");
-        return -1;
+    /*write to blocks in between*/
+    uint32_t i;
+    for (i = block_start + 1 ; i < block_end ; i++) {
+        pframe_t *cur_pframe = NULL;
+        err = pframe_get(&vnode->vn_mmobj, i, &cur_pframe);
+        if (err < 0) {
+            KASSERT(cur_pframe == NULL);
+            return err;
+        }
+
+        memcpy(cur_pframe->pf_addr, &(bytes[(i - block_start) * S5_BLOCK_SIZE]), S5_BLOCK_SIZE);
+    }
+
+    for (i = block_start ; i <= block_end ; i++) {
+        pframe_t *cur_pframe = NULL;
+        err = pframe_get(&vnode->vn_mmobj, i, &cur_pframe);
+        if (err < 0) {
+            KASSERT(cur_pframe == NULL);
+            return err;
+        }
+
+        err = pframe_dirty(cur_pframe);
+        KASSERT(!err && "Shouldn't fail here.\n");
+    }
+
+    return len;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5_write_file");*/
+        /*return -1;*/
 }
 
 /*
