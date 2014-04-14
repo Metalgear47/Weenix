@@ -367,7 +367,7 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         return err;
     }
 
-    memcpy(block_pframe->pf_addr, &(bytes[(block_end - block_start) * S5_BLOCK_SIZE]), (offset_end - 0 + 1));
+    memcpy(block_pframe->pf_addr, &(bytes[(block_end - block_start) * S5_BLOCK_SIZE]), (offset_end + 1));
 
     /*write to blocks in between*/
     uint32_t i;
