@@ -790,8 +790,30 @@ s5_free_inode(vnode_t *vnode)
 int
 s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5_find_dirent");
-        return -1;
+    KASSERT(vnode);
+    KASSERT(name);
+    KASSERT(S_ISDIR(vnode->vn_mode));
+
+    s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
+    KASSERT(inode);
+    KASSERT(S5_TYPE_DIR == inode->s5_type);
+
+    int err = 0;
+    off_t offset = 0;
+    off_t filesize = vnode->vn_len;
+    s5_dirent_t dirent;
+
+    while (offset < filesize) {
+        s5_read_file(vnode, offset, (char *)(&dirent), sizeof(s5_dirent_t));
+        if name_match(dirent.s5d_name, name, namelen) {
+            return dirent.s5d_inode;
+        }
+        offset += sizeof(s5_dirent_t);
+    }
+
+    return -ENOENT;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5_find_dirent");*/
+        /*return -1;*/
 }
 
 /*
