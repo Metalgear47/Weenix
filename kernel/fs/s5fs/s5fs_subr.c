@@ -225,7 +225,8 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     if (blockno < 0) {
                         s5_free_block(fs, (uint32_t)indirect_block);
                         pframe_unpin(ibp);
-                        pframe_free(ibp);
+                        /*not sure about free the pframe*/
+                        /*pframe_free(ibp);*/
                         return blockno;
                     }
 
@@ -423,8 +424,106 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
 int
 s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5_read_file");
-        return -1;
+    KASSERT(vnode);
+    s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
+    KASSERT(inode);
+    KASSERT((S5_TYPE_DATA == inode->s5_type)
+             || (S5_TYPE_DIR == inode->s5_type));
+
+    dprintf("vnode address is %p, off set is %u, buffer address is %p, writing length is %u\n", vnode, seek, dest, len);
+
+    if ((unsigned)seek >= inode->s5_size) {
+        dprintf("end of the file has been reached\n");
+        return 0;
+    }
+
+    /*get the block number*/
+    uint32_t block_start = S5_DATA_BLOCK(seek);
+    off_t end = seek + len - 1;
+    /*write to [start, end]*/
+    if ((unsigned)end >= inode->s5_size) {
+        end = inode->s5_size - 1;
+        len = end - seek + 1;
+        dprintf("read exceeds the end of the file: end is %u, len is %u\n", end, len);
+    }
+    uint32_t block_end = S5_DATA_BLOCK(end);
+    dprintf("starting block number is %u, end block number is %u\n", block_start, block_end);
+
+    /*get the offset inside block*/
+    off_t offset_start = S5_DATA_OFFSET(seek);
+    off_t offset_end = S5_DATA_OFFSET(end);
+    dprintf("start offset is %u, end offset is %u\n", offset_start, offset_end);
+
+    if (block_start == block_end) {
+        dprintf("only read one block\n");
+        pframe_t *block_pframe = NULL;
+        int err = pframe_get(&vnode->vn_mmobj, block_start, &block_pframe);
+        if (err < 0) {
+            KASSERT(block_pframe == NULL);
+            return err;
+        }
+
+        KASSERT((unsigned)(offset_end - offset_start + 1) == len);
+        if (block_pframe->pf_pagenum == 0) {
+            memset(dest, 0, len);
+        } else {
+            memcpy(dest, block_pframe->pf_addr, len);
+        }
+
+        KASSERT(!err && "should not fail here");
+
+        return len;
+    }
+
+    dprintf("read to multi blocks\n");
+    /*write to the start block*/
+    pframe_t *block_pframe = NULL;
+    int err = pframe_get(&vnode->vn_mmobj, block_start, &block_pframe);
+    if (err < 0) {
+        KASSERT(block_pframe == NULL);
+        return err;
+    }
+
+    if (block_pframe->pf_pagenum == 0) {
+        memset(dest, 0, (S5_BLOCK_SIZE - offset_start));
+    } else {
+        memcpy(dest, block_pframe->pf_addr, (S5_BLOCK_SIZE - offset_start));
+    }
+
+    /*write to the end block*/
+    block_pframe = NULL;
+    err = pframe_get(&vnode->vn_mmobj, block_end, &block_pframe);
+    if (err < 0) {
+        KASSERT(block_pframe == NULL);
+        return err;
+    }
+
+    if (block_pframe->pf_pagenum == 0) {
+        memset(&(dest[(block_end - block_start) * S5_BLOCK_SIZE]), 0, (offset_end + 1));
+    } else {
+        memcpy(&(dest[(block_end - block_start) * S5_BLOCK_SIZE]), block_pframe->pf_addr, (offset_end + 1));
+    }
+
+    /*write to blocks in between*/
+    uint32_t i;
+    for (i = block_start + 1 ; i < block_end ; i++) {
+        pframe_t *cur_pframe = NULL;
+        err = pframe_get(&vnode->vn_mmobj, i, &cur_pframe);
+        if (err < 0) {
+            KASSERT(cur_pframe == NULL);
+            return err;
+        }
+
+        if (block_pframe->pf_pagenum == 0) {
+            memset(&(dest[(i - block_start) * S5_BLOCK_SIZE]), 0, S5_BLOCK_SIZE);
+        } else {
+            memcpy(&(dest[(i - block_start) * S5_BLOCK_SIZE]), cur_pframe->pf_addr, S5_BLOCK_SIZE);
+        }
+    }
+
+    return len;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5_read_file");*/
+        /*return -1;*/
 }
 
 /*
