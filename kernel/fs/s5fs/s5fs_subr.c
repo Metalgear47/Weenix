@@ -971,6 +971,7 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     ((char *)name)[namelen] = 0;
     dprintf("parent vnode address is %p, child vnode address is %p, name is %s\n", parent, child, name);
 
+    /*examine if the dirent alread exists*/
     int err = s5_find_dirent(parent, name, namelen);
     if (err == 0) {
         return -EEXIST;
@@ -981,12 +982,23 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     }
     KASSERT(err == -ENOENT);
 
+    /*construct the dirent*/
     s5_dirent_t dirent;
     strncpy(dirent.s5d_name, name, namelen);
+    KASSERT(inode_child->s5_number == child->vn_vno);
     dirent.s5d_inode = inode_child->s5_number;
 
-        NOT_YET_IMPLEMENTED("S5FS: s5_link");
-        return -1;
+    /*write it to the end of the file*/
+    err = s5_write_file(parent, parent->vn_len, (const char *)(&dirent), sizeof(s5_dirent_t));
+    if (err < 0) {
+        return err;
+    }
+
+    /*dirty_inode? isn't this done by s5_write_file*/
+
+    return 0;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5_link");*/
+        /*return -1;*/
 }
 
 /*
