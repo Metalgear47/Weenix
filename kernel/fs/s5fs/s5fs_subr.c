@@ -311,6 +311,8 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
  *    KASSERT(o);
  */
 
+    dprintf("vnode address is %p, off set is %u, buffer address is %p, writing length is %u\n", vnode, seek, bytes, len);
+
     /*get the block number*/
     uint32_t block_start = S5_DATA_BLOCK(seek);
     off_t end = seek + len - 1;
@@ -318,14 +320,18 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     if ((unsigned)end >= S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE) {
         end = S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE - 1;
         len = end - seek + 1;
+        dprintf("write exceeds the end of the file: end is %u, len is %u\n", end, len);
     }
     uint32_t block_end = S5_DATA_BLOCK(end);
+    dprintf("starting block number is %u, end block number is %u\n", block_start, block_end);
 
     /*get the offset inside block*/
     off_t offset_start = S5_DATA_OFFSET(seek);
     off_t offset_end = S5_DATA_OFFSET(end);
+    dprintf("start offset is %u, end offset is %u\n", offset_start, offset_end);
 
     if (block_start == block_end) {
+        dprintf("only write to one block\n");
         pframe_t *block_pframe = NULL;
         int err = pframe_get(&vnode->vn_mmobj, block_start, &block_pframe);
         if (err < 0) {
@@ -342,6 +348,7 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         return len;
     }
 
+    dprintf("write to multi blocks\n");
     /*write to the start block*/
     pframe_t *block_pframe = NULL;
     int err = pframe_get(&vnode->vn_mmobj, block_start, &block_pframe);
@@ -375,6 +382,7 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         memcpy(cur_pframe->pf_addr, &(bytes[(i - block_start) * S5_BLOCK_SIZE]), S5_BLOCK_SIZE);
     }
 
+    dprintf("dirty all the blocks\n");
     for (i = block_start ; i <= block_end ; i++) {
         pframe_t *cur_pframe = NULL;
         err = pframe_get(&vnode->vn_mmobj, i, &cur_pframe);
