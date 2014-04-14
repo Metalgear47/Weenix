@@ -1013,7 +1013,49 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
 int
 s5_inode_blocks(vnode_t *vnode)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5_inode_blocks");
-        return -1;
-}
+    KASSERT(vnode);
 
+    s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
+    KASSERT(inode);
+
+    int result = 0;
+    uint32_t i;
+    for (i = 0 ; i < S5_NDIRECT_BLOCKS ; i++) {
+        if (inode->s5_direct_blocks[i]) {
+            result++;
+        }
+    }
+
+    if (inode->s5_indirect_block == 0) {
+        return result;
+    } else {
+        if (((S5_TYPE_DATA == inode->s5_type)
+             || (S5_TYPE_DIR == inode->s5_type))
+            && inode->s5_indirect_block) {
+            pframe_t *ibp;
+            uint32_t *b;
+
+            s5fs_t *fs = VNODE_TO_S5FS(vnode);
+            KASSERT(fs);
+
+            /*get the page frame*/
+            pframe_get(S5FS_TO_VMOBJ(fs),
+                       (unsigned)inode->s5_indirect_block,
+                       &ibp);
+            KASSERT(ibp
+                    && "because never fails for block_device "
+                    "vm_objects");
+
+            b = (uint32_t *)(ibp->pf_addr);
+            for (i = 0 ; i < S5_NIDIRECT_BLOCKS ; i++) {
+                if (b[i]) {
+                    result++;
+                }
+            }
+        }
+    }
+
+    return result;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5_inode_blocks");*/
+        /*return -1;*/
+}
