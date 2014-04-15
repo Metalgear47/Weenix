@@ -213,7 +213,44 @@ s5fs_mount(struct fs *fs)
 static void
 s5fs_read_vnode(vnode_t *vnode)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_read_vnode");
+    KASSERT(vn);
+    s5fs_t *fs = VNODE_TO_S5FS(vnode);
+
+    int err = 0;
+    pframe_t *pframe_inode_block = NULL;
+    pframe_get(S5FS_TO_VMOBJ(fs), S5_INODE_BLOCK(vnode->vn_vno), &pframe_inode_block);
+    KASSERT(err == 0 && pframe_inode_block);
+
+    s5_inode_t *ilist = (s5_inode_t *)pframe_inode_block->pf_addr;
+    s5_inode_t *inode = *(ilist[S5_INODE_OFFSET(vnode->vn_vno)]);
+
+    switch (inode->s5_type) {
+        case S5_TYPE_DATA:
+            vn->vn_mode = S_IFREG;
+            vn->vn_ops = &s5fs_file_vops;
+            break;
+        case S5_TYPE_DIR:
+            vn->vn_mode = S_IFDIR;
+            vn->vn_ops = &s5fs_dir_vops;
+            break;
+        case S5_TYPE_CHR:
+            vn->vn_mode = S_IFCHR;
+            vn->vn_ops = NULL;
+            vn->vn_devid = (devid_t)(inode->s5_indirect_block);
+            break;
+        case S5_TYPE_BLK:
+            vn->vn_mode = S_IFBLK;
+            vn->vn_ops = NULL;
+            vn->vn_devid = (devid_t)(inode->s5_indirect_block);
+            break;
+        default:
+            panic("inode %d has unknown/invalid type %d!!\n",
+                  (int)vn->vn_vno, (int)inode->rf_mode);
+    }
+
+    vnode->vn_len = inode->s5_size;
+    vnode->vn_i = (void *)inode;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_read_vnode");*/
 }
 
 /*
