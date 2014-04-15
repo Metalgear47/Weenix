@@ -35,6 +35,8 @@
 #include "vm/vmmap.h"
 #include "vm/shadow.h"
 
+#define dprintf(...) dbg(DBG_S5FS, __VA_ARGS__)
+
 /* Diagnostic/Utility: */
 static int s5_check_super(s5_super_t *super);
 static int s5fs_check_refcounts(fs_t *fs);
@@ -465,8 +467,30 @@ s5fs_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
 static int
 s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_create");
-        return -1;
+    KASSERT(dir);
+    KASSERT(name);
+    KASSERT(result);
+    KASSERT(namelen <= S5_NAME_LEN);
+
+    int inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_DATA, 0);
+    if (inodeno < 0) {
+        *result = NULL;
+        return inodeno;
+    }
+    KASSERT(inodeno);
+
+    vnode_t *file = vget(dir->vn_fs, inodeno);
+    KASSERT(file);
+
+    int err = s5_link(dir, file, name, namelen);
+    vput(file);
+    if (err < 0) {
+        s5_free_inode(file);
+        dprintf("some error occured, the error number is %d.\n", err);
+    }
+    return err;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_create");*/
+        /*return -1;*/
 }
 
 
