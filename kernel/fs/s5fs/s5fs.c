@@ -481,6 +481,7 @@ s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
 
     vnode_t *file = vget(dir->vn_fs, inodeno);
     KASSERT(file);
+    s5fs_read_vnode(file);
 
     int err = s5_link(dir, file, name, namelen);
     vput(file);
