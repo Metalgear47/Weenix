@@ -612,8 +612,27 @@ s5fs_stat(vnode_t *vnode, struct stat *ss)
 static int
 s5fs_fillpage(vnode_t *vnode, off_t offset, void *pagebuf)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_fillpage");
-        return -1;
+    KASSERT(vnode);
+    KASSERT(pagebuf);
+
+    int blockno = s5_seek_to_block(vnode, offset, 0);
+    if (blockno < 0) {
+        return blockno;
+    }
+
+    if (blockno == 0) {
+        memset(pagebuf, 0, PAGE_SIZE);
+        return 0;
+    }
+
+    s5fs_t *fs = VNODE_TO_S5FS(vnode);
+    KASSERT(fs);
+
+    int err = fs->s5f_bdev->bd_ops->read_block(fs->s5f_bdev, pagebuf, blockno, 1);
+
+    return err;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_fillpage");*/
+        /*return -1;*/
 }
 
 
