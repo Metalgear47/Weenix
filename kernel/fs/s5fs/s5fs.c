@@ -302,8 +302,27 @@ s5fs_delete_vnode(vnode_t *vnode)
 static int
 s5fs_query_vnode(vnode_t *vnode)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_query_vnode");
+    KASSERT(vnode);
+    s5fs_t *fs = VNODE_TO_S5FS(vnode);
+
+    int err = 0;
+    pframe_t *pframe_inode_block = NULL;
+    pframe_get(S5FS_TO_VMOBJ(fs), S5_INODE_BLOCK(vnode->vn_vno), &pframe_inode_block);
+    KASSERT(err == 0 && pframe_inode_block);
+
+    s5_inode_t *ilist = (s5_inode_t *)pframe_inode_block->pf_addr;
+    s5_inode_t *inode = &(ilist[S5_INODE_OFFSET(vnode->vn_vno)]);
+    KASSERT(inode && inode->s5_number == vnode->vn_vno);
+
+    KASSERT(inode->s5_linkcount > 0);
+    if (inode->s5_linkcount > 1) {
+        return 1;
+    } else {
+        KASSERT(inode->s5_linkcount == 1);
         return 0;
+    }
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_query_vnode");*/
+        /*return 0;*/
 }
 
 /*
