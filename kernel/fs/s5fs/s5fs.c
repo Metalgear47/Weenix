@@ -632,8 +632,70 @@ s5fs_unlink(vnode_t *dir, const char *name, size_t namelen)
 static int
 s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_mkdir");
-        return -1;
+    KASSERT(dir);
+    KASSERT(dir->vn_len % sizeof(s5_dirent_t) == 0);
+    KASSERT(name);
+    KASSERT(namelen <= S5_NAME_LEN);
+
+    if ((unsigned)dir->vn_len >= S5_MAX_FILE_SIZE) {
+        panic("It's hardly the case, gonna panic here during debugging.\n");
+        return -ENOSPC;
+    }
+
+    /*Allocate an inode*/
+    int inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_DIR, 0);
+    if (inodeno < 0) {
+        return inodeno;
+    }
+    KASSERT(inodeno);
+
+    /*get the vnode for the child dir*/
+    vnode_t *vnode_child = vget(dir->vn_fs, inodeno);
+    KASSERT(vnode_child);
+    s5fs_read_vnode(vnode_child);
+    KASSERT(vnode_child->vn_len == 0);
+    KASSERT(vnode_child->vn_vno == (unsigned)inodeno);
+
+    /*add the link at parent directory*/
+    int err = s5_link(dir, vnode_child, name, namelen);
+    if (err < 0) {
+        s5_free_inode(vnode_child);
+        vput(vnode_child);
+        return err;
+    }
+
+    /*Set up '.' and '..'*/
+    err = s5_link(vnode_child, vnode_child, ".", 1);
+    if (err < 0) {
+        if (s5_remove_dirent(dir, name, namelen) < 0) {
+            /*panic during debugging*/
+            panic("The directory is corrupted\n");
+        }
+        s5_free_inode(vnode_child);
+        vput(vnode_child);
+        return err;
+    }
+    s5_inode_t *inode_child = VNODE_TO_S5INODE(vnode_child);
+    KASSERT(inode_child->s5_linkcount == 1);
+
+    err = s5_link(vnode_child, dir, "..", 2);
+    if (err < 0) {
+        if (s5_remove_dirent(dir, name, namelen) < 0) {
+            /*panic during debugging*/
+            panic("The directory is corrupted\n");
+        }
+        if (s5_remove_dirent(dir, ".", 1) < 0) {
+            /*panic during debugging*/
+            panic("The directory is corrupted\n");
+        }
+        s5_free_inode(vnode_child);
+        vput(vnode_child);
+        return err;
+    }
+    KASSERT(inode_child->s5_linkcount == 1);
+    return 0;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_mkdir");*/
+        /*return -1;*/
 }
 
 /*
