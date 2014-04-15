@@ -692,6 +692,9 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
         vput(vnode_child);
         return err;
     }
+
+    /*maybe need to modify the inode size, need to be REVIEWed*/
+
     KASSERT(inode_child->s5_linkcount == 1);
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_mkdir");*/
@@ -727,8 +730,30 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
 static int
 s5fs_readdir(vnode_t *vnode, off_t offset, struct dirent *d)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_readdir");
-        return -1;
+    KASSERT(vnode);
+    KASSERT(vnode->vn_len % sizeof(s5_dirent_t) == 0);
+    KASSERT(S_ISDIR(vnode->vn_mode));
+    KASSERT(offset % sizeof(s5_dirent_t) == 0);
+    KASSERT(d);
+
+    s5_dirent_t s5_dirent;
+    int err = s5_read_file(vnode, offset, (char *)(&s5_dirent), sizeof(s5_dirent_t));
+    if (err < 0) {
+        return err;
+    }
+    if (err == 0) {
+        KASSERT(offset >= vnode->vn_len);
+        return 0;
+    }
+    KASSERT(err == sizeof(s5_dirent_t));
+
+    d->d_ino = s5_dirent.s5d_inode;
+    d->d_off = 0; /* unused*/
+    strncpy(d->d_name, s5_dirent.s5d_name, S5_NAME_LEN - 1);
+    d->d_name[S5_NAME_LEN - 1] = '\0';
+    return sizeof(s5_dirent_t);
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_readdir");*/
+        /*return -1;*/
 }
 
 

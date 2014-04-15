@@ -1006,7 +1006,7 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
 
     /*dirty_inode. */
     /*special case '.'*/
-    if (!namematch(".", name, namelen)) {
+    if (!name_match(".", name, namelen)) {
         inode_child->s5_linkcount++;
         s5_dirty_inode(VNODE_TO_S5FS(parent), inode_child);
     }
