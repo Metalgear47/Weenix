@@ -601,8 +601,14 @@ s5fs_link(vnode_t *src, vnode_t *dir, const char *name, size_t namelen)
 static int
 s5fs_unlink(vnode_t *dir, const char *name, size_t namelen)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_unlink");
-        return -1;
+    KASSERT(dir);
+    KASSERT(name);
+    KASSERT(namelen <= S5_NAME_LEN);
+
+    int err = s5_remove_dirent(dir, name, namelen);
+    return err;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_unlink");*/
+        /*return -1;*/
 }
 
 /*
