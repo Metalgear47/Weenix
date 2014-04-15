@@ -1002,7 +1002,9 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
         return err;
     }
 
-    /*dirty_inode? isn't this done by s5_write_file*/
+    /*dirty_inode. */
+    inode_child->linkcount++;
+    s5_dirty_inode(, inode_child);
 
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_link");*/

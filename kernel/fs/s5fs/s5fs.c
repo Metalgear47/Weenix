@@ -579,8 +579,15 @@ s5fs_lookup(vnode_t *base, const char *name, size_t namelen, vnode_t **result)
 static int
 s5fs_link(vnode_t *src, vnode_t *dir, const char *name, size_t namelen)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_link");
-        return -1;
+    KASSERT(src);
+    KASSERT(dir);
+    KASSERT(name);
+    KASSERT(namelen <= S5_NAME_LEN);
+
+    int err = s5_link(src, dir, name, namelen);
+    return err;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_link");*/
+        /*return -1;*/
 }
 
 /*
