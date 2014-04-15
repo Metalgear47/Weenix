@@ -426,8 +426,18 @@ s5fs_read(vnode_t *vnode, off_t offset, void *buf, size_t len)
 static int
 s5fs_write(vnode_t *vnode, off_t offset, const void *buf, size_t len)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_write");
-        return -1;
+    KASSERT(vnode);
+    KASSERT(buf);
+
+    kmutex_lock(&vnode->vn_mutex);
+
+    int err = s5_write_file(vnode, offset, buf, len);
+
+    kmutex_unlock(&vnode->vn_mutex);
+
+    return err;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_write");*/
+        /*return -1;*/
 }
 
 /* This function is deceptivly simple, just return the vnode's
