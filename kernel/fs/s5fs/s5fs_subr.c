@@ -929,11 +929,6 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     KASSERT(inode_deleted);
     inode_deleted->s5_linkcount--;
 
-    /*call s5_free_inode to free the inode*/
-    if (inode_deleted->s5_linkcount == 0) {
-        s5_free_inode(vnode_deleted);
-    }
-
     /*not sure about this, but when vget, we've already vref once*/
     vput(vnode_deleted);
     vput(vnode_deleted);
@@ -941,8 +936,15 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     /*modify the length*/
     vnode->vn_len -= sizeof(s5_dirent_t);
     inode->s5_size -= sizeof(s5_dirent_t);
+    s5_dirty_inode(fs, inode);
 
     /*still need to dirty_inode?*/
+    s5_dirty_inode(fs, inode_deleted);
+
+    /*call s5_free_inode to free the inode*/
+    if (inode_deleted->s5_linkcount == 0) {
+        s5_free_inode(vnode_deleted);
+    }
 
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_remove_dirent");*/
@@ -1003,8 +1005,8 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     }
 
     /*dirty_inode. */
-    inode_child->linkcount++;
-    s5_dirty_inode(, inode_child);
+    inode_child->s5_linkcount++;
+    s5_dirty_inode(VNODE_TO_S5FS(parent), inode_child);
 
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_link");*/
