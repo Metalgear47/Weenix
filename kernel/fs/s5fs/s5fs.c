@@ -512,7 +512,15 @@ s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t dev
     KASSERT(name);
     KASSERT(namelen <= S5_NAME_LEN);
 
-    int inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_DATA, 0);
+    int inodeno;
+    if (S_ISCHR(mode)) {
+        inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_CHR, devid);
+    } else if (S_ISBLK(mode)) {
+        inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_BLK, devid);
+    } else {
+        panic("Invalid mode! \n");
+    }
+
     if (inodeno < 0) {
         return inodeno;
     }
@@ -528,9 +536,11 @@ s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t dev
         s5_free_inode(file);
         dprintf("some error occured, the error number is %d.\n", err);
     }
-    return err;
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_mknod");
-        return -1;
+
+    KASSERT(err == 0);
+    return 0;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_mknod");*/
+        /*return -1;*/
 }
 
 /*
