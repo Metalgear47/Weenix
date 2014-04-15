@@ -479,15 +479,17 @@ s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
     }
     KASSERT(inodeno);
 
-    vnode_t *file = vget(dir->vn_fs, inodeno);
-    KASSERT(file);
-    s5fs_read_vnode(file);
+    *result = vget(dir->vn_fs, inodeno);
+    KASSERT(*result);
+    s5fs_read_vnode(*result);
 
-    int err = s5_link(dir, file, name, namelen);
-    vput(file);
+    int err = s5_link(dir, *result, name, namelen);
     if (err < 0) {
-        s5_free_inode(file);
+        vput(*result);
+        *result = NULL;
+        s5_free_inode(*result);
         dprintf("some error occured, the error number is %d.\n", err);
+        return err;
     }
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_create");*/
@@ -506,6 +508,27 @@ s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
 static int
 s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t devid)
 {
+    KASSERT(dir);
+    KASSERT(name);
+    KASSERT(namelen <= S5_NAME_LEN);
+
+    int inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_DATA, 0);
+    if (inodeno < 0) {
+        return inodeno;
+    }
+    KASSERT(inodeno);
+
+    vnode_t *file = vget(dir->vn_fs, inodeno);
+    KASSERT(file);
+    s5fs_read_vnode(file);
+
+    int err = s5_link(dir, file, name, namelen);
+    vput(file);
+    if (err < 0) {
+        s5_free_inode(file);
+        dprintf("some error occured, the error number is %d.\n", err);
+    }
+    return err;
         NOT_YET_IMPLEMENTED("S5FS: s5fs_mknod");
         return -1;
 }
