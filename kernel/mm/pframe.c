@@ -349,9 +349,6 @@ get_resident:
         return err;
     }
 
-    /*panic("should not reach here.\n");*/
-    /*return 0;*/
-
         /*NOT_YET_IMPLEMENTED("S5FS: pframe_get");*/
         /*return 0;*/
 }
@@ -415,12 +412,9 @@ pframe_pin(pframe_t *pf)
     KASSERT(pf->pf_pincount >= 0 && "Bad thing happened, pincount is negative.\n");
     dbg(DBG_PFRAME, "called on pframe %p.\n with pincount: %d", pf, pf->pf_pincount);
 
-    if (pf->pf_pincount > 0) {
-        pf->pf_pincount++;
-    } else {
+    pf->pf_pincount++;
+    if (pf->pf_pincount == 1){
         dbg(DBG_PFRAME, "this pfram is first pinned, add it to correct list.\n");
-        pf->pf_pincount++;
-        KASSERT(pf->pf_pincount == 1);
 
         /*remove it from allocated list*/
         list_remove(&pf->pf_link);
@@ -460,8 +454,8 @@ pframe_unpin(pframe_t *pf)
         npinned--;
 
         /*add it to allocated list*/
-        list_insert_head(&alloc_list, &pf->pf_link);
-        /*a little bit shaky about insert head(LRU)*/
+        list_insert_tail(&alloc_list, &pf->pf_link);
+        /*a little bit shaky about insert tail(LRU)*/
         nallocated++;
     }
 
