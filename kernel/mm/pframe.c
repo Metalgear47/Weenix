@@ -242,7 +242,7 @@ pframe_alloc(mmobj_t *o, uint32_t pagenum)
 
         pf->pf_obj = o;
         pf->pf_pagenum = pagenum;
-        pf->pf_flags = 0;
+        pf->pf_flags = 0; /*PF_DIRTY, PF_BUSY*/
         sched_queue_init(&pf->pf_waitq);
         pf->pf_pincount = 0;
 
@@ -300,7 +300,6 @@ pframe_get(struct mmobj *o, uint32_t pagenum, pframe_t **result)
     KASSERT(o);
     dbg(DBG_PFRAME, "called with mmobj %p, pagenum %u\n", o, pagenum);
 
-    /*do I have to pin the pf if it's busy?*/
 get_resident:
     *result = pframe_get_resident(o, pagenum);
     if (*result) {
@@ -315,18 +314,11 @@ get_resident:
     } else {
         KASSERT(*result == NULL);
     }
+    /* *result == NULL means this page is not resident*/
 
-allocate:
     *result = pframe_alloc(o, pagenum);
     if (*result == NULL) {
-        dbg(DBG_PFRAME, "not enough pframes there, gonna call pageout deamon.\n");
-
-        sched_wakeup_on(&pageoutd_waitq);
-        sched_make_runnable(curthr);
-        sched_switch();
-        dbg(DBG_PFRAME, "after pageout deamon reclaimed pframes.\n");
-        
-        goto allocate;
+        return -ENOMEM;
     } else {
         dbg(DBG_PFRAME, "got a pframe, now gonna fill it.\n");
         pframe_pin(*result);
@@ -335,15 +327,30 @@ allocate:
         pframe_unpin(*result);
 
         if (err < 0) {
+            /*it's allocated but some error occured during fill the page*/
+            /*so reclaim all the memory this page took*/
+            pframe_free(*result);
             /*set the result to NULL*/
             *result = NULL;
             dbg(DBG_PFRAME, "some error when trying to fill the page, error number is %d\n", err);
+            return err;
         }
+
+        /*check to see if we need to call pageoutd*/
+        if pageoutd_needed() {
+            /*wake up pageoutd*/
+            sched_wakeup_on(&pageoutd_waitq);
+            /*wait for pageoutd to finish*/
+            sched_sleep_on(&alloc_waitq);
+        }
+
+        dbg(DBG_PFRAME, "after pageout deamon reclaimed pframes.\n");
+        
         return err;
     }
 
-    panic("should not reach here.\n");
-    return 0;
+    /*panic("should not reach here.\n");*/
+    /*return 0;*/
 
         /*NOT_YET_IMPLEMENTED("S5FS: pframe_get");*/
         /*return 0;*/
