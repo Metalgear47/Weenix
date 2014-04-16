@@ -900,8 +900,27 @@ s5fs_fillpage(vnode_t *vnode, off_t offset, void *pagebuf)
 static int
 s5fs_dirtypage(vnode_t *vnode, off_t offset)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_dirtypage");
+    KASSERT(vnode);
+
+    int blocknum = s5_seek_to_block(vnode, offset, 0);
+    if (blocknum < 0) {
+        return blocknum;
+    }
+
+    if (blocknum == 0) {
+        blocknum = s5_seek_to_block(vnode, offset, 1);
+        if (blocknum < 0) {
+            return blocknum;
+        }
+        KASSERT(blocknum);
+
+        /*associate this block with inode*/
         return -1;
+    } else {
+        return 0;
+    }
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_dirtypage");*/
+        /*return -1;*/
 }
 
 /*
@@ -913,7 +932,7 @@ s5fs_cleanpage(vnode_t *vnode, off_t offset, void *pagebuf)
     KASSERT(vnode);
     KASSERT(pagebuf);
 
-    int blocknum = s5_seek_to_block(vnode, offset, 1);
+    int blocknum = s5_seek_to_block(vnode, offset, 0);
     if (blocknum < 0) {
         return blocknum;
     }
