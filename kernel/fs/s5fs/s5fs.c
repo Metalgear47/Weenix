@@ -832,8 +832,21 @@ s5fs_readdir(vnode_t *vnode, off_t offset, struct dirent *d)
 static int
 s5fs_stat(vnode_t *vnode, struct stat *ss)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_stat");
-        return -1;
+    s5_inode_t *i = VNODE_TO_S5INODE(vnode);
+    KASSERT(i);
+
+    ss->st_mode = vnode->vn_mode;
+    ss->st_ino = (int)vnode->vn_vno;
+    ss->st_nlink = i->s5_linkcount - 1;
+
+    KASSERT((unsigned)vnode->vn_len == i->s5_size);
+    ss->st_size = (int)vnode->vn_len;
+    ss->st_blksize = (int) PAGE_SIZE;
+    ss->st_blocks = s5_inode_blocks(vnode);
+
+    return 0;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_stat");*/
+        /*return -1;*/
 }
 
 
