@@ -913,9 +913,10 @@ s5fs_dirtypage(vnode_t *vnode, off_t offset)
             return blocknum;
         }
         KASSERT(blocknum);
+        
+        /*seems no need here to associate this block with the inode because it's already done during s5_seek_to_block*/
 
-        /*associate this block with inode*/
-        return -1;
+        return 0;
     } else {
         return 0;
     }
