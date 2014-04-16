@@ -862,12 +862,12 @@ s5fs_fillpage(vnode_t *vnode, off_t offset, void *pagebuf)
     KASSERT(vnode);
     KASSERT(pagebuf);
 
-    int blockno = s5_seek_to_block(vnode, offset, 0);
-    if (blockno < 0) {
-        return blockno;
+    int blocknum = s5_seek_to_block(vnode, offset, 0);
+    if (blocknum < 0) {
+        return blocknum;
     }
 
-    if (blockno == 0) {
+    if (blocknum == 0) {
         memset(pagebuf, 0, PAGE_SIZE);
         return 0;
     }
@@ -875,7 +875,7 @@ s5fs_fillpage(vnode_t *vnode, off_t offset, void *pagebuf)
     s5fs_t *fs = VNODE_TO_S5FS(vnode);
     KASSERT(fs);
 
-    int err = fs->s5f_bdev->bd_ops->read_block(fs->s5f_bdev, pagebuf, blockno, 1);
+    int err = fs->s5f_bdev->bd_ops->read_block(fs->s5f_bdev, pagebuf, blocknum, 1);
 
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_fillpage");*/
@@ -913,17 +913,17 @@ s5fs_cleanpage(vnode_t *vnode, off_t offset, void *pagebuf)
     KASSERT(vnode);
     KASSERT(pagebuf);
 
-    int blockno = s5_seek_to_block(vnode, offset, 1);
-    if (blockno < 0) {
-        return blockno;
+    int blocknum = s5_seek_to_block(vnode, offset, 1);
+    if (blocknum < 0) {
+        return blocknum;
     }
 
-    KASSERT(blockno);
+    KASSERT(blocknum);
 
     s5fs_t *fs = VNODE_TO_S5FS(vnode);
     KASSERT(fs);
 
-    int err = fs->s5f_bdev->bd_ops->write_block(fs->s5f_bdev, pagebuf, blockno, 1);
+    int err = fs->s5f_bdev->bd_ops->write_block(fs->s5f_bdev, pagebuf, blocknum, 1);
 
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_cleanpage");*/
