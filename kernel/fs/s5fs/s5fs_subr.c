@@ -942,7 +942,7 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     s5_dirty_inode(fs, inode_deleted);
 
     /*call s5_free_inode to free the inode*/
-    if (inode_deleted->s5_linkcount == 0) {
+    if (inode_deleted->s5_linkcount == 1) {
         s5_free_inode(vnode_deleted);
     }
 

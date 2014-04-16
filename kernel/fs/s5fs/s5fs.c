@@ -470,7 +470,7 @@ s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
     KASSERT(dir);
     KASSERT(name);
     KASSERT(result);
-    KASSERT(namelen <= S5_NAME_LEN);
+    KASSERT(namelen < S5_NAME_LEN);
 
     int inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_DATA, 0);
     if (inodeno < 0) {
@@ -510,7 +510,7 @@ s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t dev
 {
     KASSERT(dir);
     KASSERT(name);
-    KASSERT(namelen <= S5_NAME_LEN);
+    KASSERT(namelen < S5_NAME_LEN);
 
     int inodeno;
     if (S_ISCHR(mode)) {
@@ -554,7 +554,7 @@ s5fs_lookup(vnode_t *base, const char *name, size_t namelen, vnode_t **result)
     KASSERT(base);
     KASSERT(name);
     KASSERT(result);
-    KASSERT(namelen <= S5_NAME_LEN);
+    KASSERT(namelen < S5_NAME_LEN);
 
     int inodeno = s5_find_dirent(base, name, namelen);
     if (inodeno < 0) {
@@ -582,7 +582,7 @@ s5fs_link(vnode_t *src, vnode_t *dir, const char *name, size_t namelen)
     KASSERT(src);
     KASSERT(dir);
     KASSERT(name);
-    KASSERT(namelen <= S5_NAME_LEN);
+    KASSERT(namelen < S5_NAME_LEN);
 
     int err = s5_link(src, dir, name, namelen);
     return err;
@@ -603,7 +603,7 @@ s5fs_unlink(vnode_t *dir, const char *name, size_t namelen)
 {
     KASSERT(dir);
     KASSERT(name);
-    KASSERT(namelen <= S5_NAME_LEN);
+    KASSERT(namelen < S5_NAME_LEN);
 
     int err = s5_remove_dirent(dir, name, namelen);
     return err;
@@ -634,8 +634,9 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
 {
     KASSERT(dir);
     KASSERT(dir->vn_len % sizeof(s5_dirent_t) == 0);
+    KASSERT(S_ISDIR(dir->vn_mode));
     KASSERT(name);
-    KASSERT(namelen <= S5_NAME_LEN);
+    KASSERT(namelen < S5_NAME_LEN);
 
     if ((unsigned)dir->vn_len >= S5_MAX_FILE_SIZE) {
         panic("It's hardly the case, gonna panic here during debugging.\n");
@@ -714,8 +715,70 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
 static int
 s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
 {
-        NOT_YET_IMPLEMENTED("S5FS: s5fs_rmdir");
-        return -1;
+    KASSERT(parent);
+    KASSERT(parent->vn_len % sizeof(s5_dirent_t) == 0);
+    KASSERT(S_ISDIR(parent->vn_mode));
+    KASSERT(name);
+    KASSERT(namelen < S5_NAME_LEN);
+
+    KASSERT(!name_match(".", name, namelen) &&
+            !name_match("..", name, namelen));
+
+    /*get the vnode for the child*/
+    vnode_t *child = NULL;
+    int err = s5fs_lookup(parent, name, namelen, &child);
+    if (err < 0) {
+        KASSERT(child == NULL);
+        return err;
+    }
+
+    KASSERT(child);
+    KASSERT(S_ISDIR(child->vn_mode));
+
+    /*determine if the child dir is empty or not*/
+    if (child->vn_len != 2 * sizeof(s5_dirent_t)) {
+        return -ENOTEMPTY;
+    }
+    dirent_t d;
+    off_t offset = 0;
+    int ret = 0;
+    while ((ret = s5fs_readdir(child, offset, &d)) > 0) {
+        offset += ret;
+        if (strcmp(d.d_name, ".") != 0 ||
+            strcmp(d.d_name, "..") != 0) {
+            vput(child);
+            return -ENOTEMPTY;
+        }
+    }
+    if (ret < 0) {
+        vput(child);
+        return ret;
+    }
+
+    /*remove '..' directory from child*/
+    err = s5_remove_dirent(child, "..", 2);
+    if (err < 0) {
+        vput(child);
+        return err;
+    }
+
+    /*not worried about '.' for now because it doesn't influence the linkcount*/
+
+    /*remove this dirent from parent dir*/
+    err = s5_remove_dirent(parent, name, namelen);
+    if (err < 0) {
+        err = s5_link(child, parent, "..", 2);
+        if (err < 0) {
+            panic("The file system is corrupted\n");
+        }
+        vput(child);
+        return err;
+    }
+
+    vput(child);
+    return err;
+        /*NOT_YET_IMPLEMENTED("S5FS: s5fs_rmdir");*/
+        /*return -1;*/
 }
 
 
