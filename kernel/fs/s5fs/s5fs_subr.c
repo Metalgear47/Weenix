@@ -64,6 +64,9 @@ int
 s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 {
     KASSERT(vnode);
+    if (seekptr < 0) {
+        return -EINVAL;
+    }
 
     /*the block number in the file*/
     uint32_t blocknum_file = S5_DATA_BLOCK(seekptr);
@@ -71,7 +74,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 
     /*block number exceeds the max number*/
     if (blocknum_file > S5_MAX_FILE_BLOCKS) {
-        /*I guess I don't need to care about it now because it should be checked by upper layer*/
+        /*it should be checked on upper layer. But it would be good if I also check here.*/
         dprintf("request a block exceeding max file blocks.\n");
         /*not sure about the return value here*/
         return -EINVAL;
@@ -572,6 +575,7 @@ s5_alloc_block(s5fs_t *fs)
         KASSERT(fs->s5f_bdev);
         blocknum = s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1];
         KASSERT(blocknum > 0);
+
         pframe_get(&fs->s5f_bdev->bd_mmobj, blocknum, &next_free_blocks);
         KASSERT(next_free_blocks->pf_addr);
 
