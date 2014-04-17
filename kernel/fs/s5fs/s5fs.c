@@ -481,7 +481,6 @@ s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
 
     *result = vget(dir->vn_fs, inodeno);
     KASSERT(*result);
-    s5fs_read_vnode(*result);
 
     int err = s5_link(dir, *result, name, namelen);
     if (err < 0) {
@@ -528,7 +527,6 @@ s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t dev
 
     vnode_t *file = vget(dir->vn_fs, inodeno);
     KASSERT(file);
-    s5fs_read_vnode(file);
 
     int err = s5_link(dir, file, name, namelen);
     vput(file);
@@ -653,7 +651,6 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
     /*get the vnode for the child dir*/
     vnode_t *vnode_child = vget(dir->vn_fs, inodeno);
     KASSERT(vnode_child);
-    s5fs_read_vnode(vnode_child);
     KASSERT(vnode_child->vn_len == 0);
     KASSERT(vnode_child->vn_vno == (unsigned)inodeno);
 
