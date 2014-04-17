@@ -345,8 +345,8 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         }
 
         KASSERT((unsigned)(offset_end - offset_start + 1) == len);
-        char *pf_offset = (char *)block_pframe->pf_addr + offset_start;
-        memcpy(pf_offset, bytes, len);
+        char *pf_off = (char *)block_pframe->pf_addr + offset_start;
+        memcpy(pf_off, bytes, len);
 
         err = pframe_dirty(block_pframe);
         KASSERT(!err && "should not fail here");
@@ -363,7 +363,10 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         return err;
     }
 
-    memcpy(block_pframe->pf_addr, bytes, (S5_BLOCK_SIZE - offset_start));
+    char *pf_off = (char *)block_pframe->pf_addr + offset_start;
+    memcpy(pf_off, bytes, (S5_BLOCK_SIZE - offset_start));
+    err = pframe_dirty(block_pframe);
+    KASSERT(!err && "should not fail here");
 
     /*write to the end block*/
     block_pframe = NULL;
@@ -373,7 +376,9 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         return err;
     }
 
-    memcpy(block_pframe->pf_addr, &(bytes[(block_end - block_start) * S5_BLOCK_SIZE]), (offset_end + 1));
+    memcpy(block_pframe->pf_addr, bytes + (block_end - block_start) * S5_BLOCK_SIZE, (offset_end + 1));
+    err = pframe_dirty(block_pframe);
+    KASSERT(!err && "should not fail here");
 
     /*write to blocks in between*/
     uint32_t i;
@@ -385,20 +390,9 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
             return err;
         }
 
-        memcpy(cur_pframe->pf_addr, &(bytes[(i - block_start) * S5_BLOCK_SIZE]), S5_BLOCK_SIZE);
-    }
-
-    dprintf("dirty all the blocks\n");
-    for (i = block_start ; i <= block_end ; i++) {
-        pframe_t *cur_pframe = NULL;
-        err = pframe_get(&vnode->vn_mmobj, i, &cur_pframe);
-        if (err < 0) {
-            KASSERT(cur_pframe == NULL);
-            return err;
-        }
-
+        memcpy(cur_pframe->pf_addr, bytes + (i - block_start) * S5_BLOCK_SIZE, S5_BLOCK_SIZE);
         err = pframe_dirty(cur_pframe);
-        KASSERT(!err && "Shouldn't fail here.\n");
+        KASSERT(!err && "should not fail here");
     }
 
     /*update len in vnode*/
