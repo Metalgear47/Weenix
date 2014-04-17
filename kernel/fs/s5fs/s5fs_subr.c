@@ -315,7 +315,12 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     KASSERT((S5_TYPE_DATA == inode->s5_type)
              || (S5_TYPE_DIR == inode->s5_type));
 
-    dprintf("vnode address is %p, off set is %u, buffer address is %p, writing length is %u\n", vnode, seek, bytes, len);
+    if (seek < 0 || (unsigned)seek >= S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE) {
+        dprintf("requesting a write to negative position or exceeding the maximum file size\n");
+        return -EINVAL;
+    }
+
+    dprintf("vnode address is %p, off set is %d, buffer address is %p, writing length is %u\n", vnode, seek, bytes, len);
 
     /*get the block number*/
     uint32_t block_start = S5_DATA_BLOCK(seek);
@@ -395,10 +400,15 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         KASSERT(!err && "should not fail here");
     }
 
+    KASSERT((unsigned)vnode->vn_len == inode->s5_size);
+    off_t file_length = MAX(end + 1, vnode->vn_len);
     /*update len in vnode*/
-    vnode->vn_len = end + 1;
+    vnode->vn_len = file_length;
     /*update size in s5_inode*/
-    inode->s5_size = end + 1;
+    inode->s5_size = (unsigned)file_length;
+    /*dirty the inode*/
+    s5_dirty_inode(VNODE_TO_S5FS(vnode), inode);
+
     return len;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_write_file");*/
         /*return -1;*/
