@@ -442,6 +442,12 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
     KASSERT(inode);
     KASSERT((S5_TYPE_DATA == inode->s5_type)
              || (S5_TYPE_DIR == inode->s5_type));
+    KASSERT((unsigned)vnode->vn_len == inode->s5_size);
+
+    if (seek < 0) {
+        dprintf("requesting a read to negative position\n");
+        return -EINVAL;
+    }
 
     dprintf("vnode address is %p, off set is %u, buffer address is %p, writing length is %u\n", vnode, seek, dest, len);
 
@@ -453,7 +459,7 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
     /*get the block number*/
     uint32_t block_start = S5_DATA_BLOCK(seek);
     off_t end = seek + len - 1;
-    /*write to [start, end]*/
+    /*read from [start, end]*/
     if ((unsigned)end >= inode->s5_size) {
         end = inode->s5_size - 1;
         len = end - seek + 1;
@@ -477,11 +483,8 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
         }
 
         KASSERT((unsigned)(offset_end - offset_start + 1) == len);
-        if (block_pframe->pf_pagenum == 0) {
-            memset(dest, 0, len);
-        } else {
-            memcpy(dest, block_pframe->pf_addr, len);
-        }
+        char *pf_off = (char *)block_pframe->pf_addr + offset_start;
+        memcpy(dest, pf_off, len);
 
         return len;
     }
@@ -495,11 +498,8 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
         return err;
     }
 
-    if (block_pframe->pf_pagenum == 0) {
-        memset(dest, 0, (S5_BLOCK_SIZE - offset_start));
-    } else {
-        memcpy(dest, block_pframe->pf_addr, (S5_BLOCK_SIZE - offset_start));
-    }
+    char *pf_off = (char *)block_pframe + offset_start;
+    memcpy(dest, pf_off, (S5_BLOCK_SIZE - offset_start));
 
     /*read the end block*/
     block_pframe = NULL;
@@ -509,11 +509,7 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
         return err;
     }
 
-    if (block_pframe->pf_pagenum == 0) {
-        memset(&(dest[(block_end - block_start) * S5_BLOCK_SIZE]), 0, (offset_end + 1));
-    } else {
-        memcpy(&(dest[(block_end - block_start) * S5_BLOCK_SIZE]), block_pframe->pf_addr, (offset_end + 1));
-    }
+    memcpy(dest + (block_end - block_start) * S5_BLOCK_SIZE, block_pframe->pf_addr, (offset_end + 1));
 
     /*read blocks in between*/
     uint32_t i;
@@ -525,11 +521,7 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
             return err;
         }
 
-        if (block_pframe->pf_pagenum == 0) {
-            memset(&(dest[(i - block_start) * S5_BLOCK_SIZE]), 0, S5_BLOCK_SIZE);
-        } else {
-            memcpy(&(dest[(i - block_start) * S5_BLOCK_SIZE]), cur_pframe->pf_addr, S5_BLOCK_SIZE);
-        }
+        memcpy(dest + (i - block_start) * S5_BLOCK_SIZE, cur_pframe->pf_addr, S5_BLOCK_SIZE);
     }
 
     return len;
