@@ -579,8 +579,8 @@ s5_alloc_block(s5fs_t *fs)
 
         memcpy((void *)(s->s5s_free_blocks), next_free_blocks->pf_addr, 
                 S5_NBLKS_PER_FNODE * sizeof(int));
-        /*not sure if I need to dirty the page here*/
-        /*and memset the whole page*/
+        /*this will not initialize the contents of an allocated block*/
+        /*the contents are undefined*/
 
         s->s5s_nfree = S5_NBLKS_PER_FNODE - 1;
     } else {
@@ -799,8 +799,10 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
     KASSERT(inode);
     KASSERT(S5_TYPE_DIR == inode->s5_type);
+    KASSERT((unsigned)vnode->vn_len == inode->s5_size);
+    KASSERT(inode->s5_size % sizeof(s5_dirent_t) == 0);
 
-    KASSERT(namelen <= S5_NAME_LEN);
+    KASSERT(namelen < S5_NAME_LEN);
 
     ((char *)name)[namelen] = 0;
     dprintf("vnode address is %p, name is %s, inode size is %d\n", vnode, name, vnode->vn_len);
@@ -825,9 +827,11 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
         }
 
         if name_match(dirent.s5d_name, name, namelen) {
+            KASSERT(dirent.s5d_inode);
             return dirent.s5d_inode;
         }
 
+        KASSERT(err == sizeof(s5_dirent_t));
         offset += sizeof(s5_dirent_t);
     }
 
@@ -868,7 +872,7 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     KASSERT(inode);
     KASSERT(S5_TYPE_DIR == inode->s5_type);
 
-    KASSERT(namelen <= S5_NAME_LEN);
+    KASSERT(namelen < S5_NAME_LEN);
 
     ((char *)name)[namelen] = 0;
     dprintf("vnode address is %p, name is %s\n", vnode, name);
@@ -878,6 +882,7 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     off_t offset = 0;
     off_t filesize = vnode->vn_len;
     KASSERT((filesize % sizeof(s5_dirent_t)) == 0);
+    KASSERT((unsigned)filesize == inode->s5_size);
     s5_dirent_t dirent_target;
 
     /*search for the to-be-deleted dirent*/
@@ -893,14 +898,16 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
         if name_match(dirent_target.s5d_name, name, namelen) {
             inodeno = dirent_target.s5d_inode;
+            KASSERT(inodeno);
             break;
         }
 
+        KASSERT(err == sizeof(s5_dirent_t));
         offset += sizeof(s5_dirent_t);
     }
 
     KASSERT(inodeno >= 0);
-    KASSERT(err == 0);
+    KASSERT(err >= 0);
     if (inodeno == 0) {
         return -ENOENT;
     }
@@ -911,13 +918,14 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     if (err < 0) {
         return err;
     }
-    KASSERT(err == 0);
+    KASSERT(err == sizeof(s5_dirent_t));
 
     /*write the last dirent into the deleted dirent position*/
     err = s5_write_file(vnode, offset, (const char *)(&dirent_last), sizeof(s5_dirent_t));
     if (err < 0) {
         return err;
     }
+    KASSERT(err == sizeof(s5_dirent_t));
 
     s5fs_t *fs = VNODE_TO_S5FS(vnode);
     KASSERT(fs);
@@ -930,6 +938,15 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     s5_inode_t *inode_deleted = VNODE_TO_S5INODE(vnode);
     KASSERT(inode_deleted);
     inode_deleted->s5_linkcount--;
+    s5_dirty_inode(fs, inode_deleted);
+
+    /*free the inode should be done during s5fs_delete_vnode*/
+    /*
+     *[>call s5_free_inode to free the inode<]
+     *if (inode_deleted->s5_linkcount == 1) {
+     *    s5_free_inode(vnode_deleted);
+     *}
+     */
 
     /*not sure about this, but when vget, we've already vref once*/
     vput(vnode_deleted);
@@ -939,14 +956,8 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     vnode->vn_len -= sizeof(s5_dirent_t);
     inode->s5_size -= sizeof(s5_dirent_t);
     s5_dirty_inode(fs, inode);
-
-    /*still need to dirty_inode?*/
+    /*still need to dirty_inode*/
     s5_dirty_inode(fs, inode_deleted);
-
-    /*call s5_free_inode to free the inode*/
-    if (inode_deleted->s5_linkcount == 1) {
-        s5_free_inode(vnode_deleted);
-    }
 
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_remove_dirent");*/
@@ -978,7 +989,7 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     s5_inode_t *inode_child = VNODE_TO_S5INODE(child);
     KASSERT(inode_child);
 
-    KASSERT(namelen <= S5_NAME_LEN);
+    KASSERT(namelen < S5_NAME_LEN);
 
     ((char *)name)[namelen] = 0;
     dprintf("parent vnode address is %p, child vnode address is %p, name is %s\n", parent, child, name);
