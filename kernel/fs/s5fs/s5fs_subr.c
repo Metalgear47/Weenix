@@ -980,11 +980,15 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
 {
     KASSERT(parent);
     KASSERT(name);
+    KASSERT(!name_match(".", name, namelen) &&
+            !name_match("..", name, namelen));
     KASSERT(S_ISDIR(parent->vn_mode));
 
     s5_inode_t *inode_parent = VNODE_TO_S5INODE(parent);
     KASSERT(inode_parent);
     KASSERT(S5_TYPE_DIR == inode_parent->s5_type);
+    KASSERT((unsigned)parent->vn_len == inode_parent->s5_size);
+    KASSERT(parent->vn_len % sizeof(s5_dirent_t) == 0);
 
     s5_inode_t *inode_child = VNODE_TO_S5INODE(child);
     KASSERT(inode_child);
@@ -994,9 +998,9 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     ((char *)name)[namelen] = 0;
     dprintf("parent vnode address is %p, child vnode address is %p, name is %s\n", parent, child, name);
 
-    /*examine if the dirent alread exists*/
+    /*examine if the dirent already exists*/
     int err = s5_find_dirent(parent, name, namelen);
-    if (err == 0) {
+    if (err > 0) {
         return -EEXIST;
     }
 
@@ -1016,10 +1020,14 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     if (err < 0) {
         return err;
     }
+    KASSERT(err == sizeof(s5_dirent_t));
 
-    /*dirty_inode. */
+    /*increase the refcount on child*/
+    vref(child);
+
     /*special case '.'*/
     if (!name_match(".", name, namelen)) {
+        /*increment the linkcount for inode*/
         inode_child->s5_linkcount++;
         s5_dirty_inode(VNODE_TO_S5FS(parent), inode_child);
     }
