@@ -74,7 +74,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 
     /*block number exceeds the max number*/
     if (blocknum_file > S5_MAX_FILE_BLOCKS) {
-        /*it should be checked on upper layer. But it would be good if I also check here.*/
+        /*it should be checked on upper layer. But it would be nice if I also check here.*/
         dprintf("request a block exceeding max file blocks.\n");
         /*not sure about the return value here*/
         return -EINVAL;
@@ -83,7 +83,6 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
     int blocknum = 0;
     /*get the file's corresponding inode*/
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
-    /*inode should not be NULL and check the type of inode*/
     KASSERT(inode);
     KASSERT((S5_TYPE_DATA == inode->s5_type)
             || (S5_TYPE_DIR == inode->s5_type)
@@ -103,11 +102,14 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
         if (blocknum == 0) {
             /*sparse block*/
             dprintf("It's a sparse block\n");
+
             if (alloc == 0) {
                 dprintf("No need to alloc, just return 0\n");
+
                 return 0;
             } else {
                 dprintf("need to alloc!, gonna call s5_alloc_block\n");
+
                 blocknum = s5_alloc_block(fs);
                 if (blocknum < 0) {
                     dprintf("Got some error: %d\n", blocknum);
@@ -115,6 +117,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                 }
                 /*blocknum should not be 0*/
                 KASSERT(blocknum);
+
                 inode->s5_direct_blocks[blocknum_file] = blocknum;
                 s5_dirty_inode(fs, inode);
                 dprintf("the newly allocated block is %d\n", blocknum);
@@ -123,6 +126,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
         } else {
             /*not a sparse block*/
             dprintf("It's not a sparse block, block number is %d\n", blocknum);
+
             return blocknum;
         }
     } else {
@@ -147,45 +151,45 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                 KASSERT(ibp
                         && "because never fails for block_device "
                         "vm_objects");
-                pframe_pin(ibp);
 
                 b = (uint32_t *)(ibp->pf_addr);
+                /*the block number on device*/
                 blocknum = b[blocknum_indirect];
+
                 if (blocknum == 0) {
                     dprintf("It's a sparse block\n");
                     if (alloc == 0) {
                         dprintf("no need to allocate, just return 0\n");
-                        pframe_unpin(ibp);
                         return 0;
                     } else {
                         dprintf("need to allocate a new block, gonna start\n");
+
+                        pframe_pin(ibp);
                         blocknum = s5_alloc_block(fs);
+                        pframe_unpin(ibp);
+
                         if (blocknum < 0) {
                             dprintf("get some error: %d\n", blocknum);
-                            pframe_unpin(ibp);
                             return blocknum;
                         } else {
                             /*blocknum should not be 0*/
                             KASSERT(blocknum);
                             /*store it back in the indirect blocks array*/
                             b[blocknum_indirect] = blocknum;
-                            /*unpin it*/
-                            pframe_unpin(ibp);
+
+                            pframe_pin(ibp);
                             /*since indirect block is modified, dirty it*/
                             pframe_dirty(ibp);
-                            /*since inode is also modified*/
-                            s5_dirty_inode(fs, inode);
+                            pframe_unpin(ibp);
+
                             dprintf("the newly allocated block number is %d\n", blocknum);
                             return blocknum;
                         }
                     }
                 } else {
                     dprintf("not a sparse block, block number is %d\n", blocknum);
-                    pframe_unpin(ibp);
                     return blocknum;
                 }
-
-                /*pframe_unpin(ibp);*/
             } else {
                 KASSERT(inode->s5_indirect_block == 0);
                 /*indirect block is all 0s*/
@@ -212,22 +216,24 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     pframe_t *ibp = NULL;
                     /*load the page frame for indirect block*/
                     int err = pframe_get(o, (uint32_t)indirect_block, &ibp);
-                    if (ibp == NULL || err < 0) {
+                    if (err < 0) {
+                        KASSERT(ibp == NULL);
                         s5_free_block(fs, (uint32_t)indirect_block);
                         return err;
                         /*TODO: need to review pframe_get*/
                     }
 
-                    pframe_pin(ibp);
                     /*get the pointer to indirect blocks array*/
                     uint32_t *b = (uint32_t*)(ibp->pf_addr);
                     memset(b, 0, S5_NIDIRECT_BLOCKS * sizeof(int));
 
+                    pframe_pin(ibp);
                     /*allocate the block for the real data*/
                     blocknum = s5_alloc_block(fs);
+                    pframe_unpin(ibp);
+
                     if (blocknum < 0) {
                         s5_free_block(fs, (uint32_t)indirect_block);
-                        pframe_unpin(ibp);
                         /*not sure about free the pframe*/
                         pframe_free(ibp);
                         return blocknum;
@@ -240,11 +246,13 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     /*update the block number in indirect block*/
                     b[blocknum_indirect] = blocknum;
 
-                    pframe_unpin(ibp);
+                    pframe_pin(ibp);
                     /*dirty the page for indirect block*/
                     pframe_dirty(ibp);
                     /*dirty the inode*/
                     s5_dirty_inode(fs, inode);
+                    pframe_pin(ibp);
+
                     return blocknum;
                 }
             }
