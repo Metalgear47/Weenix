@@ -315,14 +315,6 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     KASSERT((S5_TYPE_DATA == inode->s5_type)
              || (S5_TYPE_DIR == inode->s5_type));
 
-/*
- *    s5fs_t *fs = VNODE_TO_S5FS(vnode);
- *    KASSERT(fs);
- *
- *    mmobj_t *o = S5FS_TO_VMOBJ(fs);
- *    KASSERT(o);
- */
-
     dprintf("vnode address is %p, off set is %u, buffer address is %p, writing length is %u\n", vnode, seek, bytes, len);
 
     /*get the block number*/
@@ -342,6 +334,7 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     off_t offset_end = S5_DATA_OFFSET(end);
     dprintf("start offset is %u, end offset is %u\n", offset_start, offset_end);
 
+    /*write to only one block*/
     if (block_start == block_end) {
         dprintf("only write to one block\n");
         pframe_t *block_pframe = NULL;
@@ -352,7 +345,8 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         }
 
         KASSERT((unsigned)(offset_end - offset_start + 1) == len);
-        memcpy(block_pframe->pf_addr, bytes, len);
+        char *pf_offset = (char *)block_pframe->pf_addr + offset_start;
+        memcpy(pf_offset, bytes, len);
 
         err = pframe_dirty(block_pframe);
         KASSERT(!err && "should not fail here");

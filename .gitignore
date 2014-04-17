@@ -29,3 +29,6 @@ manifests/
 # mac file
 .DS_Store
 /doc/.DS_Store
+
+# vim backup directory
+.vimbackup
