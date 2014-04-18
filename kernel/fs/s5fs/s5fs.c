@@ -230,6 +230,8 @@ s5fs_read_vnode(vnode_t *vnode)
     KASSERT(inode && inode->s5_number == vnode->vn_vno);
 
     inode->s5_linkcount++;
+    dprintf("inode linkcount incremented, ino is vnode->vn_vno, linkcount now is: %d", inode->s5_linkcount);
+
     pframe_pin(pframe_inode_block);
     err = pframe_dirty(pframe_inode_block);
     KASSERT(!err && "Shouldn't fail when dirtying it");
@@ -289,6 +291,8 @@ s5fs_delete_vnode(vnode_t *vnode)
     KASSERT(inode && inode->s5_number == vnode->vn_vno);
 
     inode->s5_linkcount--;
+    dprintf("inode linkcount decremented, ino is vnode->vn_vno, linkcount now is: %d", inode->s5_linkcount);
+
     pframe_pin(pframe_inode_block);
     pframe_dirty(pframe_inode_block);
     pframe_unpin(pframe_inode_block);
@@ -681,6 +685,7 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
     KASSERT(vnode_child);
     KASSERT(vnode_child->vn_len == 0);
     KASSERT(vnode_child->vn_vno == (unsigned)inodeno);
+    KASSERT(vnode_child->vn_refcount == 1);
     
     /*this name is not in the directory*/
     KASSERT(0 > s5_find_dirent(dir, name, namelen));
@@ -707,7 +712,7 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
         return err;
     }
     s5_inode_t *inode_child = VNODE_TO_S5INODE(vnode_child);
-    KASSERT(inode_child->s5_linkcount == 1);
+    KASSERT(inode_child->s5_linkcount == 2);
 
     /*'..'*/
     err = s5_link(vnode_child, dir, "..", 2);
@@ -725,8 +730,9 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
         return err;
     }
 
+    KASSERT(inode_child->s5_linkcount == 2);
     vput(vnode_child);
-    KASSERT(inode_child->s5_linkcount == 1);
+    /*KASSERT(inode_child->s5_linkcount == 1);*/
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_mkdir");*/
         /*return -1;*/
