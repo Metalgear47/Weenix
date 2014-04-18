@@ -342,9 +342,9 @@ get_resident:
             sched_wakeup_on(&pageoutd_waitq);
             /*wait for pageoutd to finish*/
             sched_sleep_on(&alloc_waitq);
-        }
 
-        dbg(DBG_PFRAME, "after pageout deamon reclaimed pframes.\n");
+            dbg(DBG_PFRAME, "after pageout deamon reclaimed pframes.\n");
+        }
         
         return err;
     }
@@ -410,7 +410,7 @@ void
 pframe_pin(pframe_t *pf)
 {
     KASSERT(pf->pf_pincount >= 0 && "Bad thing happened, pincount is negative.\n");
-    dbg(DBG_PFRAME, "called on pframe %p.\n with pincount: %d", pf, pf->pf_pincount);
+    dbg(DBG_PFRAME, "called on pframe %p. with pincount: %d\n", pf, pf->pf_pincount);
 
     pf->pf_pincount++;
     if (pf->pf_pincount == 1){
@@ -443,7 +443,7 @@ void
 pframe_unpin(pframe_t *pf)
 {
     KASSERT(pf->pf_pincount > 0);
-    dbg(DBG_PFRAME, "called on pframe %p.\n with pincount: %d", pf, pf->pf_pincount);
+    dbg(DBG_PFRAME, "called on pframe %p.with pincount: %d\n", pf, pf->pf_pincount);
 
     pf->pf_pincount--;
     if (pf->pf_pincount == 0) {

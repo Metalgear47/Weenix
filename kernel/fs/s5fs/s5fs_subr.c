@@ -592,7 +592,7 @@ s5_alloc_block(s5fs_t *fs)
     unlock_s5(fs);
 
     KASSERT(blocknum > 0);
-    dprintf("block allocated, the block number is %d", blocknum);
+    dprintf("block allocated, the block number is %d\n", blocknum);
     return blocknum;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_alloc_block");*/
         /*return -1;*/
@@ -980,8 +980,6 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
 {
     KASSERT(parent);
     KASSERT(name);
-    KASSERT(!name_match(".", name, namelen) &&
-            !name_match("..", name, namelen));
     KASSERT(S_ISDIR(parent->vn_mode));
 
     s5_inode_t *inode_parent = VNODE_TO_S5INODE(parent);

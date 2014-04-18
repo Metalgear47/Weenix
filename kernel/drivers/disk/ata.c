@@ -545,11 +545,12 @@ ata_do_operation(ata_disk_t *adisk, char *data, blocknum_t blocknum, int write)
     /*number of sectors*/
     ata_outb_reg(adisk->ata_channel, ATA_REG_SECCOUNT0, adisk->ata_sectors_per_block);
     /*starting sector*/
-    uint8_t byte = (blocknum & 0xff);
+    uint32_t sectornum = blocknum * adisk->ata_sectors_per_block;
+    uint8_t byte = (sectornum & 0xff);
     ata_outb_reg(adisk->ata_channel, ATA_REG_LBA0, byte);
-    byte = (blocknum & 0xff00) >> 8;
+    byte = (sectornum & 0xff00) >> 8;
     ata_outb_reg(adisk->ata_channel, ATA_REG_LBA1, byte);
-    byte = (blocknum & 0xff0000) >> 16;
+    byte = (sectornum & 0xff0000) >> 16;
     ata_outb_reg(adisk->ata_channel, ATA_REG_LBA2, byte);
 
     /*type of operation*/

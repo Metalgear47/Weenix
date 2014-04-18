@@ -177,6 +177,7 @@ s5fs_mount(struct fs *fs)
         fs->fs_i = s5;
         fs->fs_op = &s5fs_fsops;
         fs->fs_root = vget(fs, s5->s5f_super->s5s_root_inode);
+        /*fs->fs_root = vget(fs, 257);*/
 
         return 0;
 }
