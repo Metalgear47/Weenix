@@ -580,6 +580,7 @@ s5fs_lookup(vnode_t *base, const char *name, size_t namelen, vnode_t **result)
     KASSERT(inodeno);
 
     *result = vget(base->vn_fs, inodeno);
+    KASSERT(*result);
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_lookup");*/
         /*return -1;*/
@@ -683,25 +684,28 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
     /*add the link at parent directory*/
     int err = s5_link(dir, vnode_child, name, namelen);
     if (err < 0) {
-        s5_free_inode(vnode_child);
+        /*s5_free_inode(vnode_child);*/
         vput(vnode_child);
         return err;
     }
+    KASSERT(dir->vn_len % sizeof(s5_dirent_t) == 0);
 
     /*Set up '.' and '..'*/
+    /*'.'*/
     err = s5_link(vnode_child, vnode_child, ".", 1);
     if (err < 0) {
         if (s5_remove_dirent(dir, name, namelen) < 0) {
             /*panic during debugging*/
             panic("The directory is corrupted\n");
         }
-        s5_free_inode(vnode_child);
+        /*s5_free_inode(vnode_child);*/
         vput(vnode_child);
         return err;
     }
     s5_inode_t *inode_child = VNODE_TO_S5INODE(vnode_child);
     KASSERT(inode_child->s5_linkcount == 1);
 
+    /*'..'*/
     err = s5_link(vnode_child, dir, "..", 2);
     if (err < 0) {
         if (s5_remove_dirent(dir, name, namelen) < 0) {
@@ -712,13 +716,12 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
             /*panic during debugging*/
             panic("The directory is corrupted\n");
         }
-        s5_free_inode(vnode_child);
+        /*s5_free_inode(vnode_child);*/
         vput(vnode_child);
         return err;
     }
 
-    /*maybe need to modify the inode size, need to be REVIEWed*/
-
+    vput(vnode_child);
     KASSERT(inode_child->s5_linkcount == 1);
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_mkdir");*/
