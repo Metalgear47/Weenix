@@ -624,6 +624,8 @@ static int
 s5fs_unlink(vnode_t *dir, const char *name, size_t namelen)
 {
     KASSERT(dir);
+    KASSERT(S_ISDIR(dir->vn_mode));
+    KASSERT(dir->vn_len % sizeof(s5_dirent_t) == 0);
     KASSERT(name);
     KASSERT(namelen < S5_NAME_LEN);
 
@@ -809,7 +811,7 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
  *
  * Here you need to use s5_read_file() to read a s5_dirent_t from a directory
  * and copy that data into the given dirent. The value of d_off is dependent on
- * your implementation and may or may not b e necessary.  Finally, return the
+ * your implementation and may or may not be necessary.  Finally, return the
  * number of bytes read.
  */
 static int

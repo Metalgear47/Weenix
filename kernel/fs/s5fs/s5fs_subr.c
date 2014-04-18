@@ -1023,7 +1023,8 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     KASSERT(err == sizeof(s5_dirent_t));
 
     /*increase the refcount on child*/
-    vref(child);
+    /*actually no need, it's not we've acquired a new pointer to child*/
+    /*vref(child);*/
 
     /*special case '.'*/
     if (!name_match(".", name, namelen)) {
