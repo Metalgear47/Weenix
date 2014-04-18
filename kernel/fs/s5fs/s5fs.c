@@ -475,6 +475,7 @@ static int
 s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
 {
     KASSERT(dir);
+    KASSERT(S_ISDIR(dir->vn_mode));
     KASSERT(name);
     KASSERT(result);
     KASSERT(namelen < S5_NAME_LEN);
@@ -491,9 +492,12 @@ s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
 
     int err = s5_link(dir, *result, name, namelen);
     if (err < 0) {
+        /*link is not successful*/
         vput(*result);
         *result = NULL;
-        s5_free_inode(*result);
+        /*no need to do it*/
+        /*vput->s5fs_delete_vnode->decrement linkcount->s5_free_inode*/
+        /*s5_free_inode(*result);*/
         dprintf("some error occured, the error number is %d.\n", err);
         return err;
     }
