@@ -680,6 +680,9 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
     KASSERT(vnode_child);
     KASSERT(vnode_child->vn_len == 0);
     KASSERT(vnode_child->vn_vno == (unsigned)inodeno);
+    
+    /*this name is not in the directory*/
+    KASSERT(0 > s5_find_dirent(dir, name, namelen));
 
     /*add the link at parent directory*/
     int err = s5_link(dir, vnode_child, name, namelen);
