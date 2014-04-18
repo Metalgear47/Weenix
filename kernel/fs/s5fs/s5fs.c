@@ -754,12 +754,12 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
             !name_match("..", name, namelen));
 
     /*get the vnode for the child*/
-    vnode_t *child = NULL;
-    int err = s5fs_lookup(parent, name, namelen, &child);
-    if (err < 0) {
-        KASSERT(child == NULL);
-        return err;
+    int inodeno = s5_find_dirent(parent, name, namelen);
+    if (inodeno < 0) {
+        return inodeno;
     }
+    vnode_t *child = vget(parent->vn_fs, inodeno);
+    KASSERT(child);
 
     KASSERT(child);
     KASSERT(S_ISDIR(child->vn_mode));
@@ -767,23 +767,37 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
 
     /*determine if the child dir is empty or not*/
     if (child->vn_len != 2 * sizeof(s5_dirent_t)) {
+        vput(child);
         return -ENOTEMPTY;
     }
-    dirent_t d;
-    off_t offset = 0;
-    int ret = 0;
-    while ((ret = s5fs_readdir(child, offset, &d)) > 0) {
-        offset += ret;
-        if (strcmp(d.d_name, ".") != 0 ||
-            strcmp(d.d_name, "..") != 0) {
-            vput(child);
-            return -ENOTEMPTY;
-        }
-    }
-    if (ret < 0) {
+    int err = 0;
+    err = s5_find_dirent(parent, ".", 1);
+    if (err < 0) {
         vput(child);
-        return ret;
+        return err;
     }
+    err = s5_find_dirent(parent, "..", 2);
+    if (err < 0) {
+        vput(child);
+        return err;
+    }
+    /*
+     *dirent_t d;
+     *off_t offset = 0;
+     *int ret = 0;
+     *while ((ret = s5fs_readdir(child, offset, &d)) > 0) {
+     *    offset += ret;
+     *    if (strcmp(d.d_name, ".") != 0 ||
+     *        strcmp(d.d_name, "..") != 0) {
+     *        vput(child);
+     *        return -ENOTEMPTY;
+     *    }
+     *}
+     *if (ret < 0) {
+     *    vput(child);
+     *    return ret;
+     *}
+     */
 
     /*remove '..' directory from child*/
     err = s5_remove_dirent(child, "..", 2);
