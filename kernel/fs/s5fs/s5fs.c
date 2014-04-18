@@ -885,8 +885,10 @@ s5fs_stat(vnode_t *vnode, struct stat *ss)
     s5_inode_t *i = VNODE_TO_S5INODE(vnode);
     KASSERT(i);
 
+    memset(ss, 0, sizeof(struct stat));
     ss->st_mode = vnode->vn_mode;
     ss->st_ino = (int)vnode->vn_vno;
+    /*is it just linkcount or linkcount - 1?*/
     ss->st_nlink = i->s5_linkcount - 1;
 
     KASSERT((unsigned)vnode->vn_len == i->s5_size);
