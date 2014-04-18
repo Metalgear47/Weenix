@@ -230,7 +230,7 @@ s5fs_read_vnode(vnode_t *vnode)
     KASSERT(inode && inode->s5_number == vnode->vn_vno);
 
     inode->s5_linkcount++;
-    dprintf("inode linkcount incremented, ino is vnode->vn_vno, linkcount now is: %d", inode->s5_linkcount);
+    dprintf("inode linkcount incremented, ino is vnode->vn_vno, linkcount now is: %d\n", inode->s5_linkcount);
 
     pframe_pin(pframe_inode_block);
     err = pframe_dirty(pframe_inode_block);
