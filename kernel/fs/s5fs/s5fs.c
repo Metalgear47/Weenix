@@ -476,6 +476,7 @@ s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
 {
     KASSERT(dir);
     KASSERT(S_ISDIR(dir->vn_mode));
+    KASSERT(dir->vn_len % sizeof(s5_dirent_t) == 0);
     KASSERT(name);
     KASSERT(namelen < S5_NAME_LEN);
 
@@ -521,6 +522,7 @@ s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t dev
 {
     KASSERT(dir);
     KASSERT(S_ISDIR(dir->vn_mode));
+    KASSERT(dir->vn_len % sizeof(s5_dirent_t) == 0);
     KASSERT(name);
     KASSERT(namelen < S5_NAME_LEN);
 
@@ -566,8 +568,9 @@ int
 s5fs_lookup(vnode_t *base, const char *name, size_t namelen, vnode_t **result)
 {
     KASSERT(base);
+    KASSERT(S_ISDIR(base->vn_mode));
+    KASSERT(base->vn_len % sizeof(s5_dirent_t) == 0);
     KASSERT(name);
-    KASSERT(result);
     KASSERT(namelen < S5_NAME_LEN);
 
     int inodeno = s5_find_dirent(base, name, namelen);
@@ -595,10 +598,15 @@ s5fs_link(vnode_t *src, vnode_t *dir, const char *name, size_t namelen)
 {
     KASSERT(src);
     KASSERT(dir);
+    KASSERT(S_ISDIR(dir->vn_mode));
+    KASSERT(dir->vn_len % sizeof(s5_dirent_t) == 0);
     KASSERT(name);
     KASSERT(namelen < S5_NAME_LEN);
 
-    int err = s5_link(src, dir, name, namelen);
+    KASSERT(0 > s5_find_dirent(dir, name, namelen));
+
+    /*switch the order of parameters*/
+    int err = s5_link(dir, src, name, namelen);
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_link");*/
         /*return -1;*/
@@ -747,6 +755,7 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
 
     KASSERT(child);
     KASSERT(S_ISDIR(child->vn_mode));
+    KASSERT(child->vn_len % sizeof(s5_dirent_t) == 0);
 
     /*determine if the child dir is empty or not*/
     if (child->vn_len != 2 * sizeof(s5_dirent_t)) {
