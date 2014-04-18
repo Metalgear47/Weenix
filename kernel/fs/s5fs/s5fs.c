@@ -477,8 +477,9 @@ s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
     KASSERT(dir);
     KASSERT(S_ISDIR(dir->vn_mode));
     KASSERT(name);
-    KASSERT(result);
     KASSERT(namelen < S5_NAME_LEN);
+
+    KASSERT(0 > s5_find_dirent(dir, name, namelen));
 
     int inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_DATA, 0);
     if (inodeno < 0) {
@@ -519,8 +520,11 @@ static int
 s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t devid)
 {
     KASSERT(dir);
+    KASSERT(S_ISDIR(dir->vn_mode));
     KASSERT(name);
     KASSERT(namelen < S5_NAME_LEN);
+
+    KASSERT(0 > s5_find_dirent(dir, name, namelen));
 
     int inodeno;
     if (S_ISCHR(mode)) {
@@ -542,8 +546,9 @@ s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t dev
     int err = s5_link(dir, file, name, namelen);
     vput(file);
     if (err < 0) {
-        s5_free_inode(file);
+        /*s5_free_inode(file);*/
         dprintf("some error occured, the error number is %d.\n", err);
+        return err;
     }
 
     KASSERT(err == 0);
