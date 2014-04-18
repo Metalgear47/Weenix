@@ -843,13 +843,17 @@ s5fs_readdir(vnode_t *vnode, off_t offset, struct dirent *d)
     KASSERT(offset % sizeof(s5_dirent_t) == 0);
     KASSERT(d);
 
+    if (offset > vnode->vn_len) {
+        return 0;
+    }
+
     s5_dirent_t s5_dirent;
     int err = s5_read_file(vnode, offset, (char *)(&s5_dirent), sizeof(s5_dirent_t));
     if (err < 0) {
         return err;
     }
     if (err == 0) {
-        KASSERT(offset >= vnode->vn_len);
+        KASSERT(offset == vnode->vn_len);
         return 0;
     }
     KASSERT(err == sizeof(s5_dirent_t));
@@ -858,6 +862,8 @@ s5fs_readdir(vnode_t *vnode, off_t offset, struct dirent *d)
     d->d_off = 0; /* unused*/
     strncpy(d->d_name, s5_dirent.s5d_name, S5_NAME_LEN - 1);
     d->d_name[S5_NAME_LEN - 1] = '\0';
+
+    KASSERT(err == sizeof(s5_dirent_t));
     return sizeof(s5_dirent_t);
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_readdir");*/
         /*return -1;*/
