@@ -31,6 +31,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
     KASSERT(dir != NULL);
     KASSERT(name != NULL);
 
+    ((char *)name)[len] = NULL;
     dbg(DBG_VFS, "lookup: vnode 0x%p, name is: %s, namelen is: %u.\n", dir, name, len);
 
     KASSERT(dir->vn_ops);
@@ -45,6 +46,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
      *    dbg(DBG_VFS, "%s\n", name);
      *    dbg(DBG_VFS, "the name matches '.' \n");
      *    *result = dir;
+     *    vref(dir);
      *    return 0;
      *}
      */
@@ -56,6 +58,7 @@ lookup(vnode_t *dir, const char *name, size_t len, vnode_t **result)
         *result = NULL;
         return err;
     }
+    KASSERT(err == 0);
     return err;
 
     /*don't know why I need to special case "." and ".."*/

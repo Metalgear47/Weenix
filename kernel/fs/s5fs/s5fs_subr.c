@@ -818,7 +818,7 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
     dprintf("s5fs_subr level call hook\n");
 
     ((char *)name)[namelen] = 0;
-    dprintf("vnode address is %p, name is %s, inode size is %d\n", vnode, name, vnode->vn_len);
+    dprintf("vnode address is %p, name is '%s' inode size is %d\n", vnode, name, vnode->vn_len);
 
     int err = 0;
     off_t offset = 0;
@@ -953,7 +953,7 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     /*not sure about the maintainance of linkcount*/
     s5_inode_t *inode_deleted = VNODE_TO_S5INODE(vnode);
     KASSERT(inode_deleted);
-    inode_deleted->s5_linkcount--;
+    /*inode_deleted->s5_linkcount--;*/
     s5_dirty_inode(fs, inode_deleted);
 
     /*free the inode should be done during s5fs_delete_vnode*/
