@@ -815,6 +815,8 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
     KASSERT(namelen < S5_NAME_LEN);
 
+    dprintf("s5fs_subr level call hook\n");
+
     ((char *)name)[namelen] = 0;
     dprintf("vnode address is %p, name is %s, inode size is %d\n", vnode, name, vnode->vn_len);
 
@@ -884,6 +886,8 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     KASSERT(S5_TYPE_DIR == inode->s5_type);
 
     KASSERT(namelen < S5_NAME_LEN);
+
+    dprintf("s5fs_subr level call hook\n");
 
     ((char *)name)[namelen] = 0;
     dprintf("vnode address is %p, name is %s\n", vnode, name);
@@ -1004,6 +1008,8 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
 
     KASSERT(namelen < S5_NAME_LEN);
 
+    dprintf("s5fs_subr level call hook\n");
+
     ((char *)name)[namelen] = 0;
     dprintf("parent vnode address is %p, child vnode address is %p, name is %s\n", parent, child, name);
 
@@ -1065,6 +1071,8 @@ s5_inode_blocks(vnode_t *vnode)
 
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
     KASSERT(inode);
+
+    dprintf("s5fs_subr level call hook\n");
 
     int result = 0;
     uint32_t i;

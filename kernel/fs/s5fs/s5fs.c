@@ -220,6 +220,8 @@ s5fs_read_vnode(vnode_t *vnode)
     s5fs_t *fs = VNODE_TO_S5FS(vnode);
     KASSERT(fs);
 
+    dprintf("s5fs level call hook\n");
+
     int err = 0;
     pframe_t *pframe_inode_block = NULL;
     err = pframe_get(S5FS_TO_VMOBJ(fs), S5_INODE_BLOCK(vnode->vn_vno), &pframe_inode_block);
@@ -280,6 +282,8 @@ s5fs_delete_vnode(vnode_t *vnode)
     KASSERT(vnode);
     s5fs_t *fs = VNODE_TO_S5FS(vnode);
     KASSERT(fs);
+
+    dprintf("s5fs level call hook\n");
 
     int err = 0;
     pframe_t *pframe_inode_block = NULL;
@@ -420,6 +424,8 @@ s5fs_read(vnode_t *vnode, off_t offset, void *buf, size_t len)
     KASSERT(vnode);
     KASSERT(buf);
 
+    dprintf("s5fs level call hook\n");
+
     /*read exceeds the end of the file*/
     if (offset >= vnode->vn_len) {
         return 0;
@@ -442,6 +448,8 @@ s5fs_write(vnode_t *vnode, off_t offset, const void *buf, size_t len)
 {
     KASSERT(vnode);
     KASSERT(buf);
+
+    dprintf("s5fs level call hook\n");
 
     kmutex_lock(&vnode->vn_mutex);
 
@@ -486,6 +494,8 @@ s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
     KASSERT(namelen < S5_NAME_LEN);
 
     KASSERT(0 > s5_find_dirent(dir, name, namelen));
+
+    dprintf("s5fs level call hook\n");
 
     int inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_DATA, 0);
     if (inodeno < 0) {
@@ -533,6 +543,8 @@ s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t dev
 
     KASSERT(0 > s5_find_dirent(dir, name, namelen));
 
+    dprintf("s5fs level call hook\n");
+
     int inodeno;
     if (S_ISCHR(mode)) {
         inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_CHR, devid);
@@ -578,6 +590,8 @@ s5fs_lookup(vnode_t *base, const char *name, size_t namelen, vnode_t **result)
     KASSERT(name);
     KASSERT(namelen < S5_NAME_LEN);
 
+    dprintf("s5fs level call hook\n");
+
     int inodeno = s5_find_dirent(base, name, namelen);
     if (inodeno < 0) {
         return inodeno;
@@ -611,6 +625,8 @@ s5fs_link(vnode_t *src, vnode_t *dir, const char *name, size_t namelen)
 
     KASSERT(0 > s5_find_dirent(dir, name, namelen));
 
+    dprintf("s5fs level call hook\n");
+
     /*switch the order of parameters*/
     int err = s5_link(dir, src, name, namelen);
     return err;
@@ -634,6 +650,8 @@ s5fs_unlink(vnode_t *dir, const char *name, size_t namelen)
     KASSERT(dir->vn_len % sizeof(s5_dirent_t) == 0);
     KASSERT(name);
     KASSERT(namelen < S5_NAME_LEN);
+
+    dprintf("s5fs level call hook\n");
 
     int err = s5_remove_dirent(dir, name, namelen);
     return err;
@@ -856,6 +874,8 @@ s5fs_readdir(vnode_t *vnode, off_t offset, struct dirent *d)
     KASSERT(offset % sizeof(s5_dirent_t) == 0);
     KASSERT(d);
 
+    dprintf("s5fs level call hook\n");
+
     if (offset > vnode->vn_len) {
         return 0;
     }
@@ -927,6 +947,8 @@ s5fs_fillpage(vnode_t *vnode, off_t offset, void *pagebuf)
     KASSERT(vnode);
     KASSERT(pagebuf);
 
+    dprintf("s5fs_fillpage call hook\n");
+
     int blocknum = s5_seek_to_block(vnode, offset, 0);
     if (blocknum < 0) {
         return blocknum;
@@ -967,6 +989,8 @@ s5fs_dirtypage(vnode_t *vnode, off_t offset)
 {
     KASSERT(vnode);
 
+    dprintf("s5fs_dirtypage call hook\n");
+
     int blocknum = s5_seek_to_block(vnode, offset, 0);
     if (blocknum < 0) {
         return blocknum;
@@ -997,6 +1021,8 @@ s5fs_cleanpage(vnode_t *vnode, off_t offset, void *pagebuf)
 {
     KASSERT(vnode);
     KASSERT(pagebuf);
+
+    dprintf("s5fs_cleanpage call hook\n");
 
     int blocknum = s5_seek_to_block(vnode, offset, 0);
     if (blocknum < 0) {
