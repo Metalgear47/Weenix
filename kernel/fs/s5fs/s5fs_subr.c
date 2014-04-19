@@ -922,6 +922,7 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     if (inodeno == 0) {
         return -ENOENT;
     }
+    KASSERT(offset < filesize);
 
     /*get the last dirent*/
     s5_dirent_t dirent_last;
@@ -959,8 +960,7 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
      *}
      */
 
-    /*not sure about this, but when vget, we've already vref once*/
-    vput(vnode_deleted);
+    /*vnode_deleted did not outlive this function, so we only need to make sure that we have 1 vput corresponding to vget*/
     vput(vnode_deleted);
 
     /*modify the length*/
@@ -1024,6 +1024,7 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     dirent.s5d_name[namelen] = 0;
     KASSERT(inode_child->s5_number == child->vn_vno);
     dirent.s5d_inode = inode_child->s5_number;
+    KASSERT(inode_child->s5_type != 0);
 
     /*write it to the end of the file*/
     err = s5_write_file(parent, parent->vn_len, (const char *)(&dirent), sizeof(s5_dirent_t));
