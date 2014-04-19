@@ -596,7 +596,8 @@ s5fs_lookup(vnode_t *base, const char *name, size_t namelen, vnode_t **result)
     if (inodeno < 0) {
         return inodeno;
     }
-    KASSERT(inodeno);
+    /*inodeno can be 0: inode for root*/
+    /*KASSERT(inodeno);*/
 
     *result = vget(base->vn_fs, inodeno);
     KASSERT(*result);

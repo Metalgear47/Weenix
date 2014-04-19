@@ -840,7 +840,8 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
         }
 
         if name_match(dirent.s5d_name, name, namelen) {
-            KASSERT(dirent.s5d_inode);
+            /*there exists inode number 0- the inode for the root*/
+            /*KASSERT(dirent.s5d_inode);*/
             return dirent.s5d_inode;
         }
 
@@ -913,7 +914,8 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
         if name_match(dirent_target.s5d_name, name, namelen) {
             inodeno = dirent_target.s5d_inode;
-            KASSERT(inodeno);
+            /*inodeno can be 0: inode for root*/
+            /*KASSERT(inodeno);*/
             break;
         }
 

@@ -1,0 +1,6 @@
+pframe_get
+pframe_unpin
+pframe_pin
+s5_read_file
+s5_write_file
+s5_seek_to_block
