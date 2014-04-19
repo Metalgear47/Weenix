@@ -340,8 +340,8 @@ initproc_run(int arg1, void *arg2)
      *do_waitpid(-1, 0, NULL);
      */
      /*========================*/
-    vfstest_main(1, NULL);
-    /*vfs_test();*/
+    /*vfstest_main(1, NULL);*/
+    vfs_test();
      /*========================*/
 
     do_exit(0);
@@ -626,11 +626,16 @@ multi_verify(int arg1, void *arg2)
 void
 vfs_test()
 {
-    do_open("/1", O_RDONLY);
-    do_mkdir("/1");
-    do_mkdir("/2");
-    do_mkdir("/3");
+    /*
+     *do_open("/1", O_RDONLY);
+     *do_mkdir("/1");
+     *do_mkdir("/2");
+     *do_mkdir("/3");
+     */
     do_mkdir("/4");
+    do_mkdir("/4/1");
+    do_rmdir("/4/1");
+    panic("stop it");
     
     int fd = do_open("/1", O_RDONLY);
     do_open("/1/noexist", O_RDONLY);

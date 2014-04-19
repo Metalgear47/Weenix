@@ -668,6 +668,8 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
     KASSERT(name);
     KASSERT(namelen < S5_NAME_LEN);
 
+    dprintf("called with name: %s\n", name);
+
     if ((unsigned)dir->vn_len >= S5_MAX_FILE_SIZE) {
         panic("It's hardly the case, gonna panic here during debugging.\n");
         return -ENOSPC;
@@ -713,6 +715,7 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
     }
     s5_inode_t *inode_child = VNODE_TO_S5INODE(vnode_child);
     KASSERT(inode_child->s5_linkcount == 2);
+    dprintf("'.' directory is added\n");
 
     /*'..'*/
     err = s5_link(vnode_child, dir, "..", 2);
@@ -729,6 +732,7 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
         vput(vnode_child);
         return err;
     }
+    dprintf("'..' directory is added\n");
 
     KASSERT(inode_child->s5_linkcount == 2);
     vput(vnode_child);
@@ -760,6 +764,8 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
     KASSERT(!name_match(".", name, namelen) &&
             !name_match("..", name, namelen));
 
+    dprintf("rmdir is called\n");
+
     /*get the vnode for the child*/
     int inodeno = s5_find_dirent(parent, name, namelen);
     if (inodeno < 0) {
@@ -781,12 +787,12 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
     err = s5_find_dirent(parent, ".", 1);
     if (err < 0) {
         vput(child);
-        return err;
+        return -ENOTEMPTY;
     }
     err = s5_find_dirent(parent, "..", 2);
     if (err < 0) {
         vput(child);
-        return err;
+        return -ENOTEMPTY;
     }
     /*
      *dirent_t d;

@@ -362,6 +362,7 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         /*update size in s5_inode*/
         inode->s5_size = (unsigned)file_length;
         dprintf("updating the file size to %d\n", file_length);
+        dprintf("inode length is %d\n", inode->s5_size);
         /*dirty the inode*/
         s5_dirty_inode(VNODE_TO_S5FS(vnode), inode);
 
@@ -459,7 +460,7 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
         return -EINVAL;
     }
 
-    dprintf("vnode address is %p, off set is %u, buffer address is %p, writing length is %u\n", vnode, seek, dest, len);
+    dprintf("vnode address is %p, off set is %u, buffer address is %p, reading length is %u\n", vnode, seek, dest, len);
 
     if ((unsigned)seek >= inode->s5_size) {
         dprintf("end of the file has been reached\n");
@@ -1020,6 +1021,7 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     /*construct the dirent*/
     s5_dirent_t dirent;
     strncpy(dirent.s5d_name, name, namelen);
+    dirent.s5d_name[namelen] = 0;
     KASSERT(inode_child->s5_number == child->vn_vno);
     dirent.s5d_inode = inode_child->s5_number;
 
