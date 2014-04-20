@@ -703,6 +703,7 @@ s5_alloc_inode(fs_t *fs, uint16_t type, devid_t devid)
         inode->s5_size = 0;
         inode->s5_type = type;
         inode->s5_linkcount = 0;
+        dprintf("crazykeyword inode linkcount incremented, ino %d, linkcount now is: %d\n",inode->s5_number, inode->s5_linkcount);
         memset(inode->s5_direct_blocks, 0, S5_NDIRECT_BLOCKS * sizeof(int));
         if ((S5_TYPE_CHR == type) || (S5_TYPE_BLK == type))
                 inode->s5_indirect_block = devid;
@@ -950,8 +951,11 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     }
 
     /*not sure about the maintainance of linkcount*/
-    s5_inode_t *inode_deleted = VNODE_TO_S5INODE(vnode);
+    s5_inode_t *inode_deleted = VNODE_TO_S5INODE(vnode_deleted);
     KASSERT(inode_deleted);
+    inode_deleted->s5_linkcount--;
+    dprintf("crazykeyword inode linkcount incremented, ino %d, linkcount now is: %d\n", vnode_deleted->vn_vno, inode_deleted->s5_linkcount);
+    s5_dirty_inode(fs, inode_deleted);
 
     /*vnode_deleted did not outlive this function, so we only need to make sure that we have 1 vput corresponding to vget*/
     vput(vnode_deleted);
@@ -961,7 +965,7 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     inode->s5_size -= sizeof(s5_dirent_t);
     s5_dirty_inode(fs, inode);
     /*still need to dirty_inode*/
-    s5_dirty_inode(fs, inode_deleted);
+    /*s5_dirty_inode(fs, inode_deleted);*/
 
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_remove_dirent");*/
@@ -1036,6 +1040,7 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     if (!name_match(".", name, namelen)) {
         /*increment the linkcount for inode*/
         inode_child->s5_linkcount++;
+        dprintf("crazykeyword inode linkcount incremented, ino %d, linkcount now is: %d\n", child->vn_vno, inode_child->s5_linkcount);
         s5_dirty_inode(VNODE_TO_S5FS(parent), inode_child);
     }
 

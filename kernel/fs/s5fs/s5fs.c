@@ -232,7 +232,7 @@ s5fs_read_vnode(vnode_t *vnode)
     KASSERT(inode && inode->s5_number == vnode->vn_vno);
 
     inode->s5_linkcount++;
-    dprintf("inode linkcount incremented, ino %d, linkcount now is: %d\n",vnode->vn_vno, inode->s5_linkcount);
+    dprintf("crazykeyword inode linkcount incremented, ino %d, linkcount now is: %d\n",vnode->vn_vno, inode->s5_linkcount);
 
     pframe_pin(pframe_inode_block);
     err = pframe_dirty(pframe_inode_block);
@@ -295,7 +295,7 @@ s5fs_delete_vnode(vnode_t *vnode)
     KASSERT(inode && inode->s5_number == vnode->vn_vno);
 
     inode->s5_linkcount--;
-    dprintf("inode linkcount decremented, ino %d, linkcount now is: %d\n",vnode->vn_vno, inode->s5_linkcount);
+    dprintf("crazykeyword inode linkcount decremented, ino %d, linkcount now is: %d\n",vnode->vn_vno, inode->s5_linkcount);
 
     pframe_pin(pframe_inode_block);
     pframe_dirty(pframe_inode_block);
@@ -756,7 +756,6 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
     KASSERT(inode_child->s5_linkcount == 2);
     vput(vnode_child);
     dprintf("this directory's size is now %d\n", dir->vn_len);
-    /*KASSERT(inode_child->s5_linkcount == 1);*/
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_mkdir");*/
         /*return -1;*/
@@ -1083,6 +1082,10 @@ calculate_refcounts(int *counts, vnode_t *vnode)
                 int offset = 0;
                 struct dirent d;
                 vnode_t *child;
+
+                if (vnode->vn_vno == 0) {
+                    dprintf("Aha\n");
+                }
 
                 while (0 < (ret = s5fs_readdir(vnode, offset, &d))) {
                         /*
