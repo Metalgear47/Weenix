@@ -925,9 +925,6 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
     KASSERT(inodeno >= 0);
     KASSERT(err >= 0);
-    if (inodeno == 0) {
-        return -ENOENT;
-    }
     KASSERT(offset < filesize);
 
     /*get the last dirent*/
@@ -1029,7 +1026,7 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     /*construct the dirent*/
     s5_dirent_t dirent;
     strncpy(dirent.s5d_name, name, namelen);
-    dirent.s5d_name[namelen] = 0;
+    dirent.s5d_name[namelen] = '\0';
     KASSERT(inode_child->s5_number == child->vn_vno);
     dirent.s5d_inode = inode_child->s5_number;
     KASSERT(inode_child->s5_type != 0);

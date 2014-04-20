@@ -755,6 +755,7 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
 
     KASSERT(inode_child->s5_linkcount == 2);
     vput(vnode_child);
+    dprintf("this directory's size is now %d\n", dir->vn_len);
     /*KASSERT(inode_child->s5_linkcount == 1);*/
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_mkdir");*/
@@ -792,8 +793,6 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
     }
     vnode_t *child = vget(parent->vn_fs, inodeno);
     KASSERT(child);
-
-    KASSERT(child);
     KASSERT(S_ISDIR(child->vn_mode));
     KASSERT(child->vn_len % sizeof(s5_dirent_t) == 0);
 
@@ -830,7 +829,9 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
      *    return ret;
      *}
      */
+    dprintf("it's empty, gonna start find for it.\n");
 
+    dprintf("removing '..' \n");
     /*remove '..' directory from child*/
     err = s5_remove_dirent(child, "..", 2);
     if (err < 0) {
@@ -840,6 +841,7 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
 
     /*not worried about '.' for now because it doesn't influence the linkcount*/
 
+    dprintf("removing %s from current dir\n", name);
     /*remove this dirent from parent dir*/
     err = s5_remove_dirent(parent, name, namelen);
     if (err < 0) {
