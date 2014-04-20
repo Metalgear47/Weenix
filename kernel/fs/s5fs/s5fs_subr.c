@@ -952,8 +952,6 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     /*not sure about the maintainance of linkcount*/
     s5_inode_t *inode_deleted = VNODE_TO_S5INODE(vnode);
     KASSERT(inode_deleted);
-    /*inode_deleted->s5_linkcount--;*/
-    s5_dirty_inode(fs, inode_deleted);
 
     /*free the inode should be done during s5fs_delete_vnode*/
     /*
@@ -965,6 +963,8 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
     /*vnode_deleted did not outlive this function, so we only need to make sure that we have 1 vput corresponding to vget*/
     vput(vnode_deleted);
+    /*inode_deleted->s5_linkcount--;*/
+    /*s5_dirty_inode(fs, inode_deleted);*/
 
     /*modify the length*/
     vnode->vn_len -= sizeof(s5_dirent_t);
