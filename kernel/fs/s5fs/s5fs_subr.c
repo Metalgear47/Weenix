@@ -179,8 +179,11 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 
                             pframe_pin(ibp);
                             /*since indirect block is modified, dirty it*/
-                            pframe_dirty(ibp);
+                            int err = pframe_dirty(ibp);
                             pframe_unpin(ibp);
+                            if (err < 0) {
+                                return err;
+                            }
 
                             dprintf("the newly allocated block number is %d\n", blocknum);
                             return blocknum;
@@ -248,10 +251,13 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 
                     pframe_pin(ibp);
                     /*dirty the page for indirect block*/
-                    pframe_dirty(ibp);
+                    err = pframe_dirty(ibp);
                     /*dirty the inode*/
                     s5_dirty_inode(fs, inode);
                     pframe_pin(ibp);
+                    if (err < 0) {
+                        return err;
+                    }
 
                     return blocknum;
                 }
@@ -356,7 +362,9 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         memcpy(pf_off, bytes, len);
 
         err = pframe_dirty(block_pframe);
-        KASSERT(!err && "should not fail here");
+        if (err < 0) {
+            return err;
+        }
 
         off_t file_length = end + 1;
         /*update len in vnode*/
@@ -383,7 +391,9 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     char *pf_off = (char *)block_pframe->pf_addr + offset_start;
     memcpy(pf_off, bytes, (S5_BLOCK_SIZE - offset_start));
     err = pframe_dirty(block_pframe);
-    KASSERT(!err && "should not fail here");
+    if (err < 0) {
+        return err;
+    }
 
     /*write to the end block*/
     block_pframe = NULL;
