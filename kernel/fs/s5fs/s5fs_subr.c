@@ -587,9 +587,11 @@ s5_alloc_block(s5fs_t *fs)
     lock_s5(fs);
 
     KASSERT(S5_NBLKS_PER_FNODE > s->s5s_nfree);
+    dprintf("s5s_nfree is %u and s5s_free_blocks[NBLKS - 1] is %u\n", s->s5s_nfree, s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1]);
 
     if (s->s5s_nfree == 0 && s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1] == (uint32_t) -1) {
         dprintf("there are no free blocks\n");
+        unlock_s5(fs);
         return -ENOSPC;
     }
 
