@@ -144,10 +144,6 @@ kthread_cancel(kthread_t *kthr, void *retval)
     } else {
         sched_cancel(kthr);
         kthr->kt_retval = retval;
-        if (KT_SLEEP_CANCELLABLE == kthr->kt_state) {
-            /*wake it up*/
-            sched_make_runnable(kthr);
-        }
         /*what if the thread is running*/
         /*
          *if (KT_RUN == kthr->kt_state) {

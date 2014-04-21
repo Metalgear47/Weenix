@@ -169,6 +169,7 @@ void
 sched_broadcast_on(ktqueue_t *q)
 {
     KASSERT(NULL != q);
+    KASSERT(NULL != curthr);
 
     while (!sched_queue_empty(q)) {
         kthread_t *kthr_tmp = sched_wakeup_on(q);
@@ -188,14 +189,23 @@ sched_broadcast_on(ktqueue_t *q)
 void
 sched_cancel(struct kthread *kthr)
 {
-    switch(kthr->kt_state) {
-        case KT_SLEEP_CANCELLABLE:
-            kthr->kt_cancelled = 1;
-            /*remove it from the queue*/
-            ktqueue_remove(kthr->kt_wchan, kthr);
-            break;
-        default:
-            kthr->kt_cancelled = 1;
+    /*
+     *switch(kthr->kt_state) {
+     *    case KT_SLEEP_CANCELLABLE:
+     *        kthr->kt_cancelled = 1;
+     *        [>remove it from the queue<]
+     *        ktqueue_remove(kthr->kt_wchan, kthr);
+     *        break;
+     *    default:
+     *        kthr->kt_cancelled = 1;
+     *}
+     */
+    kthr->kt_cancelled = 1;
+    if (KT_SLEEP_CANCELLABLE == kthr->kt_state) {
+        /*remove it from the queue*/
+        ktqueue_remove(kthr->kt_wchan, kthr);
+        /*make it runnable*/
+        sched_make_runnable(kthr);
     }
         /*NOT_YET_IMPLEMENTED("PROCS: sched_cancel");*/
 }

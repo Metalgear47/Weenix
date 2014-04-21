@@ -316,12 +316,10 @@ initproc_run(int arg1, void *arg2)
  */
     /*end tests*/
 
-    /*
-     *kshell_t *ksh = kshell_create(0);
-     *KASSERT(NULL != ksh);
-     *while (kshell_execute_next(ksh));
-     *kshell_destroy(ksh);
-     */
+    kshell_t *ksh = kshell_create(0);
+    KASSERT(NULL != ksh);
+    while (kshell_execute_next(ksh));
+    kshell_destroy(ksh);
 
     /*
      *create_proc("Alternately reading", alternately_read, 0, 0);
@@ -340,7 +338,7 @@ initproc_run(int arg1, void *arg2)
      *do_waitpid(-1, 0, NULL);
      */
      /*========================*/
-    vfstest_main(1, NULL);
+    /*vfstest_main(1, NULL);*/
     /*vfs_test();*/
      /*========================*/
 

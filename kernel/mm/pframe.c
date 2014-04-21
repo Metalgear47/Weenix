@@ -414,7 +414,7 @@ pframe_pin(pframe_t *pf)
 
     pf->pf_pincount++;
     if (pf->pf_pincount == 1){
-        dbg(DBG_PFRAME, "this pfram is first pinned, add it to correct list.\n");
+        dbg(DBG_PFRAME, "this pframe is first pinned, add it to correct list.\n");
 
         /*remove it from allocated list*/
         list_remove(&pf->pf_link);
