@@ -128,6 +128,9 @@ do_write(int fd, const void *buf, size_t nbytes)
 
     fput(f);
 
+    if (writelen != nbytes) {
+        return -ENOSPC;
+    }
     return writelen;
         /*NOT_YET_IMPLEMENTED("VFS: do_write");*/
         /*return -1;*/

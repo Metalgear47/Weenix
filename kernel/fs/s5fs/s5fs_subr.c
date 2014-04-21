@@ -326,9 +326,11 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     uint32_t block_start = S5_DATA_BLOCK(seek);
     off_t end = seek + len - 1;
     /*write to [start, end]*/
+    int partial_write_flag = 0;
     if ((unsigned)end >= S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE) {
         end = S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE - 1;
         len = end - seek + 1;
+        partial_write_flag = 1;
         dprintf("write exceeds the end of the file: end is %u, len is %u\n", end, len);
     }
     uint32_t block_end = S5_DATA_BLOCK(end);
@@ -393,7 +395,9 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
 
     memcpy(block_pframe->pf_addr, bytes + (block_end - block_start) * S5_BLOCK_SIZE, (offset_end + 1));
     err = pframe_dirty(block_pframe);
-    KASSERT(!err && "should not fail here");
+    if (err < 0) {
+        return err;
+    }
 
     /*write to blocks in between*/
     uint32_t i;
@@ -407,7 +411,9 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
 
         memcpy(cur_pframe->pf_addr, bytes + (i - block_start) * S5_BLOCK_SIZE, S5_BLOCK_SIZE);
         err = pframe_dirty(cur_pframe);
-        KASSERT(!err && "should not fail here");
+        if (err < 0) {
+            return err;
+        }
     }
 
     KASSERT((unsigned)vnode->vn_len == inode->s5_size);
@@ -420,6 +426,9 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     /*dirty the inode*/
     s5_dirty_inode(VNODE_TO_S5FS(vnode), inode);
 
+    /*if (partial_write_flag) {
+        return -ENOSPC;
+    }*/
     return len;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_write_file");*/
         /*return -1;*/
