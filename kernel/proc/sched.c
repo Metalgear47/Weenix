@@ -111,7 +111,8 @@ sched_sleep_on(ktqueue_t *q)
 
     sched_switch();
 
-    curthr->kt_state = KT_RUN;
+    /*it should already be set to KT_RUN when it's added to runq*/
+    KASSERT(curthr->kt_state == KT_RUN);
     return;
         /*NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");*/
 }
@@ -137,12 +138,12 @@ sched_cancellable_sleep_on(ktqueue_t *q)
     dbg(DBG_PROC, "%s begins to (cancellable) sleep on some queue %p.\n", curproc->p_comm, q);
     sched_switch();
 
-    /*set it to KT_RUN since it's running*/
-    curthr->kt_state = KT_RUN;
+    /*it should already be set to KT_RUN when it's added to runq*/
+    KASSERT(curthr->kt_state == KT_RUN);
 
     /*check kt_cancelled*/
     if (1 == curthr->kt_cancelled) {
-        /*not sure about the kthread state*/
+        /*kt_state is already set to KT_RUN*/
         return -EINTR;
     }
     
@@ -253,6 +254,7 @@ sched_switch(void)
     uint8_t old_ipl = intr_getipl();
     intr_setipl(IPL_HIGH);
 
+    /*no threads on the run queue*/
     while (sched_queue_empty(&kt_runq)) {
         intr_disable();
         intr_setipl(IPL_LOW);
@@ -298,7 +300,9 @@ sched_make_runnable(kthread_t *thr)
     uint8_t old_ipl = intr_getipl();
     intr_setipl(IPL_HIGH);
 
+    /*set it to KT_RUN state*/
     thr->kt_state = KT_RUN;
+    /*Add it to the runq*/
     ktqueue_enqueue(&kt_runq, thr);
 
     intr_setipl(old_ipl);
