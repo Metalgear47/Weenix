@@ -103,11 +103,15 @@ sched_sleep_on(ktqueue_t *q)
     KASSERT(NULL != curthr);
     KASSERT(NULL != q);
 
+    KASSERT(curthr->kt_state = KT_RUN);
     curthr->kt_state = KT_SLEEP;
 
     ktqueue_enqueue(q, curthr);
-    dbg(DBG_PROC, "%s begins to sleep on some queue.\n", curproc->p_comm);
+    dbg(DBG_PROC, "%s begins to (normal) sleep on some queue %p.\n", curproc->p_comm, q);
+
     sched_switch();
+
+    curthr->kt_state = KT_RUN;
     return;
         /*NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");*/
 }
@@ -126,15 +130,17 @@ sched_cancellable_sleep_on(ktqueue_t *q)
     KASSERT(NULL != curthr);
     KASSERT(NULL != q);
 
+    KASSERT(curthr->kt_state = KT_RUN);
     curthr->kt_state = KT_SLEEP_CANCELLABLE;
 
     ktqueue_enqueue(q, curthr);
+    dbg(DBG_PROC, "%s begins to (cancellable) sleep on some queue.\n", curproc->p_comm);
     sched_switch();
 
     /*check kt_cancelled*/
     if (1 == curthr->kt_cancelled) {
         /*not sure about the kthread state*/
-        return EINTR;
+        return -EINTR;
     }
     
     return 0;
