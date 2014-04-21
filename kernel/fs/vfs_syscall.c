@@ -72,6 +72,10 @@ do_read(int fd, void *buf, size_t nbytes)
 
     /*call virtual read op*/
     int readlen = f->f_vnode->vn_ops->read(f->f_vnode, f->f_pos, buf, nbytes);
+    if (readlen < 0) {
+        fput(f);
+        return readlen;
+    }
     f->f_pos += readlen;
 
     /*fput it*/
@@ -124,6 +128,10 @@ do_write(int fd, const void *buf, size_t nbytes)
      *}
      */
     int writelen = f->f_vnode->vn_ops->write(f->f_vnode, f->f_pos, buf, nbytes);
+    if (writelen < 0) {
+        fput(f);
+        return writelen;
+    }
     f->f_pos += writelen;
 
     fput(f);

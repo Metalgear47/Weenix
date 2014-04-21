@@ -431,11 +431,11 @@ s5fs_read(vnode_t *vnode, off_t offset, void *buf, size_t len)
         return 0;
     }
 
-    kmutex_lock(&vnode->vn_mutex);
+    /*kmutex_lock(&vnode->vn_mutex);*/
 
     int err = s5_read_file(vnode, offset, buf, len);
 
-    kmutex_unlock(&vnode->vn_mutex);
+    /*kmutex_unlock(&vnode->vn_mutex);*/
 
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_read");*/
@@ -451,11 +451,11 @@ s5fs_write(vnode_t *vnode, off_t offset, const void *buf, size_t len)
 
     dprintf("s5fs level call hook\n");
 
-    kmutex_lock(&vnode->vn_mutex);
+    /*kmutex_lock(&vnode->vn_mutex);*/
 
     int err = s5_write_file(vnode, offset, buf, len);
 
-    kmutex_unlock(&vnode->vn_mutex);
+    /*kmutex_unlock(&vnode->vn_mutex);*/
 
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_write");*/
