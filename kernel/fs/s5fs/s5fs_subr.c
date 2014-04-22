@@ -604,10 +604,10 @@ s5_alloc_block(s5fs_t *fs)
         /*get the pframe where we will copy free block nums from*/
         pframe_t *next_free_blocks = NULL;
         KASSERT(fs->s5f_bdev);
-        blocknum = s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1];
+        blocknum = (int)s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1];
         KASSERT(blocknum > 0);
 
-        pframe_get(&fs->s5f_bdev->bd_mmobj, blocknum, &next_free_blocks);
+        pframe_get(&fs->s5f_bdev->bd_mmobj, (uint32_t)blocknum, &next_free_blocks);
         KASSERT(next_free_blocks->pf_addr);
 
         memcpy((void *)(s->s5s_free_blocks), next_free_blocks->pf_addr, 
