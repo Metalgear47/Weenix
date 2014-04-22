@@ -73,7 +73,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
     dprintf("s5_seek_to_block is called, vnode is %p, seekptr is %u, alloc is %d, requesting for block No.%u\n", vnode, seekptr, alloc, blocknum_file);
 
     /*block number exceeds the max number*/
-    if (blocknum_file > S5_MAX_FILE_BLOCKS) {
+    if (blocknum_file >= S5_MAX_FILE_BLOCKS) {
         /*it should be checked on upper layer. But it would be nice if I also check here.*/
         dprintf("request a block exceeding max file blocks.\n");
         /*not sure about the return value here*/
@@ -592,6 +592,7 @@ s5_alloc_block(s5fs_t *fs)
     if (s->s5s_nfree == 0 && s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1] == (uint32_t) -1) {
         dprintf("there are no free blocks\n");
         unlock_s5(fs);
+        panic("aha");
         return -ENOSPC;
     }
 
