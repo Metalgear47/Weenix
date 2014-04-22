@@ -150,6 +150,7 @@ kthread_cancel(kthread_t *kthr, void *retval)
          *    list_remove(&kthr->kt_qlink);
          *}
          */
+        /*if the thread's sleep is not cancellable, we do nothing else here*/
     }
 
         /*NOT_YET_IMPLEMENTED("PROCS: kthread_cancel");*/

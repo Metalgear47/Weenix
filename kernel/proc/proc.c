@@ -141,6 +141,8 @@ proc_create(char *name)
      *}
      */
 
+    /* VM */
+
     dbg(DBG_PROC, "Created process with name: %s\n", name);
     dbginfo(DBG_PROC, proc_info, proc_struct);
     dbginfo(DBG_PROC, proc_list_info, NULL);
@@ -179,6 +181,10 @@ proc_cleanup(int status)
 {
     /*waking up its parent*/
     sched_wakeup_on(&curproc->p_pproc->p_wait);
+
+    if (curproc == proc_initproc) {
+        KASSERT(list_empty(&curproc->p_children));
+    }
 
     /*reparenting*/
     proc_t *child_proc;
@@ -227,6 +233,7 @@ void
 proc_kill(proc_t *p, int status)
 {
     KASSERT(NULL != p);
+    KASSERT(NULL != curproc);
 
     if (curproc == p) {
         do_exit(status);
