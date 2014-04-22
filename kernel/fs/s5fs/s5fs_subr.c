@@ -254,7 +254,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     err = pframe_dirty(ibp);
                     /*dirty the inode*/
                     s5_dirty_inode(fs, inode);
-                    pframe_pin(ibp);
+                    pframe_unpin(ibp);
                     if (err < 0) {
                         return err;
                     }
