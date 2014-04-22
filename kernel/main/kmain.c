@@ -338,7 +338,7 @@ initproc_run(int arg1, void *arg2)
      *do_waitpid(-1, 0, NULL);
      */
      /*========================*/
-    /*vfstest_main(1, NULL);*/
+    vfstest_main(1, NULL);
     /*vfs_test();*/
      /*========================*/
 

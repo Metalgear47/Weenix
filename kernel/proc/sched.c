@@ -103,7 +103,7 @@ sched_sleep_on(ktqueue_t *q)
     KASSERT(NULL != curthr);
     KASSERT(NULL != q);
 
-    KASSERT(curthr->kt_state = KT_RUN);
+    KASSERT(curproc->p_pid == PID_IDLE || curthr->kt_state == KT_RUN);
     curthr->kt_state = KT_SLEEP;
 
     ktqueue_enqueue(q, curthr);
@@ -131,7 +131,7 @@ sched_cancellable_sleep_on(ktqueue_t *q)
     KASSERT(NULL != curthr);
     KASSERT(NULL != q);
 
-    KASSERT(curthr->kt_state = KT_RUN);
+    KASSERT(curproc->p_pid == PID_IDLE || curthr->kt_state == KT_RUN);
     curthr->kt_state = KT_SLEEP_CANCELLABLE;
 
     ktqueue_enqueue(q, curthr);

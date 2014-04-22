@@ -309,6 +309,7 @@ get_resident:
             goto get_resident;
         } else {
             dbg(DBG_PFRAME, "the pframe is resident and not busy, just return it.\n");
+            KASSERT(o == (*result)->pf_obj);
             return 0;
         }
     } else {
@@ -346,6 +347,8 @@ get_resident:
             dbg(DBG_PFRAME, "after pageout deamon reclaimed pframes.\n");
         }
         
+        KASSERT(err == 0);
+        KASSERT(o == (*result)->pf_obj);
         return err;
     }
 

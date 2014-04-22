@@ -302,12 +302,14 @@ do_mknod(const char *path, int mode, unsigned devid)
     int err = 0;
     size_t namelen;
     const char *name = (const char *) kmalloc(sizeof(char) * (NAME_LEN + 1));
+    /*const char name[NAME_LEN];*/
     KASSERT(name && "Ran out of kernel memory.\n");
     vnode_t *dir_vnode;
 
     dbg(DBG_VFS, "about to call dir_namev\n");
     err = dir_namev(path, &namelen, &name, NULL, &dir_vnode);
     if (err < 0) {
+        kfree((void *)name);
         KASSERT(dir_vnode == NULL);
         dbg(DBG_VFS, "dir_namev failed, errno is %d.\n", err);
         return err;
@@ -317,6 +319,7 @@ do_mknod(const char *path, int mode, unsigned devid)
     dbg(DBG_VFS, "about to call lookup\n");
     err = lookup(dir_vnode, name, namelen, &file_vnode);
     if (err == 0) {
+        kfree((void *)name);
         vput(dir_vnode);
         vput(file_vnode);
         dbg(DBG_VFS, "the file already exists\n");
@@ -324,6 +327,7 @@ do_mknod(const char *path, int mode, unsigned devid)
     }
 
     if (err == -ENOTDIR) {
+        kfree((void *)name);
         vput(dir_vnode);
         dbg(DBG_VFS, "the vnode is not a directory\n.");
         KASSERT(file_vnode == NULL);
@@ -335,11 +339,13 @@ do_mknod(const char *path, int mode, unsigned devid)
     dbg(DBG_VFS, "about to call vnode->mknod\n");
     err = dir_vnode->vn_ops->mknod(dir_vnode, name, namelen, mode, devid);
     if (err < 0) {
+        kfree((void *)name);
         vput(dir_vnode);
         dbg(DBG_VFS, "vnode->mknod failed, errno is %d\n", err);
         return err;
     }
 
+    kfree((void *)name);
     vput(dir_vnode);
     dbg(DBG_VFS, "vnode->mknod succeed\n");
     return err;
