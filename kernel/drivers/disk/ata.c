@@ -529,6 +529,9 @@ ata_write(blockdev_t *bdev, const char *data, blocknum_t blocknum, unsigned int 
 static int
 ata_do_operation(ata_disk_t *adisk, char *data, blocknum_t blocknum, int write)
 {
+    if (blocknum == 1988) {
+        dbg(DBG_TEST, "test");
+    }
     KASSERT(NULL != adisk);
     KASSERT(NULL != data);
 

@@ -146,7 +146,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 
                 /*get the page frame*/
                 pframe_get(S5FS_TO_VMOBJ(fs),
-                           (unsigned)inode->s5_indirect_block,
+                           (inode->s5_indirect_block),
                            &ibp);
                 KASSERT(ibp
                         && "because never fails for block_device "
@@ -426,7 +426,7 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         }
     }
 
-    KASSERT((unsigned)vnode->vn_len == inode->s5_size);
+    KASSERT((unsigned)(vnode->vn_len) == inode->s5_size);
     off_t file_length = end + 1;
     /*update len in vnode*/
     vnode->vn_len = file_length;
@@ -472,7 +472,7 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
     KASSERT(inode);
     KASSERT((S5_TYPE_DATA == inode->s5_type)
              || (S5_TYPE_DIR == inode->s5_type));
-    KASSERT((unsigned)vnode->vn_len == inode->s5_size);
+    KASSERT((unsigned)(vnode->vn_len) == inode->s5_size);
 
     if (seek < 0) {
         dprintf("requesting a read to negative position\n");
@@ -781,7 +781,7 @@ s5_free_inode(vnode_t *vnode)
                 uint32_t *b;
 
                 pframe_get(S5FS_TO_VMOBJ(fs),
-                           (unsigned)inode->s5_indirect_block,
+                           inode->s5_indirect_block,
                            &ibp);
                 KASSERT(ibp
                         && "because never fails for block_device "
@@ -833,7 +833,7 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
     KASSERT(inode);
     KASSERT(S5_TYPE_DIR == inode->s5_type);
-    KASSERT((unsigned)vnode->vn_len == inode->s5_size);
+    KASSERT((unsigned)(vnode->vn_len) == inode->s5_size);
     KASSERT(inode->s5_size % sizeof(s5_dirent_t) == 0);
 
     KASSERT(namelen < S5_NAME_LEN);
@@ -1015,7 +1015,7 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     s5_inode_t *inode_parent = VNODE_TO_S5INODE(parent);
     KASSERT(inode_parent);
     KASSERT(S5_TYPE_DIR == inode_parent->s5_type);
-    KASSERT((unsigned)parent->vn_len == inode_parent->s5_size);
+    KASSERT((unsigned)(parent->vn_len) == inode_parent->s5_size);
     KASSERT(parent->vn_len % sizeof(s5_dirent_t) == 0);
 
     s5_inode_t *inode_child = VNODE_TO_S5INODE(child);
@@ -1112,7 +1112,7 @@ s5_inode_blocks(vnode_t *vnode)
 
             /*get the page frame*/
             pframe_get(S5FS_TO_VMOBJ(fs),
-                       (unsigned)inode->s5_indirect_block,
+                       (inode->s5_indirect_block),
                        &ibp);
             KASSERT(ibp
                     && "because never fails for block_device "
