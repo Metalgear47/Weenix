@@ -120,20 +120,26 @@ proc_create(char *name)
         proc_struct->p_pproc = curproc;
         /*not sure about the parent process.*/
 
-        list_insert_tail(&curproc->p_children, &proc_struct->p_child_link);
+        KASSERT(curproc == proc_struct->p_pproc);
+        list_insert_tail(&proc_struct->p_pproc->p_children, &proc_struct->p_child_link);
         /*dbg(DBG_PROC, "Not IDLE_PROC, hook it up with parent: %d\n", proc_struct->p_pid);*/
     } else {
         proc_struct->p_pproc = NULL;
     }
 
+    /* VFS-related: */
+    /*p_files*/
     int i = 0;
     for (i = 0 ; i < NFILES ; i++) {
         proc_struct->p_files[i] = NULL;
     }
+    /*p_cwd*/
     proc_struct->p_cwd = vfs_root_vn;
-    if (vfs_root_vn) {
-        vref(vfs_root_vn);
-    }
+    /*
+     *if (vfs_root_vn) {
+     *    vref(vfs_root_vn);
+     *}
+     */
 
     dbg(DBG_PROC, "Created process with name: %s\n", name);
     dbginfo(DBG_PROC, proc_info, proc_struct);
@@ -199,6 +205,12 @@ proc_cleanup(int status)
             fput(curproc->p_files[i]);
         }
     }
+
+    /*
+     *if (curproc->p_cwd) {
+     *    vput(curproc->p_cwd);
+     *}
+     */
 
         /*NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");*/
 }

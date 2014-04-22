@@ -136,7 +136,7 @@ do_write(int fd, const void *buf, size_t nbytes)
 
     fput(f);
 
-    if (writelen != nbytes) {
+    if ((unsigned)writelen != nbytes) {
         return -ENOSPC;
     }
     return writelen;
@@ -686,6 +686,7 @@ do_chdir(const char *path)
         return -ENOTDIR;
     }
 
+    /*if (curproc->p_cwd != vfs_root_vn) {*/
     vput(curproc->p_cwd);
     curproc->p_cwd = new_vnode;
 
