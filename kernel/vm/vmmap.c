@@ -24,6 +24,9 @@
 #include "mm/mman.h"
 #include "mm/mmobj.h"
 
+#define USER_PAGE_HIGH
+/*my own macro*/
+
 static slab_allocator_t *vmmap_allocator;
 static slab_allocator_t *vmarea_allocator;
 
@@ -162,22 +165,51 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
                 /*prev is a vmarea*/
                 vmarea_t *vma_prev = list_item(vma_cur->vma_plink.l_prev, vmarea_t, vma_plink);
                 KASSERT(vma_prev);
-                if (vma_cur->vma_start - vma_prev->vma_end >- npages) {
+                if (vma_cur->vma_start - vma_prev->vma_end >= npages) {
                     return vma_prev->vma_end;
                 }
             }
         } list_iterate_end();
 
         KASSERT(vma_cur->vma_plink.l_next == list);
-        if ((USER_MEM_HIGH - USER_MEM_LOW) / PAGE_SIZE - vma_cur->vma_end >= npages) {
+        if (USER_PAGE_HIGH - vma_cur->vma_end >= npages) {
             return vma_cur->vma_end;
         } else {
             return -1;
         }
     } else {
+        if list_empty(&map->vmm_list) {
+            return (USER_PAGE_HIGH - npages);
+        }
+
+        list_link_t *list = &map->vmm_list;
+        vmarea_t *vma_cur;
+        list_iterate_reverse(list, vma_cur, vmarea_t, vma_plink) {
+            if (vma_cur->vma_plink.l_next == list) {
+                /*no prev*/
+                /*head of list*/
+                if (USER_PAGE_HIGH - vma_cur->vma_end >= npages) {
+                    return vma_cur->vma_end;
+                }
+            } else {
+                /*prev is a vmarea*/
+                vmarea_t *vma_next = list_item(vma_cur->vma_plink.l_next, vmarea_t, vma_plink);
+                KASSERT(vma_next);
+                if (vma_next->vma_start - vma_cur->vma_end >= npages) {
+                    return vma_cur->vma_end;
+                }
+            }
+        } list_iterate_end();
+
+        KASSERT(vma_cur->vma_plink.l_prev == list);
+        if (vma_cur->vma_start >= npages) {
+            return 0;
+        } else {
+            return -1;
+        }
     }
-        NOT_YET_IMPLEMENTED("VM: vmmap_find_range");
-        return -1;
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_find_range");*/
+        /*return -1;*/
 }
 
 /* Find the vm_area that vfn lies in. Simply scan the address space
