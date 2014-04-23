@@ -332,11 +332,11 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     uint32_t block_start = S5_DATA_BLOCK(seek);
     off_t end = seek + len - 1;
     /*write to [start, end]*/
-    int partial_write_flag = 0;
+    /*int partial_write_flag = 0;*/
     if ((unsigned)end >= S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE) {
         end = S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE - 1;
         len = end - seek + 1;
-        partial_write_flag = 1;
+        /*partial_write_flag = 1;*/
         dprintf("write exceeds the end of the file: end is %u, len is %u\n", end, len);
     }
     uint32_t block_end = S5_DATA_BLOCK(end);
