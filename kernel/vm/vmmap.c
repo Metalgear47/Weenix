@@ -120,8 +120,17 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 vmarea_t *
 vmmap_lookup(vmmap_t *map, uint32_t vfn)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_lookup");
-        return NULL;
+    vmarea_t *vma;
+
+    list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
+        if (vfn >= vma->vma_start && vfn < vma->vma_end) {
+            return vma;
+        }
+    } list_iterate_end();
+
+    return NULL;
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_lookup");*/
+        /*return NULL;*/
 }
 
 /* Allocates a new vmmap containing a new vmarea for each area in the
