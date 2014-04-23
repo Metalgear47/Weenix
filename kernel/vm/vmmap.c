@@ -74,7 +74,20 @@ vmmap_create(void)
 void
 vmmap_destroy(vmmap_t *map)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_destroy");
+    KASSERT(map);
+
+    /*vmarea_t pointer*/
+    vmarea_t *vma;
+
+    /*traversal thru vmm_list and remove it*/
+    list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
+        list_remove(&vma->vma_plink);
+    } list_iterate_end();
+    
+    /*Any other things than just remove the link?*/
+
+    slab_obj_free(vmmap_allocator, map);
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_destroy");*/
 }
 
 /* Add a vmarea to an address space. Assumes (i.e. asserts to some extent)
