@@ -415,24 +415,11 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     if (err < 0) {
         return err;
     }
+    bytes += S5_BLOCK_SIZE - offset_start;
 
-    /*write to the end block*/
-    block_pframe = NULL;
-    err = pframe_get(&vnode->vn_mmobj, block_end, &block_pframe);
-    if (err < 0) {
-        KASSERT(block_pframe == NULL);
-        return err;
-    }
-
-    memcpy(block_pframe->pf_addr, bytes + (block_end - block_start) * S5_BLOCK_SIZE, (offset_end + 1));
-    err = pframe_dirty(block_pframe);
-    if (err < 0) {
-        return err;
-    }
-
-    /*write to blocks in between*/
+    /*write to blocks till end between*/
     uint32_t i;
-    for (i = block_start + 1 ; i < block_end ; i++) {
+    for (i = block_start + 1 ; i <= block_end ; i++) {
         pframe_t *cur_pframe = NULL;
         err = pframe_get(&vnode->vn_mmobj, i, &cur_pframe);
         if (err < 0) {
@@ -440,7 +427,12 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
             return err;
         }
 
-        memcpy(cur_pframe->pf_addr, bytes + (i - block_start) * S5_BLOCK_SIZE, S5_BLOCK_SIZE);
+        if (i != block_end) {
+            memcpy(cur_pframe->pf_addr, bytes, S5_BLOCK_SIZE);
+            bytes += S5_BLOCK_SIZE;
+        } else {
+            memcpy(cur_pframe->pf_addr, bytes, offset_end + 1);
+        }
         err = pframe_dirty(cur_pframe);
         if (err < 0) {
             return err;
@@ -551,20 +543,11 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
 
     char *pf_off = (char *)block_pframe + offset_start;
     memcpy(dest, pf_off, (S5_BLOCK_SIZE - offset_start));
+    dest += S5_BLOCK_SIZE - offset_start;
 
-    /*read the end block*/
-    block_pframe = NULL;
-    err = pframe_get(&vnode->vn_mmobj, block_end, &block_pframe);
-    if (err < 0) {
-        KASSERT(block_pframe == NULL);
-        return err;
-    }
-
-    memcpy(dest + (block_end - block_start) * S5_BLOCK_SIZE, block_pframe->pf_addr, (offset_end + 1));
-
-    /*read blocks in between*/
+    /*read blocks till end*/
     uint32_t i;
-    for (i = block_start + 1 ; i < block_end ; i++) {
+    for (i = block_start + 1 ; i <= block_end ; i++) {
         pframe_t *cur_pframe = NULL;
         err = pframe_get(&vnode->vn_mmobj, i, &cur_pframe);
         if (err < 0) {
@@ -572,7 +555,12 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
             return err;
         }
 
-        memcpy(dest + (i - block_start) * S5_BLOCK_SIZE, cur_pframe->pf_addr, S5_BLOCK_SIZE);
+        if (i != block_end) {
+            memcpy(dest, cur_pframe->pf_addr, S5_BLOCK_SIZE);
+            dest += S5_BLOCK_SIZE;
+        } else {
+            memcpy(dest, cur_pframe->pf_addr, offset_end + 1);
+        }
     }
 
     return len;

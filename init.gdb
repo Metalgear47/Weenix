@@ -9,7 +9,7 @@ break bootstrap
 # break special_file_write
 # break null_write
 # break s5fs_subr.c:133
-break s5fs_subr.c:602
-break ata.c:533
+# break s5fs_subr.c:602
+# break ata.c:533
 
 continue
