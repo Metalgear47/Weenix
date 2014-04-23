@@ -354,8 +354,8 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     off_t end = seek + len - 1;
     /*write to [start, end]*/
     /*int partial_write_flag = 0;*/
-    if ((unsigned)end >= S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE) {
-        end = S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE - 1;
+    if ((unsigned)end >= S5_MAX_FILE_SIZE) {
+        end = S5_MAX_FILE_SIZE - 1;
         len = end - seek + 1;
         /*partial_write_flag = 1;*/
         dprintf("write exceeds the end of the file: end is %u, len is %u\n", end, len);
@@ -391,9 +391,9 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         /*update len in vnode*/
         vnode->vn_len = file_length;
         /*update size in s5_inode*/
-        inode->s5_size = (unsigned)file_length;
+        inode->s5_size = (uint32_t)file_length;
         dprintf("updating the file size to %d\n", file_length);
-        dprintf("inode length is %d\n", inode->s5_size);
+        dprintf("inode length is %u\n", inode->s5_size);
         /*dirty the inode*/
         s5_dirty_inode(VNODE_TO_S5FS(vnode), inode);
 
