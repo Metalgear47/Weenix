@@ -144,6 +144,38 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 int
 vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 {
+    if (dir == VMMAP_DIR_LOHI || dir == 0) {
+        if list_empty(&map->vmm_list) {
+            return 0;
+        }
+
+        list_link_t *list = &map->vmm_list;
+        vmarea_t *vma_cur;
+        list_iterate_begin(list, vma_cur, vmarea_t, vma_plink) {
+            if (vma_cur->vma_plink.l_prev == list) {
+                /*no prev*/
+                /*head of list*/
+                if (vma_cur->vma_start >= npages) {
+                    return 0;
+                }
+            } else {
+                /*prev is a vmarea*/
+                vmarea_t *vma_prev = list_item(vma_cur->vma_plink.l_prev, vmarea_t, vma_plink);
+                KASSERT(vma_prev);
+                if (vma_cur->vma_start - vma_prev->vma_end >- npages) {
+                    return vma_prev->vma_end;
+                }
+            }
+        } list_iterate_end();
+
+        KASSERT(vma_cur->vma_plink.l_next == list);
+        if ((USER_MEM_HIGH - USER_MEM_LOW) / PAGE_SIZE - vma_cur->vma_end >= npages) {
+            return vma_cur->vma_end;
+        } else {
+            return -1;
+        }
+    } else {
+    }
         NOT_YET_IMPLEMENTED("VM: vmmap_find_range");
         return -1;
 }
