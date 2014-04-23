@@ -78,6 +78,7 @@ static void *multi_verify(int arg1, void *arg2);
 
 /*vfs_tests*/
 void vfs_test();
+void running_inode();
 /*vfs_tests*/
 
 static context_t bootstrap_context;
@@ -316,10 +317,12 @@ initproc_run(int arg1, void *arg2)
  */
     /*end tests*/
 
-    kshell_t *ksh = kshell_create(0);
-    KASSERT(NULL != ksh);
-    while (kshell_execute_next(ksh));
-    kshell_destroy(ksh);
+    /*
+     *kshell_t *ksh = kshell_create(0);
+     *KASSERT(NULL != ksh);
+     *while (kshell_execute_next(ksh));
+     *kshell_destroy(ksh);
+     */
 
     /*
      *create_proc("Alternately reading", alternately_read, 0, 0);
@@ -340,6 +343,7 @@ initproc_run(int arg1, void *arg2)
      /*========================*/
     /*vfstest_main(1, NULL);*/
     /*vfs_test();*/
+    /*running_inode();*/
      /*========================*/
 
     do_exit(0);
@@ -667,4 +671,20 @@ vfs_test()
     /*do_close(do_open("/2", O_RDONLY));*/
     /*do_close(do_open("/2", O_RDONLY));*/
     /*do_close(do_open("/2/././", O_RDONLY));*/
+}
+
+void running_inode()
+{
+    int err = 0;
+    int i = 0;
+    char filename[10];
+    filename[9] = '\0';
+    for (i = 0 ; i < 240 ; i++) {
+        sprintf(filename, "/%d", i);
+        err = do_open(filename, O_CREAT);
+        if (err < 0) {
+            dbg(DBG_TEST, "error number is %d \n", err);
+        }
+        do_close(err);
+    }
 }
