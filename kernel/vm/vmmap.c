@@ -97,7 +97,29 @@ vmmap_destroy(vmmap_t *map)
 void
 vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_insert");
+    KASSERT(map);
+    KASSERT(newvma);
+
+    if list_empty(&map->vmm_list) {
+        list_insert_head(&map->vmm_list, &newvma->vma_plink);
+        newvma->vma_vmmap = map;
+        return;
+    }
+
+    vmarea_t *vma_cur;
+    list_iterate_begin(&map->vmm_list, vma_cur, vmarea_t, vma_plink) {
+        if (vma_cur->vma_start >= newvma->vma_end) {
+            break;
+        }
+    } list_iterate_end();
+
+    vmarea_t *vma_prev = list_item(&vma_cur->vma_plink, vmarea_t, vma_plink);
+    KASSERT(newvma->vma_start >= vma_prev->vma_end);
+    KASSERT(newvma->vma_end <= vma_cur->vma_start);
+
+    list_insert_before(&vma_cur->vma_plink, &newvma->vma_plink);
+    newvma->vma_vmmap = map;
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_insert");*/
 }
 
 /* Find a contiguous range of free virtual pages of length npages in
