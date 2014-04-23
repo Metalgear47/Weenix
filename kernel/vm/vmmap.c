@@ -106,18 +106,30 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
         return;
     }
 
+    list_link_t *list = &map->vmm_list;
     vmarea_t *vma_cur;
-    list_iterate_begin(&map->vmm_list, vma_cur, vmarea_t, vma_plink) {
-        if (vma_cur->vma_start >= newvma->vma_end) {
-            break;
+    list_iterate_begin(list, vma_cur, vmarea_t, vma_plink) {
+        if (vma_cur->vma_plink.l_prev == list) {
+            /*no prev*/
+            if (newvma->vma_end <= vma_cur->vma_start) {
+                list_insert_head(list, &newvma->vma_plink);
+                newvma->vma_vmmap = map;
+                return;
+            }
+        } else {
+            /*prev is a vmarea*/
+            vmarea_t *vma_prev = list_item(vma_cur->vma_plink.l_prev, vmarea_t, vma_plink);
+            KASSERT(vma_prev);
+            if (newvma->vma_end <= vma_cur->vma_start && newvma->vma_start >= vma_prev->vma_end) {
+                list_insert_before(&vma_cur->vma_plink, &newvma->vma_plink);
+                newvma->vma_vmmap = map;
+                return;
+            }
         }
     } list_iterate_end();
 
-    vmarea_t *vma_prev = list_item(&vma_cur->vma_plink, vmarea_t, vma_plink);
-    KASSERT(newvma->vma_start >= vma_prev->vma_end);
-    KASSERT(newvma->vma_end <= vma_cur->vma_start);
-
-    list_insert_before(&vma_cur->vma_plink, &newvma->vma_plink);
+    KASSERT(vma_cur->vma_plink.l_next == list);
+    list_insert_tail(list, &newvma->vma_plink);
     newvma->vma_vmmap = map;
         /*NOT_YET_IMPLEMENTED("VM: vmmap_insert");*/
 }
