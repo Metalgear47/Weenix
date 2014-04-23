@@ -101,7 +101,10 @@ void
 vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 {
     KASSERT(map);
+
     KASSERT(newvma);
+    /*sanity check for newvma*/
+    KASSERT(newvma->vma_end > newvma->vma_start);
 
     if list_empty(&map->vmm_list) {
         list_insert_head(&map->vmm_list, &newvma->vma_plink);
@@ -147,6 +150,9 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 int
 vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 {
+    KASSERT(map);
+
+    /*low-high*/
     if (dir == VMMAP_DIR_LOHI || dir == 0) {
         if list_empty(&map->vmm_list) {
             return 0;
@@ -178,6 +184,7 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
             return -1;
         }
     } else {
+        /*high-low*/
         if list_empty(&map->vmm_list) {
             return (USER_PAGE_HIGH - npages);
         }
@@ -192,7 +199,7 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
                     return vma_cur->vma_end;
                 }
             } else {
-                /*prev is a vmarea*/
+                /*next is a vmarea*/
                 vmarea_t *vma_next = list_item(vma_cur->vma_plink.l_next, vmarea_t, vma_plink);
                 KASSERT(vma_next);
                 if (vma_next->vma_start - vma_cur->vma_end >= npages) {
@@ -318,8 +325,20 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 int
 vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_is_range_empty");
-        return 0;
+    KASSERT(map);
+
+    vmarea_t *vma;
+    list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
+        if ((vma->vma_start >= startvfn + npages) || (vma->vma_end <= startvfn)) {
+            /*nothing*/
+        } else {
+            return 0;
+        }
+    } list_iterate_end();
+
+    return 1;
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_is_range_empty");*/
+        /*return 0;*/
 }
 
 /* Read into 'buf' from the virtual address space of 'map' starting at
