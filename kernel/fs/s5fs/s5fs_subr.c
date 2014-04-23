@@ -222,24 +222,40 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     if (err < 0) {
                         KASSERT(ibp == NULL);
                         s5_free_block(fs, (uint32_t)indirect_block);
+                        panic("it should never fail for block_device vm_obj\n");
                         return err;
-                        /*TODO: need to review pframe_get*/
                     }
 
                     /*get the pointer to indirect blocks array*/
                     uint32_t *b = (uint32_t*)(ibp->pf_addr);
-                    memset(b, 0, S5_NIDIRECT_BLOCKS * sizeof(int));
+                    memset(b, 0, S5_BLOCK_SIZE);
 
                     pframe_pin(ibp);
                     /*allocate the block for the real data*/
                     blocknum = s5_alloc_block(fs);
+                    /*also dirty the ibp because memsetting it*/
+                    err = pframe_dirty(ibp);
                     pframe_unpin(ibp);
 
                     if (blocknum < 0) {
-                        s5_free_block(fs, (uint32_t)indirect_block);
                         /*not sure about free the pframe*/
                         pframe_free(ibp);
+                        s5_free_block(fs, (uint32_t)indirect_block);
                         return blocknum;
+                    }
+
+                    /*blocknum should not be 0*/
+                    KASSERT(blocknum);
+
+                    if (err < 0) {
+                        /*
+                         *I free the pframe here because I've already dirty it
+                         */
+                        /*not sure about free the pframe*/
+                        pframe_free(ibp);
+                        s5_free_block(fs, (uint32_t)indirect_block);
+                        s5_free_block(fs, (uint32_t)blocknum);
+                        return err;
                     }
 
                     /*blocknum should not be 0*/
@@ -256,6 +272,11 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     s5_dirty_inode(fs, inode);
                     pframe_unpin(ibp);
                     if (err < 0) {
+                        inode->s5_indirect_block = 0;
+                        s5_dirty_inode(fs, inode);
+                        pframe_free(ibp);
+                        s5_free_block(fs, (uint32_t)indirect_block);
+                        s5_free_block(fs, (uint32_t)blocknum);
                         return err;
                     }
 
@@ -321,7 +342,7 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     KASSERT((S5_TYPE_DATA == inode->s5_type)
              || (S5_TYPE_DIR == inode->s5_type));
 
-    if (seek < 0 || (unsigned)seek >= S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE) {
+    if (seek < 0 || (unsigned)seek >= S5_MAX_FILE_SIZE) {
         dprintf("requesting a write to negative position or exceeding the maximum file size\n");
         return -EINVAL;
     }
