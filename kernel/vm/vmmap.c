@@ -58,8 +58,15 @@ vmarea_free(vmarea_t *vma)
 vmmap_t *
 vmmap_create(void)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_create");
-        return NULL;
+    vmmap_t *newvmm = (vmmap_t *)slab_obj_alloc(vmmap_allocator);
+    if (newvmm) {
+        list_init(&newvmm->vmm_list);
+        newvmm->vmm_proc = NULL;
+        KASSERT(list_empty(&newvmm->vmm_list));
+    }
+    return newvmm;
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_create");*/
+        /*return NULL;*/
 }
 
 /* Removes all vmareas from the address space and frees the
