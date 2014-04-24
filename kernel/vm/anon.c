@@ -127,6 +127,8 @@ anon_put(mmobj_t *o)
 static int
 anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
+    KASSERT(o);
+
     *pf = pframe_get_resident(o, pagenum);
     if (*pf) {
         return 0;
@@ -143,8 +145,16 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 static int
 anon_fillpage(mmobj_t *o, pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: anon_fillpage");
-        return 0;
+    KASSERT(o);
+    KASSERT(pf);
+    KASSERT(pf->pf_addr);
+    KASSERT(o == pf->pf_obj);
+
+    memset(pf->pf_addr, 0, PAGE_SIZE);
+
+    return 0;
+        /*NOT_YET_IMPLEMENTED("VM: anon_fillpage");*/
+        /*return 0;*/
 }
 
 static int
