@@ -177,6 +177,9 @@ anon_cleanpage(mmobj_t *o, pframe_t *pf)
     KASSERT(pf);
     KASSERT(pf->pf_addr);
     KASSERT(o == pf->pf_obj);
+
+    /*infinitely calling itself*/
+    pframe_free(pf);
     
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: anon_cleanpage");*/
