@@ -355,6 +355,13 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             vma->vma_end = lopage;
         }
 
+        /*case 3*/
+        /*chop off the left part*/
+        if (vma->vma_start >= lopage && vma->vma_end > hipage) {
+            vma->vma_off = hipage - vma->vma_start + vma->vma_off;
+            vma->vma_start = hipage;
+        }
+
         /*case 4*/
         /*just remove it*/
         if (vma->vma_start >= lopage && vma->vma_end <= hipage) {
@@ -365,8 +372,10 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             vmarea_free(vma);
         }
     } list_iterate_end();
-        NOT_YET_IMPLEMENTED("VM: vmmap_remove");
-        return -1;
+
+    return 0;
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_remove");*/
+        /*return -1;*/
 }
 
 /*
