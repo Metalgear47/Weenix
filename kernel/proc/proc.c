@@ -136,7 +136,11 @@ proc_create(char *name)
     /*p_cwd*/
     if (proc_struct->p_pid != PID_IDLE && proc_struct->p_pid != PID_INIT) {
         proc_struct->p_cwd = curproc->p_cwd;
-        /*vref(proc_struct->p_cwd);*/
+        if (proc_struct->p_cwd) {
+            vref(proc_struct->p_cwd);
+        }
+    } else {
+        proc_struct->p_cwd = NULL;
     }
 
     /* VM */
@@ -210,7 +214,7 @@ proc_cleanup(int status)
         }
     }
 
-    if (curproc->p_pid == 0 || curproc->p_pid == 1) {
+    if (curproc->p_cwd) {
         vput(curproc->p_cwd);
     }
 
