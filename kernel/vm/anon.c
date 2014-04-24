@@ -70,7 +70,12 @@ anon_create()
 static void
 anon_ref(mmobj_t *o)
 {
-        NOT_YET_IMPLEMENTED("VM: anon_ref");
+    KASSERT(o);
+    KASSERT(o->mmo_refcount >= 0);
+    o->mmo_refcount++;
+    dbg(DBG_ANON, "anon_ref: 0x%p, up to %d, nrespages=%d\n",
+        o,  o->mmo_refcount, o->mmo_nrespages);
+        /*NOT_YET_IMPLEMENTED("VM: anon_ref");*/
 }
 
 /*
