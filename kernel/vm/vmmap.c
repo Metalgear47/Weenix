@@ -324,7 +324,7 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
         /*case 1*/
         /*split into 2 vmareas*/
         /*[vma_start, lopage) and [hipage, vma_end)*/
-        if (vma->vma_start > lopage && vma->vma_end < hipage) {
+        if (vma->vma_start < lopage && vma->vma_end > hipage) {
             vmarea_t *vma_new = vmarea_alloc();
             if (vma_new == NULL) {
                 return -ENOSPC;
@@ -349,9 +349,15 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             vma->vma_start = hipage;
         }
 
+        /*case 2*/
+        /*chop off the right part*/
+        if (vma->vma_start < lopage && vma->vma_end <= hipage) {
+            vma->vma_end = lopage;
+        }
+
         /*case 4*/
         /*just remove it*/
-        if (vma->vma_start <= lopage && vma->vma_end >= hipage) {
+        if (vma->vma_start >= lopage && vma->vma_end <= hipage) {
             vma->vma_obj->mmo_ops->put(vma->vma_obj);
             list_remove(&vma->vma_plink);
             /*not sure about removing it*/
