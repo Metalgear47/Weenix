@@ -348,6 +348,16 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             vma->vma_off = hipage - vma->vma_start + vma->vma_off;
             vma->vma_start = hipage;
         }
+
+        /*case 4*/
+        /*just remove it*/
+        if (vma->vma_start <= lopage && vma->vma_end >= hipage) {
+            vma->vma_obj->mmo_ops->put(vma->vma_obj);
+            list_remove(&vma->vma_plink);
+            /*not sure about removing it*/
+            list_remove(&vma->vma_olink);
+            vmarea_free(vma);
+        }
     } list_iterate_end();
         NOT_YET_IMPLEMENTED("VM: vmmap_remove");
         return -1;
