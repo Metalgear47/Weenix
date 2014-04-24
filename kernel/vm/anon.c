@@ -129,16 +129,12 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
     KASSERT(o);
 
-    *pf = pframe_get_resident(o, pagenum);
-    if (*pf) {
-        return 0;
-    } else {
-        *pf = pframe_alloc(o, pagenum);
-        if (*pf == NULL) {
-            return -ENOSPC;
-        }
-        return 0;
+    int err = pframe_get(o, pagenum, pf);
+    if (err < 0) {
+        KASSERT(*pf == NULL);
+        return err;
     }
+    return err;
         /*NOT_YET_IMPLEMENTED("VM: anon_lookuppage");*/
         /*return -1;*/
 }
