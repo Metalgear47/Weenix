@@ -53,8 +53,13 @@ anon_init()
 mmobj_t *
 anon_create()
 {
-        NOT_YET_IMPLEMENTED("VM: anon_create");
-        return NULL;
+    mmobj_t *mmo = slab_obj_alloc(anon_allocator);
+    if (mmo) {
+        mmobj_init(mmo, &anon_mmobj_ops);
+    }
+    return mmo;
+        /*NOT_YET_IMPLEMENTED("VM: anon_create");*/
+        /*return NULL;*/
 }
 
 /* Implementation of mmobj entry points: */
