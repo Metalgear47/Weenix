@@ -133,8 +133,11 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
     if (*pf) {
         return 0;
     } else {
-        panic("edgy case, not sure if I need to handle it.");
-        return -1;
+        *pf = pframe_alloc(o, pagenum);
+        if (*pf == NULL) {
+            return -ENOSPC;
+        }
+        return 0;
     }
         /*NOT_YET_IMPLEMENTED("VM: anon_lookuppage");*/
         /*return -1;*/
