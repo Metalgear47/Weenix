@@ -342,10 +342,13 @@ initproc_run(int arg1, void *arg2)
      *do_waitpid(-1, 0, NULL);
      */
      /*========================*/
-    vfstest_main(1, NULL);
+    /*vfstest_main(1, NULL);*/
     /*vfs_test();*/
     /*running_inode();*/
      /*========================*/
+
+
+    kernel_execve("/usr/bin/segfault", NULL, NULL);
 
     do_exit(0);
 

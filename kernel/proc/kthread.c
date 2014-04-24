@@ -91,7 +91,7 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     void *ctx_stack = alloc_stack();
     KASSERT(NULL != ctx_stack);
 
-    context_setup(&kthread_struct->kt_ctx, func, arg1, arg2, kthread_struct->kt_kstack, DEFAULT_STACK_SIZE, p->p_pagedir);
+    context_setup(&kthread_struct->kt_ctx, func, arg1, arg2, ctx_stack, DEFAULT_STACK_SIZE, p->p_pagedir);
     /*The context should have the same pagetable as the process.*/
 
     kthread_struct->kt_cancelled = 0;
