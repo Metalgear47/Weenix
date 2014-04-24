@@ -127,8 +127,15 @@ anon_put(mmobj_t *o)
 static int
 anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
-        NOT_YET_IMPLEMENTED("VM: anon_lookuppage");
+    *pf = pframe_get_resident(o, pagenum);
+    if (*pf) {
+        return 0;
+    } else {
+        panic("edgy case, not sure if I need to handle it.");
         return -1;
+    }
+        /*NOT_YET_IMPLEMENTED("VM: anon_lookuppage");*/
+        /*return -1;*/
 }
 
 /* The following three functions should not be difficult. */
