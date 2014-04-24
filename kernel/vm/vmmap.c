@@ -295,8 +295,11 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         }
         lopage = (unsigned)ret;
     } else {
-        vmmap_remove(map, lopage, npages);
+
+        /*vmmap_remove(map, lopage, npages);*/
+
     }
+    uint32_t hipage = lopage + npages;
 
     vma_result->vma_start = lopage;
     vma_result->vma_end = lopage + npages;
@@ -305,12 +308,32 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     vma_result->vma_prot = prot;
     vma_result->vma_flags = flags;
 
-    vmmap_insert(map, vma_result); /*also take care of vma_plink*/
+    /*vmmap_insert(map, vma_result); [>also take care of vma_plink<]*/
+
     /*vma_obj need not to be set*/
     /*vma_olink is initialized during alloc, still unclear, what to do?*/
 
     if (file == NULL) {
-        panic("wait till I figure out anon\n");
+        mmobj_t *mmobj_anon = anon_create();
+        if (mmobj_anon == NULL) {
+            return -ENOSPC;
+        }
+
+        uint32_t pagenum = lopage;
+        for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
+            int err;
+            pframe_t *pf;
+            /*lookup(alloc) the page*/
+            /*lookuppage will also fill the page to 0s*/
+            err = mmobj_anon->mmo_ops->lookuppage(mmobj_anon, pagenum, 1, &pf);
+            if (err < 0) {
+                KASSERT(pf == NULL);
+                return err;
+            }
+        }
+
+        /*hook it up with the virtual memory area*/
+        vma_result->vma_obj = mmobj_anon;
     } else {
         /*calling mmap*/
     }
