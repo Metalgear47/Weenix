@@ -278,6 +278,24 @@ int
 vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
           int prot, int flags, off_t off, int dir, vmarea_t **new)
 {
+    KASSERT(map);
+
+    vmarea_t *vma_result = vmarea_alloc();
+    if (vma_result == NULL) {
+        return -ENOSPC;
+    }
+
+    if (lopage == 0) {
+        int ret = vmmap_find_range(map, npages, dir);
+        if (ret < 0) {
+            KASSERT(ret == -1);
+            /*not sure about the return value*/
+            return -1;
+        }
+        lopage = (unsigned)ret;
+    } else {
+        vmmap_remove(map, lopage, npages);
+    }
         NOT_YET_IMPLEMENTED("VM: vmmap_map");
         return -1;
 }
