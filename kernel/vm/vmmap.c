@@ -279,6 +279,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
           int prot, int flags, off_t off, int dir, vmarea_t **new)
 {
     KASSERT(map);
+    KASSERT(PAGE_ALIGNED(off));
 
     vmarea_t *vma_result = vmarea_alloc();
     if (vma_result == NULL) {
@@ -295,6 +296,23 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         lopage = (unsigned)ret;
     } else {
         vmmap_remove(map, lopage, npages);
+    }
+
+    vma_result->vma_start = lopage;
+    vma_result->vma_end = lopage + npages;
+    vma_result->vma_off = 0; /*what about vma_off?*/
+
+    vma_result->vma_prot = prot;
+    vma_result->vma_flags = flags;
+
+    vmmap_insert(map, vma_result); /*also take care of vma_plink*/
+    /*vma_obj need not to be set*/
+    /*vma_olink is initialized during alloc, still unclear, what to do?*/
+
+    if (file == NULL) {
+        panic("wait till I figure out anon\n");
+    } else {
+        /*calling mmap*/
     }
         NOT_YET_IMPLEMENTED("VM: vmmap_map");
         return -1;
