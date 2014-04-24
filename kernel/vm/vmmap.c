@@ -314,6 +314,41 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 int
 vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 {
+    KASSERT(map);
+    /*KASSERT(!list_empty(!map->vmm_list));*/
+
+    vmarea_t *vma;
+    uint32_t hipage = lopage + npages;
+
+    list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
+        /*case 1*/
+        /*split into 2 vmareas*/
+        /*[vma_start, lopage) and [hipage, vma_end)*/
+        if (vma->vma_start > lopage && vma->vma_end < hipage) {
+            vmarea_t *vma_new = vmarea_alloc();
+            if (vma_new == NULL) {
+                return -ENOSPC;
+            }
+            vma_new->vma_start = vma->vma_start;
+            vma_new->vma_end = lopage;
+            vma_new->vma_off = vma->vma_off;
+
+            vma_new->vma_prot = vma->vma_prot;
+            vma_new->vma_flags = vma->vma_flags;
+
+            vma_new->vma_vmmap = vma->vma_vmmap;
+            vma_new->vma_obj = vma->vma_obj;
+            vma_new->vma_obj->mmo_ops->ref(vma_new->vma_obj);
+
+            list_init(&vma_new->vma_plink);
+            list_insert_before(&vma->vma_plink, &vma_new->vma_plink);
+            list_init(&vma_new->vma_olink);
+            /*not sure about what I could do here with olink*/
+
+            vma->vma_off = hipage - vma->vma_start + vma->vma_off;
+            vma->vma_start = hipage;
+        }
+    } list_iterate_end();
         NOT_YET_IMPLEMENTED("VM: vmmap_remove");
         return -1;
 }
