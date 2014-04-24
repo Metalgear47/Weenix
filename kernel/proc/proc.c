@@ -134,12 +134,10 @@ proc_create(char *name)
         proc_struct->p_files[i] = NULL;
     }
     /*p_cwd*/
-    proc_struct->p_cwd = vfs_root_vn;
-    /*
-     *if (vfs_root_vn) {
-     *    vref(vfs_root_vn);
-     *}
-     */
+    if (proc_struct->p_pid != PID_IDLE && proc_struct->p_pid != PID_INIT) {
+        proc_struct->p_cwd = curproc->p_cwd;
+        /*vref(proc_struct->p_cwd);*/
+    }
 
     /* VM */
 
@@ -212,11 +210,9 @@ proc_cleanup(int status)
         }
     }
 
-    /*
-     *if (curproc->p_cwd) {
-     *    vput(curproc->p_cwd);
-     *}
-     */
+    if (curproc->p_pid == 0 || curproc->p_pid == 1) {
+        vput(curproc->p_cwd);
+    }
 
         /*NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");*/
 }

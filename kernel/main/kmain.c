@@ -202,6 +202,7 @@ idleproc_run(int arg1, void *arg2)
         /* Once you have VFS remember to set the current working directory
          * of the idle and init processes */
         curproc->p_cwd = vfs_root_vn;
+        vref(vfs_root_vn);
 
         initthr->kt_proc->p_cwd = vfs_root_vn;
         vref(vfs_root_vn);
@@ -341,7 +342,7 @@ initproc_run(int arg1, void *arg2)
      *do_waitpid(-1, 0, NULL);
      */
      /*========================*/
-    /*vfstest_main(1, NULL);*/
+    vfstest_main(1, NULL);
     /*vfs_test();*/
     /*running_inode();*/
      /*========================*/
