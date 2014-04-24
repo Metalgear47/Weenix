@@ -144,6 +144,8 @@ proc_create(char *name)
     }
 
     /* VM */
+    proc_struct->p_vmmap = vmmap_create();
+    KASSERT(proc_struct->p_vmmap);
 
     dbg(DBG_PROC, "Created process with name: %s\n", name);
     dbginfo(DBG_PROC, proc_info, proc_struct);
