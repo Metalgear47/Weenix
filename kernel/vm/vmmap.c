@@ -286,6 +286,8 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         return -ENOSPC;
     }
 
+    int remove = 0;
+
     if (lopage == 0) {
         int ret = vmmap_find_range(map, npages, dir);
         if (ret < 0) {
@@ -295,9 +297,8 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         }
         lopage = (unsigned)ret;
     } else {
-
         /*vmmap_remove(map, lopage, npages);*/
-
+        remove = 1;
     }
     uint32_t hipage = lopage + npages;
 
@@ -333,12 +334,32 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         }
 
         /*hook it up with the virtual memory area*/
+        /*not quite sure*/
         vma_result->vma_obj = mmobj_anon;
     } else {
         /*calling mmap*/
+        /*TODO: take care of off*/
+        mmobj_t *mmobj_ret;
+        int err = file->vn_ops->mmap(file, vma_result, &mmobj_ret);
+        if (err < 0) {
+            KASSERT(mmobj_ret == NULL);
+            return err;
+        }
     }
-        NOT_YET_IMPLEMENTED("VM: vmmap_map");
-        return -1;
+
+    if (flags & MAP_PRIVATE) {
+        /*create a shadow object*/
+    }
+
+    /*time for the final move*/
+    if (remove) {
+        vmmap_remove(map, lopage, npages);
+    }
+
+    vmmap_insert(map, vma_result);
+    return 0;
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_map");*/
+        /*return -1;*/
 }
 
 /*
