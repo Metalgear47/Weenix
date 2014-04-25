@@ -24,8 +24,21 @@
 #include "mm/mman.h"
 #include "mm/mmobj.h"
 
-#define USER_PAGE_HIGH
+#define USER_PAGE_HIGH (USER_MEM_HIGH - USER_MEM_LOW) / PAGE_SIZE
+#define VMMAP_FLAG 1
+#define dprintf(...)                    \
+        if (VMMAP_FLAG) {               \
+            dbg(DBG_VMMAP, __VA_ARGS__);\
+        }
 /*my own macro*/
+
+static void
+print_vmmap(vmmap_t *vmmap)
+{
+    if (VMMAP_FLAG) {
+        dbginfo(DBG_VMMAP, vmmap_mapping_info, vmmap);
+    }
+}
 
 static slab_allocator_t *vmmap_allocator;
 static slab_allocator_t *vmarea_allocator;
