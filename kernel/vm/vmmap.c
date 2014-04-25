@@ -40,6 +40,12 @@ print_vmmap(vmmap_t *vmmap)
     }
 }
 
+static void
+print_vmarea(vmarea_t *vmarea)
+{
+    dprintf("The vmarea is: [%u, %u), offset is %u\n", vmarea->vma_start, vmarea->vma_end, vmarea->vma_off);
+}
+
 static slab_allocator_t *vmmap_allocator;
 static slab_allocator_t *vmarea_allocator;
 
@@ -119,6 +125,12 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
     /*sanity check for newvma*/
     KASSERT(newvma->vma_end > newvma->vma_start);
 
+    dprintf("vmmap_insert is called:\n");
+    dprintf("before inserting, the vmmap is:\n");
+    print_vmmap(map);
+    dprintf("the vmarea to be inserted is:\n");
+    print_vmarea(newvma);
+
     if list_empty(&map->vmm_list) {
         list_insert_head(&map->vmm_list, &newvma->vma_plink);
         newvma->vma_vmmap = map;
@@ -150,6 +162,11 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
     KASSERT(vma_cur->vma_plink.l_next == list);
     list_insert_tail(list, &newvma->vma_plink);
     newvma->vma_vmmap = map;
+
+    dprintf("after inserting, the vmmap is:\n");
+    print_vmmap(map);
+    dprintf("the vmarea inserted is:\n");
+    print_vmarea(newvma);
         /*NOT_YET_IMPLEMENTED("VM: vmmap_insert");*/
 }
 
@@ -164,6 +181,10 @@ int
 vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 {
     KASSERT(map);
+
+    dprintf("find_range, vmmap is:\n");
+    print_vmmap(map);
+    dprintf("looking for %u pages\n", npages);
 
     /*low-high*/
     if (dir == VMMAP_DIR_LOHI || dir == 0) {
