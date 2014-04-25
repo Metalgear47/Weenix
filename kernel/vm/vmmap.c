@@ -109,7 +109,12 @@ vmmap_destroy(vmmap_t *map)
 
     /*traversal thru vmm_list and remove it*/
     list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
+        /*since there is 1 less pointer pointing to vma_obj, put it*/
+        vma->vma_obj->mmo_ops->put(vma->vma_obj);
+        /*remove it from the list*/
         list_remove(&vma->vma_plink);
+        /*reclaim the memory*/
+        vmarea_free(vma);
     } list_iterate_end();
     
     /*Any other things than just remove the link?*/
