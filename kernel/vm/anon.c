@@ -39,7 +39,7 @@ static mmobj_ops_t anon_mmobj_ops = {
 void
 anon_init()
 {
-    anon_allocator = slab_allocator_create("anon", sizeof(mmobj_t));
+    anon_allocator = slab_allocator_create("anonymous object", sizeof(mmobj_t));
     KASSERT(anon_allocator);
         /*NOT_YET_IMPLEMENTED("VM: anon_init");*/
 }
@@ -72,6 +72,7 @@ anon_ref(mmobj_t *o)
 {
     KASSERT(o);
     KASSERT(o->mmo_refcount >= 0);
+
     o->mmo_refcount++;
     dbg(DBG_ANON, "anon_ref: 0x%p, up to %d, nrespages=%d\n",
         o,  o->mmo_refcount, o->mmo_nrespages);
@@ -97,16 +98,14 @@ anon_put(mmobj_t *o)
     dbg(DBG_ANON, "anon_put: 0x%p, down to %d, nrespages = %d\n",
         o, o->mmo_refcount - 1, o->mmo_nrespages);
 
-
     if (o->mmo_refcount == (o->mmo_nrespages - 1)) {
         pframe_t *pframe_cur;
         list_iterate_begin(&o->mmo_respages, pframe_cur, pframe_t, pf_olink) {
             pframe_unpin(pframe_cur);
-            /*what about uncache it?*/
+            /*uncache the page frame*/
             pframe_free(pframe_cur);
         } list_iterate_end();
 
-        /*KASSERT(list_emtpy(&o->mmo_respages));*/
         KASSERT(0 == o->mmo_nrespages);
         KASSERT(1 == o->mmo_refcount);
     }
@@ -177,7 +176,6 @@ anon_cleanpage(mmobj_t *o, pframe_t *pf)
     KASSERT(pf->pf_addr);
     KASSERT(o == pf->pf_obj);
 
-    /*infinitely calling itself*/
     pframe_free(pf);
     
     return 0;
