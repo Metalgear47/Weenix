@@ -46,6 +46,12 @@ print_vmarea(vmarea_t *vmarea)
     dprintf("The vmarea is: [%u, %u), offset is %u\n", vmarea->vma_start, vmarea->vma_end, vmarea->vma_off);
 }
 
+static int
+valid_pagenumber(uint32_t pagenum)
+{
+    return (pagenum < USER_PAGE_HIGH);
+}
+
 static slab_allocator_t *vmmap_allocator;
 static slab_allocator_t *vmarea_allocator;
 
@@ -259,6 +265,9 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 vmarea_t *
 vmmap_lookup(vmmap_t *map, uint32_t vfn)
 {
+    KASSERT(map);
+    KASSERT(valid_pagenumber(vfn));
+
     vmarea_t *vma;
 
     list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
@@ -329,6 +338,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
             /*not sure about the return value*/
             return -1;
         }
+        dprintf("the range found is: [%d, %d)\n", ret, ret + npages);
         lopage = (unsigned)ret;
     } else {
         /*vmmap_remove(map, lopage, npages);*/
@@ -429,7 +439,11 @@ int
 vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 {
     KASSERT(map);
-    /*KASSERT(!list_empty(!map->vmm_list));*/
+    /*KASSERT(!list_empty(&map->vmm_list));*/
+
+    dprintf("before vmmap_remove:\n");
+    print_vmmap(map);
+    dprintf("the range is [%u, %u)\n", lopage, lopage + npages);
 
     vmarea_t *vma;
     uint32_t hipage = lopage + npages;
@@ -486,6 +500,9 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             vmarea_free(vma);
         }
     } list_iterate_end();
+    
+    dprintf("after vmmap_remove:\n");
+    print_vmmap(map);
 
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: vmmap_remove");*/
@@ -501,15 +518,20 @@ vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
     KASSERT(map);
 
+    dprintf("determine if the range [%u, %u) is empty in map:\n", startvfn, startvfn + npages);
+    print_vmmap(map);
+
     vmarea_t *vma;
     list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
         if ((vma->vma_start >= startvfn + npages) || (vma->vma_end <= startvfn)) {
             /*nothing*/
         } else {
+            dprintf("Hmm, not empty, found some overlapping\n");
             return 0;
         }
     } list_iterate_end();
 
+    dprintf("turns out it's emtpy for that range\n");
     return 1;
         /*NOT_YET_IMPLEMENTED("VM: vmmap_is_range_empty");*/
         /*return 0;*/
