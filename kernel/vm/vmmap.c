@@ -24,7 +24,7 @@
 #include "mm/mman.h"
 #include "mm/mmobj.h"
 
-#define USER_PAGE_HIGH (USER_MEM_HIGH - USER_MEM_LOW) / PAGE_SIZE
+#define USER_PAGE_HIGH USER_MEM_HIGH / PAGE_SIZE
 #define VMMAP_FLAG 1
 #define dprintf(...)                    \
         if (VMMAP_FLAG) {               \
@@ -412,6 +412,12 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 
                 return err;
             }
+
+            /*
+             *since vmmap_map is the first time we get the page frame
+             *for this mmobj, we pin it here
+             */
+            pframe_pin(pf);
         }
 
         /*hook it up with the virtual memory area*/
@@ -626,8 +632,37 @@ vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 int
 vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_read");
-        return 0;
+    char *buff = (char *)buf;
+    uint32_t pagenum = (uint32_t)PN_TO_ADDR(vaddr);
+    uint32_t offset = PAGE_OFFSET(vaddr);
+    
+    while (count > 0) {
+        /*get the vmarea*/
+        vmarea_t *vmarea = vmmap_lookup(map, pagenum);
+        KASSERT(vmarea);
+
+        /*get the pageframe*/
+        pframe_t *pf;
+        int err = vmarea->vma_obj->mmo_ops->lookuppage(vmarea->vma_obj, 
+                    get_pagenum(vmarea, pagenum), 0, &pf);
+        if (err < 0) {
+            return err;
+        }
+        KASSERT(err == 0);
+        KASSERT(pf);
+
+        size_t readlen = MIN((PAGE_SIZE - offset), count);
+        char *readptr = (char *)pf->pf_addr + offset;
+        memcpy(buff, readptr, readlen);
+
+        count -= readlen;
+        offset = 0;
+    }
+
+    KASSERT(count == 0);
+    return 0;
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_read");*/
+        /*return 0;*/
 }
 
 /* Write from 'buf' into the virtual address space of 'map' starting at
