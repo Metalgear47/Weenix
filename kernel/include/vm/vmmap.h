@@ -51,3 +51,5 @@ int vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count);
 vmmap_t *vmmap_clone(vmmap_t *map);
 
 size_t vmmap_mapping_info(const void *map, char *buf, size_t size);
+
+void vmmap_unittest(void);
