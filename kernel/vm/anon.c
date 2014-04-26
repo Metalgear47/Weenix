@@ -101,9 +101,12 @@ anon_put(mmobj_t *o)
     if (o->mmo_refcount == (o->mmo_nrespages - 1)) {
         pframe_t *pframe_cur;
         list_iterate_begin(&o->mmo_respages, pframe_cur, pframe_t, pf_olink) {
-            pframe_unpin(pframe_cur);
-            /*uncache the page frame*/
-            pframe_free(pframe_cur);
+            /*
+             *pframe_unpin(pframe_cur);
+             *[>uncache the page frame<]
+             *pframe_free(pframe_cur);
+             */
+            o->mmo_ops->cleanpage(o, pframe_cur);
         } list_iterate_end();
 
         KASSERT(0 == o->mmo_nrespages);
@@ -134,8 +137,9 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
         return err;
     }
 
+    /*NOT here!!! We're not sure it's resident or not*/
     /*pin it once we get it*/
-    pframe_pin(*pf);
+    /*pframe_pin(*pf);*/
 
     return err;
         /*NOT_YET_IMPLEMENTED("VM: anon_lookuppage");*/
@@ -180,6 +184,7 @@ anon_cleanpage(mmobj_t *o, pframe_t *pf)
     KASSERT(pf->pf_addr);
     KASSERT(o == pf->pf_obj);
 
+    pframe_unpin(pf);
     pframe_free(pf);
     
     return 0;
