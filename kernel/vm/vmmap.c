@@ -512,6 +512,11 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
     uint32_t hipage = lopage + npages;
 
     list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
+        /*no intersection*/
+        if (vma->vma_start >= hipage || vma->vma_end <= lopage) {
+            continue;
+        }
+
         /*case 1*/
         /*split into 2 vmareas*/
         /*[vma_start, lopage) and [hipage, vma_end)*/
@@ -529,7 +534,9 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 
             vma_new->vma_vmmap = vma->vma_vmmap;
             vma_new->vma_obj = vma->vma_obj;
-            vma_new->vma_obj->mmo_ops->ref(vma_new->vma_obj);
+            /*
+             *vma_new->vma_obj->mmo_ops->ref(vma_new->vma_obj);
+             */
 
             list_init(&vma_new->vma_plink);
             list_insert_before(&vma->vma_plink, &vma_new->vma_plink);
@@ -538,12 +545,14 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 
             vma->vma_off = hipage - vma->vma_start + vma->vma_off;
             vma->vma_start = hipage;
+            continue;
         }
 
         /*case 2*/
         /*chop off the right part*/
         if (vma->vma_start < lopage && vma->vma_end <= hipage) {
             vma->vma_end = lopage;
+            continue;
         }
 
         /*case 3*/
@@ -551,17 +560,21 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
         if (vma->vma_start >= lopage && vma->vma_end > hipage) {
             vma->vma_off = hipage - vma->vma_start + vma->vma_off;
             vma->vma_start = hipage;
+            continue;
         }
 
         /*case 4*/
         /*just remove it*/
         if (vma->vma_start >= lopage && vma->vma_end <= hipage) {
-            vma->vma_obj->mmo_ops->put(vma->vma_obj);
+            /*
+             *vma->vma_obj->mmo_ops->put(vma->vma_obj);
+             */
             list_remove(&vma->vma_plink);
             /*for NOW omit vma_olink*/
             /*not sure about removing it*/
             /*list_remove(&vma->vma_olink);*/
             vmarea_free(vma);
+            continue;
         }
     } list_iterate_end();
     
@@ -679,4 +692,34 @@ end:
         }
         */
         return osize - size;
+}
+
+/* ====================================================== */
+vmarea_t *
+vmarea_new(uint32_t start, uint32_t end)
+{
+    vmarea_t *vmarea = vmarea_alloc();
+    KASSERT(vmarea);
+    vmarea->vma_start = start;
+    vmarea->vma_end = end;
+    vmarea->vma_off = 0;
+
+    return vmarea;
+}
+
+void
+vmmap_unittest(void)
+{
+    vmmap_t *map = vmmap_create();
+    KASSERT(map);
+
+    vmmap_insert(map, vmarea_new(1,2));
+    print_vmmap(map);
+    vmmap_insert(map, vmarea_new(9,10));
+    vmmap_remove(map, 9, 1);
+
+    vmmap_insert(map, vmarea_new(0,1));
+    print_vmmap(map);
+
+    panic("Time to inspect the result\n");
 }
