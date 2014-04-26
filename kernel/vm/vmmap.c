@@ -713,13 +713,28 @@ vmmap_unittest(void)
     vmmap_t *map = vmmap_create();
     KASSERT(map);
 
-    vmmap_insert(map, vmarea_new(1,2));
+    vmmap_insert(map, vmarea_new(4,7));
     print_vmmap(map);
     vmmap_insert(map, vmarea_new(9,10));
     vmmap_remove(map, 9, 1);
 
-    vmmap_insert(map, vmarea_new(0,1));
+    vmmap_insert(map, vmarea_new(0,2));
     print_vmmap(map);
+
+    vmmap_insert(map, vmarea_new(2,3));
+    vmmap_insert(map, vmarea_new(7,10));
+    print_vmmap(map);
+
+    vmmap_remove(map, 8,1);
+    print_vmmap(map);
+
+    vmmap_is_range_empty(map, 7, 1);
+    vmmap_is_range_empty(map, 8, 1);
+
+    KASSERT(vmmap_lookup(map, 8) == NULL);
+    KASSERT(vmmap_lookup(map, 9));
+
+    vmmap_remove(map, 1, 8);
 
     panic("Time to inspect the result\n");
 }
