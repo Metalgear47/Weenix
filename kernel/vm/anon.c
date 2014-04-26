@@ -133,6 +133,10 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
         KASSERT(*pf == NULL);
         return err;
     }
+
+    /*pin it once we get it*/
+    pframe_pin(*pf);
+
     return err;
         /*NOT_YET_IMPLEMENTED("VM: anon_lookuppage");*/
         /*return -1;*/

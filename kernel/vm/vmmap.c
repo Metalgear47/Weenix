@@ -332,13 +332,10 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     KASSERT(map);
     KASSERT(PAGE_ALIGNED(off));
 
-    vmarea_t *vma_result = vmarea_alloc();
-    if (vma_result == NULL) {
-        return -ENOSPC;
-    }
-
     int remove = 0;
 
+    /*do according to lopage*/
+    dprintf("examining lopage: %u\n", lopage);
     if (lopage == 0) {
         int ret = vmmap_find_range(map, npages, dir);
         if (ret < 0) {
@@ -350,8 +347,17 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         lopage = (unsigned)ret;
     } else {
         /*vmmap_remove(map, lopage, npages);*/
+        /*should not remove here, what if something went south later*/
         remove = 1;
+        /*just mark it as remove needed*/
     }
+
+    dprintf("allocating a new vmarea\n");
+    vmarea_t *vma_result = vmarea_alloc();
+    if (vma_result == NULL) {
+        return -ENOSPC;
+    }
+
     uint32_t hipage = lopage + npages;
 
     vma_result->vma_start = lopage;
@@ -369,8 +375,15 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     if (file == NULL) {
         mmobj_t *mmobj_anon = anon_create();
         if (mmobj_anon == NULL) {
+            vmarea_free(vma_result);
             return -ENOSPC;
         }
+
+        /*ref it*/
+        /* do it early so when we put it, 
+         * anon_put will do the cleanup automatically
+         */
+        mmobj_anon->mmo_ops->ref(mmobj_anon);
 
         uint32_t pagenum = lopage;
         for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
@@ -378,8 +391,13 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
             pframe_t *pf;
             /*lookup(alloc) the page*/
             /*lookuppage will also fill the page to 0s*/
+            /*and also pin the pframe*/
             err = mmobj_anon->mmo_ops->lookuppage(mmobj_anon, pagenum, 1, &pf);
             if (err < 0) {
+                /*cleanup the struct that I've allocated*/
+                vmarea_free(vma_result);
+                mmobj_anon->mmo_ops->put(mmobj_anon);
+
                 KASSERT(pf == NULL);
                 return err;
             }
@@ -388,6 +406,8 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         /*hook it up with the virtual memory area*/
         /*not quite sure*/
         vma_result->vma_obj = mmobj_anon;
+        /*do it early*/
+        /*vma_result->vma_obj->mmo_ops->ref(vma_result->vma_obj);*/
     } else {
         /*calling mmap*/
         /*TODO: take care of off*/
