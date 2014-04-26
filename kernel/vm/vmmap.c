@@ -81,6 +81,13 @@ vmarea_free(vmarea_t *vma)
         slab_obj_free(vmarea_allocator, vma);
 }
 
+uint32_t
+get_pagenum(vmarea_t *vmarea, uint32_t pagenum)
+{
+    KASSERT(pagenum >= vmarea->vma_start && pagenum < vmarea->vma_end);
+    return pagenum - vmarea->vma_start + vmarea->vma_off;
+}
+
 /* Create a new vmmap, which has no vmareas and does
  * not refer to a process. */
 vmmap_t *
@@ -425,7 +432,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         uint32_t pagenum = lopage;
         for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
             int err;
-            pframe_t *pf;
+            pframe_t *pf = NULL;
 
             err = mmobj_file->mmo_ops->lookuppage(mmobj_file, pagenum, 1, &pf);
             if (err < 0) {
