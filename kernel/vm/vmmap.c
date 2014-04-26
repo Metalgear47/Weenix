@@ -370,6 +370,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     /*vmmap_insert(map, vma_result); [>also take care of vma_plink<]*/
 
     /*vma_obj need not to be set*/
+    vma_result->vma_obj = NULL;
     /*vma_olink is initialized during alloc, still unclear, what to do?*/
 
     if (file == NULL) {
@@ -394,11 +395,12 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
             /*and also pin the pframe*/
             err = mmobj_anon->mmo_ops->lookuppage(mmobj_anon, pagenum, 1, &pf);
             if (err < 0) {
+                KASSERT(pf == NULL);
+
                 /*cleanup the struct that I've allocated*/
                 vmarea_free(vma_result);
                 mmobj_anon->mmo_ops->put(mmobj_anon);
 
-                KASSERT(pf == NULL);
                 return err;
             }
         }
@@ -411,12 +413,31 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     } else {
         /*calling mmap*/
         /*TODO: take care of off*/
-        mmobj_t *mmobj_ret;
-        int err = file->vn_ops->mmap(file, vma_result, &mmobj_ret);
+        mmobj_t *mmobj_file;
+        int err = file->vn_ops->mmap(file, vma_result, &mmobj_file);
         if (err < 0) {
-            KASSERT(mmobj_ret == NULL);
+            KASSERT(mmobj_file == NULL);
             return err;
         }
+
+        mmobj_file->mmo_ops->ref(mmobj_file);
+
+        uint32_t pagenum = lopage;
+        for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
+            int err;
+            pframe_t *pf;
+
+            err = mmobj_file->mmo_ops->lookuppage(mmobj_file, pagenum, 1, &pf);
+            if (err < 0) {
+                KASSERT(pf == NULL);
+
+                vmarea_free(vma_result);
+                mmobj_file->mmo_ops->put(mmobj_file);
+                return err;
+            }
+        }
+
+        vma_result->vma_obj = mmobj_file;
     }
 
     if (flags & MAP_PRIVATE) {
