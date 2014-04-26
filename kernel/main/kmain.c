@@ -348,7 +348,12 @@ initproc_run(int arg1, void *arg2)
      /*========================*/
 
 
-    kernel_execve("/usr/bin/segfault", NULL, NULL);
+    char *argv[2];
+    argv[0] = "segfault";
+    argv[1] = NULL;
+    char *envp[1];
+    envp[0] = NULL;
+    kernel_execve("/usr/bin/segfault", argv, envp);
 
     do_exit(0);
 
