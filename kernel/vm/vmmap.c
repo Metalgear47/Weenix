@@ -558,8 +558,9 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
         if (vma->vma_start >= lopage && vma->vma_end <= hipage) {
             vma->vma_obj->mmo_ops->put(vma->vma_obj);
             list_remove(&vma->vma_plink);
+            /*for NOW omit vma_olink*/
             /*not sure about removing it*/
-            list_remove(&vma->vma_olink);
+            /*list_remove(&vma->vma_olink);*/
             vmarea_free(vma);
         }
     } list_iterate_end();
