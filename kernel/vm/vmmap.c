@@ -178,6 +178,7 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
     } list_iterate_end();
 
     KASSERT(vma_cur->vma_plink.l_next == list);
+    KASSERT(vma_cur->vma_end <= newvma->vma_start);
     list_insert_tail(list, &newvma->vma_plink);
     newvma->vma_vmmap = map;
 
@@ -718,12 +719,21 @@ vmmap_unittest(void)
     vmmap_insert(map, vmarea_new(9,10));
     vmmap_remove(map, 9, 1);
 
+    int lopage = vmmap_find_range(map, 2, VMMAP_DIR_LOHI);
+    dprintf("the range found is [%d, %d)\n", lopage, lopage + 2);
+
     vmmap_insert(map, vmarea_new(0,2));
     print_vmmap(map);
 
     vmmap_insert(map, vmarea_new(2,3));
     vmmap_insert(map, vmarea_new(7,10));
     print_vmmap(map);
+
+    lopage = vmmap_find_range(map, 1, VMMAP_DIR_LOHI);
+    dprintf("the range found is [%d, %d)\n", lopage, lopage + 1);
+
+    lopage = vmmap_find_range(map, 1, VMMAP_DIR_HILO);
+    dprintf("the range found is [%d, %d)\n", lopage, lopage + 1);
 
     vmmap_remove(map, 8,1);
     print_vmmap(map);
@@ -735,6 +745,12 @@ vmmap_unittest(void)
     KASSERT(vmmap_lookup(map, 9));
 
     vmmap_remove(map, 1, 8);
+
+    lopage = vmmap_find_range(map, 8, VMMAP_DIR_LOHI);
+    dprintf("the range found is [%d, %d)\n", lopage, lopage + 8);
+
+    lopage = vmmap_find_range(map, 8, VMMAP_DIR_HILO);
+    dprintf("the range found is [%d, %d)\n", lopage, lopage + 8);
 
     panic("Time to inspect the result\n");
 }
