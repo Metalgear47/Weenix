@@ -271,7 +271,10 @@ vmarea_t *
 vmmap_lookup(vmmap_t *map, uint32_t vfn)
 {
     KASSERT(map);
+    /*assumption here is that the vfn is already auditted by some other routine*/
     KASSERT(valid_pagenumber(vfn));
+    dprintf("vmmap_lookup, vfn is %u\n", vfn);
+    print_vmmap(map);
 
     vmarea_t *vma;
 

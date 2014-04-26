@@ -471,9 +471,18 @@ s5fs_write(vnode_t *vnode, off_t offset, const void *buf, size_t len)
 static int
 s5fs_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
 {
-        NOT_YET_IMPLEMENTED("VM: s5fs_mmap");
+    KASSERT(file);
+    KASSERT(vma);
 
-        return 0;
+    /*How to watch the refcount?*/
+    KASSERT(file->vn_mmobj.mmo_refcount >= 0);
+    KASSERT(file->vn_mmobj.mmo_nrespages >= 0);
+
+    *ret = &file->vn_mmobj;
+
+    return 0;
+        /*NOT_YET_IMPLEMENTED("VM: s5fs_mmap");*/
+        /*return 0;*/
 }
 
 /*
