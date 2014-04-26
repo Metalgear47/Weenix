@@ -400,7 +400,8 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
             /*lookup(alloc) the page*/
             /*lookuppage will also fill the page to 0s*/
             /*and also pin the pframe*/
-            err = mmobj_anon->mmo_ops->lookuppage(mmobj_anon, pagenum, 1, &pf);
+            err = mmobj_anon->mmo_ops->lookuppage(mmobj_anon, 
+                    get_pagenum(vma_result, pagenum), 1, &pf);
             if (err < 0) {
                 KASSERT(pf == NULL);
 
@@ -434,7 +435,13 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
             int err;
             pframe_t *pf = NULL;
 
-            err = mmobj_file->mmo_ops->lookuppage(mmobj_file, pagenum, 1, &pf);
+            int forwrite = 0;
+            if (prot & PROT_WRITE) {
+                forwrite = 1;
+            }
+
+            err = mmobj_file->mmo_ops->lookuppage(mmobj_file, 
+                    get_pagenum(vma_result, pagenum), forwrite, &pf);
             if (err < 0) {
                 KASSERT(pf == NULL);
 
