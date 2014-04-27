@@ -348,12 +348,14 @@ initproc_run(int arg1, void *arg2)
      /*========================*/
 
 
-    char *argv[2];
-    argv[0] = "segfault";
-    argv[1] = NULL;
-    char *envp[1];
-    envp[0] = NULL;
-    kernel_execve("/usr/bin/segfault", argv, envp);
+    /*
+     *char *argv[2];
+     *argv[0] = "segfault";
+     *argv[1] = NULL;
+     *char *envp[1];
+     *envp[0] = NULL;
+     *kernel_execve("/usr/bin/segfault", argv, envp);
+     */
 
     /*vmmap_unittest();*/
 

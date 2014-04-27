@@ -311,13 +311,19 @@ proc_thread_exited(void *retval)
     KASSERT(NULL == curthr->kt_wchan);
 
     /*deal with NULL pointer*/
-    if (retval == NULL) {
-        curproc->p_status = 0;
-        proc_cleanup(0);
-    } else {
-        curproc->p_status = *((int *)retval);
-        proc_cleanup(*((int *)retval));
-    }
+    /*
+     *if (retval == NULL) {
+     *    curproc->p_status = 0;
+     *    proc_cleanup(0);
+     *} else {
+     *    curproc->p_status = *((int *)retval);
+     *    proc_cleanup(*((int *)retval));
+     *}
+     */
+
+    /*p_status will be set during proc_cleanup*/
+    /*curproc->p_status = (int)retval;*/
+    proc_cleanup((int)retval);
 
     dbg(DBG_PROC, "Exiting process: [%s], now gonna make the switch and never return.\n", curproc->p_comm);
 
@@ -451,7 +457,7 @@ void
 do_exit(int status)
 {
     /*implementation for now, only one thread*/
-    kthread_exit((void *)(&status));
+    kthread_exit((void *)status);
 
         /*NOT_YET_IMPLEMENTED("PROCS: do_exit");*/
 }
