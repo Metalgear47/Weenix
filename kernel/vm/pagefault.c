@@ -57,6 +57,8 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         proc_kill(curproc, EFAULT);
     }
 
+    int forwrite = 0;
+
     if (area->vma_prot == PROT_NONE) {
         panic("Really?PROT is none? Have no idea what to do\n");
     }
@@ -66,13 +68,20 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         do_exit(EFAULT);
     }
 
-    if ((cause & FAULT_WRITE) && ((area->vma_prot & PROT_WRITE) == 0)) {
-        do_exit(EFAULT);
+    if (cause & FAULT_WRITE) {
+        if ((area->vma_prot & PROT_WRITE) == 0) {
+            do_exit(EFAULT);
+        }
+        forwrite = 1;
     }
 
-    if ((cause & FAULT_EXEC) && ((area->vma_prot & PROT_EXEC) == 0)) {
-        do_exit(EFAULT);
+    if (cause & FAULT_EXEC) {
+        if ((area->vma_prot & PROT_EXEC) == 0) {
+            do_exit(EFAULT);
+        }
     }
+
+    area->vma_obj->mmo_ops->lookuppage();
 
     panic("heck, panic for now\n");
         /*NOT_YET_IMPLEMENTED("VM: handle_pagefault");*/
