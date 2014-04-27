@@ -354,7 +354,7 @@ do_waitpid(pid_t pid, int options, int *status)
     KASSERT(0 == options);
 
     if (list_empty(&curproc->p_children)) {
-        return ECHILD;
+        return -ECHILD;
     }
 
     /*sched_make_runnable(curthr);*/
@@ -404,7 +404,7 @@ CheckAgain:
 
     /*pid is not child of curproc*/
     if (child_proc == NULL && pid > 0) {
-        return ECHILD;
+        return -ECHILD;
     }
 
     /*no dead child found*/
