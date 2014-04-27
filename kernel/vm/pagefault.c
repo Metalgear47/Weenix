@@ -60,23 +60,16 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
     }
 
     int forwrite = 0;
-
-    if (cause == PROT_NONE) {
-        panic("Really?PROT is none? Have no idea what to do\n");
-    }
-
-    /*
-     *if ((cause & PROT_READ) == 0) {
-     *    panic("no PROT_READ, what the heck?\n");
-     *    do_exit(EFAULT);
-     *}
-     */
+    uint32_t pdflags = 0;
+    uint32_t ptflags = 0;
 
     if (cause & FAULT_WRITE) {
         if ((area->vma_prot & PROT_WRITE) == 0) {
             do_exit(EFAULT);
         }
         forwrite = 1;
+        pdflags |= PD_WRITE;
+        ptflags |= PT_WRITE;
     }
 
     if (cause & FAULT_EXEC) {
@@ -105,7 +98,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 
     KASSERT(PAGE_ALIGN_DOWN(vaddr) == PN_TO_ADDR(pagenum));
     err = pt_map(pagedir, (uintptr_t)PN_TO_ADDR(pagenum), 
-            (uintptr_t)pf->pf_addr, 0x3f, 0x1ff);
+            (uintptr_t)pf->pf_addr, PD_USER, PT_USER);
     KASSERT(err == 0);
 
 
