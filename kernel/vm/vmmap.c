@@ -678,8 +678,39 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 int
 vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_write");
-        return 0;
+    char *buff = (char *)buf;
+    uint32_t pagenum = ADDR_TO_PN(vaddr);
+    uint32_t offset = PAGE_OFFSET(vaddr);
+    
+    while (count > 0) {
+        /*get the vmarea*/
+        vmarea_t *vmarea = vmmap_lookup(map, pagenum);
+        KASSERT(vmarea);
+
+        /*get the pageframe*/
+        pframe_t *pf;
+        int err = vmarea->vma_obj->mmo_ops->lookuppage(vmarea->vma_obj, 
+                    get_pagenum(vmarea, pagenum), 1, &pf);
+        if (err < 0) {
+            KASSERT(pf == NULL);
+            return err;
+        }
+        KASSERT(err == 0);
+        KASSERT(pf);
+
+        size_t writelen = MIN((PAGE_SIZE - offset), count);
+        char *writeptr = (char *)pf->pf_addr + offset;
+        memcpy(writeptr, buff, writelen);
+        pframe_dirty(pf);
+
+        count -= writelen;
+        offset = 0;
+    }
+
+    KASSERT(count == 0);
+    return 0;
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_write");*/
+        /*return 0;*/
 }
 
 /* a debugging routine: dumps the mappings of the given address space. */
