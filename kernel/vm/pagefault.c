@@ -51,6 +51,29 @@
 void
 handle_pagefault(uintptr_t vaddr, uint32_t cause)
 {
-    /*panic("heck, panic for now\n");*/
+    int pagenum = ADDR_TO_PN(vaddr);
+    vmarea_t *area = vmmap_lookup(curproc->p_vmmap, pagenum);
+    if (area == NULL) {
+        proc_kill(curproc, EFAULT);
+    }
+
+    if (area->vma_prot == PROT_NONE) {
+        panic("Really?PROT is none? Have no idea what to do\n");
+    }
+
+    if ((area->vma_prot & PROT_READ) == 0) {
+        panic("no PROT_READ, what the heck?\n");
+        do_exit(EFAULT);
+    }
+
+    if ((cause & FAULT_WRITE) && ((area->vma_prot & PROT_WRITE) == 0)) {
+        do_exit(EFAULT);
+    }
+
+    if ((cause & FAULT_EXEC) && ((area->vma_prot & PROT_EXEC) == 0)) {
+        do_exit(EFAULT);
+    }
+
+    panic("heck, panic for now\n");
         /*NOT_YET_IMPLEMENTED("VM: handle_pagefault");*/
 }
