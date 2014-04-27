@@ -66,8 +66,14 @@ shadow_init()
 mmobj_t *
 shadow_create()
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_create");
-        return NULL;
+    mmobj_t *mmo = slab_obj_alloc(shadow_allocator);
+    if (mmo) {
+        mmobj_init(mmo, &shadow_mmobj_ops);
+        mmo->mmo_un.mmo_bottom_obj = mmobj_bottom_obj(mmo);
+    }
+    return mmo;
+        /*NOT_YET_IMPLEMENTED("VM: shadow_create");*/
+        /*return NULL;*/
 }
 
 /* Implementation of mmobj entry points: */
