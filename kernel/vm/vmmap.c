@@ -377,8 +377,9 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 
     /*vmmap_insert(map, vma_result); [>also take care of vma_plink<]*/
 
-    /*vma_obj need not to be set*/
+    /*vma_obj will be set later*/
     vma_result->vma_obj = NULL;
+
     /*vma_olink is initialized during alloc, still unclear, what to do?*/
 
     if (file == NULL) {
@@ -397,10 +398,13 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         uint32_t pagenum = lopage;
         for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
             int err;
-            pframe_t *pf;
-            /*lookup(alloc) the page*/
-            /*lookuppage will also fill the page to 0s*/
-            /*and also pin the pframe*/
+            pframe_t *pf = NULL;
+            /*
+             *lookup(alloc) the page
+             *lookuppage will also fill the page to 0s
+             *and also pin the pframe if it's just allocated
+             *during calling fillpage
+             */
             err = mmobj_anon->mmo_ops->lookuppage(mmobj_anon, 
                     get_pagenum(vma_result, pagenum), 1, &pf);
             if (err < 0) {
@@ -428,7 +432,6 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         /*vma_result->vma_obj->mmo_ops->ref(vma_result->vma_obj);*/
     } else {
         /*calling mmap*/
-        /*TODO: take care of off*/
         mmobj_t *mmobj_file;
         int err = file->vn_ops->mmap(file, vma_result, &mmobj_file);
         if (err < 0) {
@@ -440,7 +443,6 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 
         uint32_t pagenum = lopage;
         for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
-            int err;
             pframe_t *pf = NULL;
 
             int forwrite = 0;
@@ -457,10 +459,24 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
                 mmobj_file->mmo_ops->put(mmobj_file);
                 return err;
             }
+
+            KASSERT(pf);
+            KASSERT(pf->pf_addr);
+
+            /*take care of off*/
+            /*use is to call fillpage of vnode*/
+            err = file->vn_ops->fillpage(file, 
+                get_pagenum(vma_result, pagenum) * PAGE_SIZE + off, pf->pf_addr);
+            if (err < 0) {
+                vmarea_free(vma_result);
+                mmobj_file->mmo_ops->put(mmobj_file);
+                return err;
+            }
         }
 
         vma_result->vma_obj = mmobj_file;
     }
+    KASSERT(vma_result->vma_obj);
 
     if (flags & MAP_PRIVATE) {
         /*create a shadow object*/
@@ -468,7 +484,12 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 
     /*time for the final move*/
     if (remove) {
-        vmmap_remove(map, lopage, npages);
+        int err = vmmap_remove(map, lopage, npages);
+        if (err < 0) {
+            vma_result->vma_obj->mmo_ops->put(vma_result->vma_obj);
+            vmarea_free(vma_result);
+            return err;
+        }
     }
 
     vmmap_insert(map, vma_result);
