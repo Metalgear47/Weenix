@@ -634,7 +634,7 @@ int
 vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 {
     char *buff = (char *)buf;
-    uint32_t pagenum = (uint32_t)PN_TO_ADDR(vaddr);
+    uint32_t pagenum = ADDR_TO_PN(vaddr);
     uint32_t offset = PAGE_OFFSET(vaddr);
     
     while (count > 0) {
@@ -647,6 +647,7 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
         int err = vmarea->vma_obj->mmo_ops->lookuppage(vmarea->vma_obj, 
                     get_pagenum(vmarea, pagenum), 0, &pf);
         if (err < 0) {
+            KASSERT(pf == NULL);
             return err;
         }
         KASSERT(err == 0);
