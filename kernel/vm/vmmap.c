@@ -120,6 +120,10 @@ vmmap_destroy(vmmap_t *map)
         vma->vma_obj->mmo_ops->put(vma->vma_obj);
         /*remove it from the list*/
         list_remove(&vma->vma_plink);
+
+        /*also have to take care of vma_olink*/
+        /*and in vmmap_clone*/
+
         /*reclaim the memory*/
         vmarea_free(vma);
     } list_iterate_end();
@@ -304,8 +308,44 @@ vmmap_lookup(vmmap_t *map, uint32_t vfn)
 vmmap_t *
 vmmap_clone(vmmap_t *map)
 {
-        NOT_YET_IMPLEMENTED("VM: vmmap_clone");
+    vmmap_t *newmap = vmmap_create();
+    if (newmap == NULL) {
         return NULL;
+    }
+
+    vmarea_t *area_cur;
+
+    list_iterate_begin(&map->vmm_list, area_cur, vmarea_t, vma_plink) {
+        vmarea_t *area_new = vmarea_alloc();
+        if (area_new == NULL) {
+            goto FAIL;
+        }
+        area_new->vma_start = area_cur->vma_start;
+        area_new->vma_end = area_cur->vma_end;
+        area_new->vma_off = area_cur->vma_off;
+
+        area_new->vma_prot = area_cur->vma_prot;
+        area_new->vma_flags = area_cur->vma_flags;
+
+        list_init(&area_new->vma_plink);
+        vmmap_insert(newmap, area_new);
+        area_new->vma_obj = NULL;
+        list_init(&area_new->vma_olink);
+    } list_iterate_end();
+
+    return newmap;
+
+FAIL:
+    list_iterate_begin(&newmap->vmm_list, area_cur, vmarea_t, vma_plink) {
+        list_remove(&area_cur->vma_plink);
+        vmarea_free(area_cur);
+    } list_iterate_end();
+
+    slab_obj_free(vmmap_allocator, newmap);
+
+    return NULL;
+        /*NOT_YET_IMPLEMENTED("VM: vmmap_clone");*/
+        /*return NULL;*/
 }
 
 /* Insert a mapping into the map starting at lopage for npages pages.
