@@ -12,6 +12,7 @@ break bootstrap
 # break s5fs_subr.c:602
 # break ata.c:533
 # break vmmap.c:443
-break vmmap_remove
+# break vmmap_remove
+break handle_pagefault
 
 continue

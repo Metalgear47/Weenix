@@ -51,6 +51,8 @@
 void
 handle_pagefault(uintptr_t vaddr, uint32_t cause)
 {
+    dbg(DBG_MM, "handle_pagefault is called\n");
+
     int pagenum = ADDR_TO_PN(vaddr);
     vmarea_t *area = vmmap_lookup(curproc->p_vmmap, pagenum);
     if (area == NULL) {
@@ -81,8 +83,21 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         }
     }
 
-    area->vma_obj->mmo_ops->lookuppage();
+    KASSERT(area->vma_obj);
+    pframe_t *pf = NULL;
+    int err = area->vma_obj->mmo_ops->lookuppage(area->vma_obj, 
+                pagenum - area->vma_start + area->vma_off, forwrite, &pf);
+    KASSERT(err == 0);
+    KASSERT(pf);
+    KASSERT(pf->pf_addr);
 
-    panic("heck, panic for now\n");
+    KASSERT(PAGE_ALIGN_DOWN(vaddr) == PN_TO_ADDR(pagenum));
+    err = pt_map(curproc->p_pagedir, (uintptr_t)PN_TO_ADDR(pagenum), 
+            (uintptr_t)pf->pf_addr, 0, 0);
+    KASSERT(err == 0);
+
+    /*tlb_flush(PAGE_ALIGN_DOWN(vaddr));*/
+
+    /*panic("heck, panic for now\n");*/
         /*NOT_YET_IMPLEMENTED("VM: handle_pagefault");*/
 }
