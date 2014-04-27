@@ -157,6 +157,7 @@ anon_fillpage(mmobj_t *o, pframe_t *pf)
     KASSERT(o == pf->pf_obj);
 
     memset(pf->pf_addr, 0, PAGE_SIZE);
+    pframe_pin(pf);
 
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: anon_fillpage");*/

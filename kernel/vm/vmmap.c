@@ -417,7 +417,8 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
              *since vmmap_map is the first time we get the page frame
              *for this mmobj, we pin it here
              */
-            pframe_pin(pf);
+            /*move it to fillpage*/
+            /*pframe_pin(pf);*/
         }
 
         /*hook it up with the virtual memory area*/
