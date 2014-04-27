@@ -52,7 +52,9 @@ static mmobj_ops_t shadow_mmobj_ops = {
 void
 shadow_init()
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_init");
+    shadow_allocator = slab_allocator_create("shadow object", sizeof(mmobj_t));
+    KASSERT(shadow_allocator);
+        /*NOT_YET_IMPLEMENTED("VM: shadow_init");*/
 }
 
 /*
