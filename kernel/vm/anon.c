@@ -56,6 +56,7 @@ anon_create()
     mmobj_t *mmo = slab_obj_alloc(anon_allocator);
     if (mmo) {
         mmobj_init(mmo, &anon_mmobj_ops);
+        list_init(&mmo->mmo_un.mmo_vmas);
     }
     return mmo;
         /*NOT_YET_IMPLEMENTED("VM: anon_create");*/
