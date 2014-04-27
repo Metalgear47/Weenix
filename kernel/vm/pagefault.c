@@ -51,7 +51,7 @@
 void
 handle_pagefault(uintptr_t vaddr, uint32_t cause)
 {
-    dbg(DBG_MM, "handle_pagefault is called\n");
+    dbg(DBG_MM, "vaddr is %#.8x, cause is %u\n", vaddr, cause);
 
     int pagenum = ADDR_TO_PN(vaddr);
     vmarea_t *area = vmmap_lookup(curproc->p_vmmap, pagenum);
@@ -61,14 +61,16 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 
     int forwrite = 0;
 
-    if (area->vma_prot == PROT_NONE) {
+    if (cause == PROT_NONE) {
         panic("Really?PROT is none? Have no idea what to do\n");
     }
 
-    if ((area->vma_prot & PROT_READ) == 0) {
-        panic("no PROT_READ, what the heck?\n");
-        do_exit(EFAULT);
-    }
+    /*
+     *if ((cause & PROT_READ) == 0) {
+     *    panic("no PROT_READ, what the heck?\n");
+     *    do_exit(EFAULT);
+     *}
+     */
 
     if (cause & FAULT_WRITE) {
         if ((area->vma_prot & PROT_WRITE) == 0) {
@@ -87,14 +89,25 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
     pframe_t *pf = NULL;
     int err = area->vma_obj->mmo_ops->lookuppage(area->vma_obj, 
                 pagenum - area->vma_start + area->vma_off, forwrite, &pf);
+
+    /*TODO: redo it when shadow object is done*/
+
     KASSERT(err == 0);
     KASSERT(pf);
     KASSERT(pf->pf_addr);
 
+    if (forwrite) {
+        err = area->vma_obj->mmo_ops->dirtypage(area->vma_obj, pf);
+        KASSERT(err == 0);
+    }
+
+    pagedir_t *pagedir = pt_get();
+
     KASSERT(PAGE_ALIGN_DOWN(vaddr) == PN_TO_ADDR(pagenum));
-    err = pt_map(curproc->p_pagedir, (uintptr_t)PN_TO_ADDR(pagenum), 
-            (uintptr_t)pf->pf_addr, 0, 0);
+    err = pt_map(pagedir, (uintptr_t)PN_TO_ADDR(pagenum), 
+            (uintptr_t)pf->pf_addr, 0x3f, 0x1ff);
     KASSERT(err == 0);
+
 
     /*tlb_flush(PAGE_ALIGN_DOWN(vaddr));*/
 
