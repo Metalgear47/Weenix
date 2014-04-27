@@ -101,12 +101,10 @@ anon_put(mmobj_t *o)
     if (o->mmo_refcount == (o->mmo_nrespages - 1)) {
         pframe_t *pframe_cur;
         list_iterate_begin(&o->mmo_respages, pframe_cur, pframe_t, pf_olink) {
-            /*
-             *pframe_unpin(pframe_cur);
-             *[>uncache the page frame<]
-             *pframe_free(pframe_cur);
-             */
-            o->mmo_ops->cleanpage(o, pframe_cur);
+            pframe_unpin(pframe_cur);
+            /*uncache the page frame*/
+            pframe_free(pframe_cur);
+            /*o->mmo_ops->cleanpage(o, pframe_cur);*/
         } list_iterate_end();
 
         KASSERT(0 == o->mmo_nrespages);
