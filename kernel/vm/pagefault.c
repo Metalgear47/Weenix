@@ -53,6 +53,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 {
     dbg(DBG_MM, "vaddr is %#.8x, cause is %u\n", vaddr, cause);
 
+    /*get the virtual page number*/
     int pagenum = ADDR_TO_PN(vaddr);
     vmarea_t *area = vmmap_lookup(curproc->p_vmmap, pagenum);
     if (area == NULL) {
@@ -78,6 +79,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         }
     }
 
+    /*get the actual page frame*/
     KASSERT(area->vma_obj);
     pframe_t *pf = NULL;
     int err = area->vma_obj->mmo_ops->lookuppage(area->vma_obj, 
@@ -98,7 +100,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 
     KASSERT(PAGE_ALIGN_DOWN(vaddr) == PN_TO_ADDR(pagenum));
     err = pt_map(pagedir, (uintptr_t)PN_TO_ADDR(pagenum), 
-            (uintptr_t)pf->pf_addr, PD_USER, PT_USER);
+            (uintptr_t)pf->pf_addr, PD_ACCESSED, PT_ACCESSED);
     KASSERT(err == 0);
 
 
