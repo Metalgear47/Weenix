@@ -43,7 +43,10 @@ print_vmmap(vmmap_t *vmmap)
 static void
 print_vmarea(vmarea_t *vmarea)
 {
-    dprintf("The vmarea is: [%u, %u), offset is %u\n", vmarea->vma_start, vmarea->vma_end, vmarea->vma_off);
+    dprintf("The vmarea is: [%u(%#.5x), %u(%#.5x)), offset is %u(%#.5x)\n", 
+            vmarea->vma_start, vmarea->vma_start,
+            vmarea->vma_end,  vmarea->vma_end, 
+            vmarea->vma_off, vmarea->vma_off);
 }
 
 static int
@@ -207,7 +210,7 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 
     dprintf("find_range, vmmap is:\n");
     print_vmmap(map);
-    dprintf("looking for %u pages\n", npages);
+    dprintf("looking for %u(%#.5x) pages\n", npages, npages);
 
     /*low-high*/
     if (dir == VMMAP_DIR_LOHI || dir == 0) {
@@ -285,7 +288,7 @@ vmmap_lookup(vmmap_t *map, uint32_t vfn)
     KASSERT(map);
     /*assumption here is that the vfn is already auditted by some other routine*/
     KASSERT(valid_pagenumber(vfn));
-    dprintf("vmmap_lookup, vfn is %u\n", vfn);
+    dprintf("vmmap_lookup, vfn is %u(%#.5x)\n", vfn, vfn);
     print_vmmap(map);
 
     vmarea_t *vma;
@@ -383,7 +386,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     int remove = 0;
 
     /*do according to lopage*/
-    dprintf("examining lopage: %u\n", lopage);
+    dprintf("examining lopage: %u(%#.5x)\n", lopage, lopage);
     if (lopage == 0) {
         int ret = vmmap_find_range(map, npages, dir);
         if (ret < 0) {
@@ -391,7 +394,8 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
             /*not sure about the return value*/
             return -1;
         }
-        dprintf("the range found is: [%d, %d)\n", ret, ret + npages);
+        dprintf("the range found is: [%d(%#.5x), %d(%#.5x))\n", 
+                ret, ret, ret + npages, ret + npages);
         lopage = (unsigned)ret;
     } else {
         /*vmmap_remove(map, lopage, npages);*/
@@ -575,7 +579,8 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 
     dprintf("before vmmap_remove:\n");
     print_vmmap(map);
-    dprintf("the range is [%u, %u)\n", lopage, lopage + npages);
+    dprintf("the range is [%u(%#.5x), %u(%#.5x))\n", 
+            lopage, lopage, lopage + npages, lopage + npages);
 
     vmarea_t *vma;
     uint32_t hipage = lopage + npages;
@@ -660,7 +665,8 @@ vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
     KASSERT(map);
 
-    dprintf("determine if the range [%u, %u) is empty in map:\n", startvfn, startvfn + npages);
+    dprintf("find if the range [%u(%#.5x), %u(%#.5x)) is empty in map:\n", 
+            startvfn, startvfn, startvfn + npages, startvfn + npages);
     print_vmmap(map);
 
     vmarea_t *vma;
