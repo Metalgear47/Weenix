@@ -464,7 +464,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
             KASSERT(pf->pf_addr);
 
             /*take care of off*/
-            /*use is to call fillpage of vnode*/
+            /*use it to call fillpage of vnode*/
             err = file->vn_ops->fillpage(file, 
                 get_pagenum(vma_result, pagenum) * PAGE_SIZE + off, pf->pf_addr);
             if (err < 0) {
@@ -563,9 +563,7 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 
             vma_new->vma_vmmap = vma->vma_vmmap;
             vma_new->vma_obj = vma->vma_obj;
-            /*
-             *vma_new->vma_obj->mmo_ops->ref(vma_new->vma_obj);
-             */
+            vma_new->vma_obj->mmo_ops->ref(vma_new->vma_obj);
 
             list_init(&vma_new->vma_plink);
             list_insert_before(&vma->vma_plink, &vma_new->vma_plink);
@@ -595,9 +593,7 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
         /*case 4*/
         /*just remove it*/
         if (vma->vma_start >= lopage && vma->vma_end <= hipage) {
-            /*
-             *vma->vma_obj->mmo_ops->put(vma->vma_obj);
-             */
+            vma->vma_obj->mmo_ops->put(vma->vma_obj);
             list_remove(&vma->vma_plink);
             /*for NOW omit vma_olink*/
             /*not sure about removing it*/
