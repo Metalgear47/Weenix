@@ -187,9 +187,14 @@ anon_cleanpage(mmobj_t *o, pframe_t *pf)
 
     /*just disable them for now*/
     /*seems most of the cleanup is done during pageoutd*/
-    /*pframe_unpin(pf);*/
     /*pframe_free(pf);*/
     
+    /*
+     *it's pinned thru the whole life cycle, and should be unpinned
+     *before it's cleaned
+     */
+    pframe_unpin(pf);
+
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: anon_cleanpage");*/
         /*return -1;*/
