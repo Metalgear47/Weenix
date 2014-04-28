@@ -64,13 +64,17 @@ sys_read(read_args_t *arg)
         return -1;
     }
 
-    err = do_read(kern_args.fd, kern_args.buf, kern_args.nbytes);
+    void *kaddr = page_alloc();
+    err = do_read(kern_args.fd, kaddr, kern_args.nbytes);
     if (err < 0) {
         curthr->kt_errno = -err;
         return -1;
-    } else {
-        return err;
     }
+
+    copy_to_user(kern_args.buf, kaddr, err);
+    page_free(kaddr);
+
+    return err;
         /*NOT_YET_IMPLEMENTED("VM: sys_read");*/
         /*return -1;*/
 }
