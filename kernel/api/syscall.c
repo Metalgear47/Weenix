@@ -56,8 +56,23 @@ init_func(syscall_init);
 static int
 sys_read(read_args_t *arg)
 {
-        NOT_YET_IMPLEMENTED("VM: sys_read");
+    read_args_t kern_args;
+    int err;
+
+    if ((err = copy_from_user(&kern_args, arg, sizeof(read_args_t))) < 0) {
+        curthr->kt_errno = -err;
         return -1;
+    }
+
+    err = do_read(kern_args.fd, kern_args.buf, kern_args.nbytes);
+    if (err < 0) {
+        curthr->kt_errno = -err;
+        return -1;
+    } else {
+        return err;
+    }
+        /*NOT_YET_IMPLEMENTED("VM: sys_read");*/
+        /*return -1;*/
 }
 
 /*
