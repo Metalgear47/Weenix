@@ -150,6 +150,20 @@ shadow_put(mmobj_t *o)
 static int
 shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
+    if (forwrite == 0) {
+        while (o != o->mmo_un.mmo_bottom_obj) {
+            *pf = pframe_get_resident(o, pagenum);
+            if (*pf) {
+                return 0;
+            }
+            o = o->mmo_shadowed;
+        }
+        /*the bottom of the shadow chain whould not be a shadow object*/
+        KASSERT(o->mmo_shadowed == NULL);
+        return pframe_get(o, pagenum, pf);
+    } else {
+        panic("for now\n");
+    }
         NOT_YET_IMPLEMENTED("VM: shadow_lookuppage");
         return 0;
 }
