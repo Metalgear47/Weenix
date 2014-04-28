@@ -104,7 +104,38 @@ shadow_ref(mmobj_t *o)
 static void
 shadow_put(mmobj_t *o)
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_put");
+    KASSERT(o);
+
+    KASSERT(0 <= o->mmo_nrespages);
+    KASSERT(o->mmo_nrespages < o->mmo_refcount);
+
+    dbg(DBG_ANON, "shadow_put: 0x%p, down to %d, nrespages = %d\n",
+        o, o->mmo_refcount - 1, o->mmo_nrespages);
+
+    if (o->mmo_refcount == (o->mmo_nrespages - 1)) {
+        pframe_t *pframe_cur;
+        list_iterate_begin(&o->mmo_respages, pframe_cur, pframe_t, pf_olink) {
+            KASSERT(pframe_cur->pf_obj == o);
+            pframe_unpin(pframe_cur);
+            /*uncache the page frame*/
+            pframe_clean(pframe_cur);
+            
+            /*pframe_free(pframe_cur);*/
+        } list_iterate_end();
+
+        KASSERT(0 == o->mmo_nrespages);
+        KASSERT(1 == o->mmo_refcount);
+    }
+
+    if (0 < --o->mmo_refcount) {
+        return;
+    }
+
+    KASSERT(0 == o->mmo_nrespages);
+    KASSERT(0 == o->mmo_refcount);
+
+    slab_obj_free(shadow_allocator, o);
+        /*NOT_YET_IMPLEMENTED("VM: shadow_put");*/
 }
 
 /* This function looks up the given page in this shadow object. The
