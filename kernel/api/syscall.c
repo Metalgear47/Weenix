@@ -85,8 +85,28 @@ sys_read(read_args_t *arg)
 static int
 sys_write(write_args_t *arg)
 {
-        NOT_YET_IMPLEMENTED("VM: sys_write");
+    write_args_t kern_args;
+    int err;
+
+    if ((err = copy_from_user(&kern_args, arg, sizeof(write_args_t))) < 0) {
+        curthr->kt_errno = -err;
         return -1;
+    }
+
+    void *kaddr = page_alloc();
+
+    copy_from_user(kaddr, kern_args.buf, kern_args.nbytes);
+    err = do_write(kern_args.fd, kaddr, kern_args.nbytes);
+    if (err < 0) {
+        curthr->kt_errno = -err;
+        return -1;
+    }
+
+    page_free(kaddr);
+
+    return err;
+        /*NOT_YET_IMPLEMENTED("VM: sys_write");*/
+        /*return -1;*/
 }
 
 /*
