@@ -414,7 +414,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 
     vma_result->vma_start = lopage;
     vma_result->vma_end = lopage + npages;
-    vma_result->vma_off = 0; /*what about vma_off?*/
+    vma_result->vma_off = ADDR_TO_PN(off); /*what about vma_off?*/
 
     vma_result->vma_prot = prot;
     vma_result->vma_flags = flags;
