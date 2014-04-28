@@ -96,11 +96,11 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         KASSERT(err == 0);
     }
 
-    pagedir_t *pagedir = pt_get();
+    pagedir_t *pagedir = curproc->p_pagedir;
 
     KASSERT(PAGE_ALIGN_DOWN(vaddr) == PN_TO_ADDR(pagenum));
     err = pt_map(pagedir, (uintptr_t)PN_TO_ADDR(pagenum), 
-            (uintptr_t)pf->pf_addr, PD_ACCESSED, PT_ACCESSED);
+            (uintptr_t)pf->pf_addr, 5, 5);
     KASSERT(err == 0);
 
 
