@@ -122,7 +122,7 @@ fail:
  */
 int addr_perm(struct proc *p, const void *vaddr, int perm)
 {
-    vmarea_t *area = vmmap_lookup(p->p_vmmap, ADDR_TO_PN((uint32_t)vaddr));
+    vmarea_t *area = vmmap_lookup(p->p_vmmap, ADDR_TO_PN(vaddr));
     KASSERT(area != NULL);
 
     if (perm & PROT_READ) {
@@ -159,6 +159,17 @@ int addr_perm(struct proc *p, const void *vaddr, int perm)
  */
 int range_perm(struct proc *p, const void *avaddr, size_t len, int perm)
 {
-        NOT_YET_IMPLEMENTED("VM: ***none***");
-        return 0;
+    uint32_t pn_start = ADDR_TO_PN(avaddr);
+    uint32_t pn_end = ADDR_TO_PN((uint32_t)avaddr + len - 1);
+
+    uint32_t i;
+    for (i = pn_start ; i <= pn_end ; i++) {
+        if (addr_perm(p, PN_TO_ADDR(pn_start), perm) == 0) {
+            return 0;
+        }
+    }
+
+    return 1;
+        /*NOT_YET_IMPLEMENTED("VM: ***none***");*/
+        /*return 0;*/
 }
