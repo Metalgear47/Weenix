@@ -61,8 +61,8 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
     }
 
     int forwrite = 0;
-    uint32_t pdflags = 0;
-    uint32_t ptflags = 0;
+    uint32_t pdflags = PD_PRESENT | PD_USER;
+    uint32_t ptflags = PT_PRESENT | PT_USER;
 
     if (cause & FAULT_WRITE) {
         if ((area->vma_prot & PROT_WRITE) == 0) {
@@ -100,7 +100,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 
     KASSERT(PAGE_ALIGN_DOWN(vaddr) == PN_TO_ADDR(pagenum));
     err = pt_map(pagedir, (uintptr_t)PN_TO_ADDR(pagenum), 
-            (uintptr_t)pf->pf_addr, 5, 5);
+            pt_virt_to_phys((uintptr_t)pf->pf_addr), pdflags, ptflags);
     KASSERT(err == 0);
 
 
