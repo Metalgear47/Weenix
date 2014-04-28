@@ -220,6 +220,8 @@ proc_cleanup(int status)
         vput(curproc->p_cwd);
     }
 
+    /*VM*/
+    vmmap_destroy(curproc->p_vmmap);
         /*NOT_YET_IMPLEMENTED("PROCS: proc_cleanup");*/
 }
 
