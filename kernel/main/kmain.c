@@ -349,11 +349,13 @@ initproc_run(int arg1, void *arg2)
 
 
     char *argv[2];
-    argv[0] = "segfault";
+    argv[0] = "hello";
     argv[1] = NULL;
     char *envp[1];
     envp[0] = NULL;
-    kernel_execve("/usr/bin/segfault", argv, envp);
+    kernel_execve("/usr/bin/hello", argv, envp);
+    
+    panic("panic for now");
 
     /*vmmap_unittest();*/
 

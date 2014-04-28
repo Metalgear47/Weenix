@@ -14,5 +14,6 @@ break bootstrap
 # break vmmap.c:443
 # break vmmap_remove
 break handle_pagefault
+#break pt_virt_to_phys
 
 continue
