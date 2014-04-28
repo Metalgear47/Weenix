@@ -120,7 +120,7 @@ shadow_put(mmobj_t *o)
             /*uncache the page frame*/
             pframe_clean(pframe_cur);
             
-            /*pframe_free(pframe_cur);*/
+            pframe_free(pframe_cur);
         } list_iterate_end();
 
         KASSERT(0 == o->mmo_nrespages);

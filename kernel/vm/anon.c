@@ -109,7 +109,7 @@ anon_put(mmobj_t *o)
             pframe_clean(pframe_cur);
             /*o->mmo_ops->cleanpage(o, pframe_cur);*/
 
-            /*pframe_free(pframe_cur);*/
+            pframe_free(pframe_cur);
         } list_iterate_end();
 
         KASSERT(0 == o->mmo_nrespages);
