@@ -112,7 +112,7 @@ shadow_put(mmobj_t *o)
     dbg(DBG_ANON, "shadow_put: 0x%p, down to %d, nrespages = %d\n",
         o, o->mmo_refcount - 1, o->mmo_nrespages);
 
-    if (o->mmo_refcount == (o->mmo_nrespages - 1)) {
+    if ((o->mmo_refcount - 1) == o->mmo_nrespages) {
         pframe_t *pframe_cur;
         list_iterate_begin(&o->mmo_respages, pframe_cur, pframe_t, pf_olink) {
             KASSERT(pframe_cur->pf_obj == o);
