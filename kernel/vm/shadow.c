@@ -108,6 +108,7 @@ shadow_put(mmobj_t *o)
 
     KASSERT(0 <= o->mmo_nrespages);
     KASSERT(o->mmo_nrespages < o->mmo_refcount);
+    KASSERT(o->mmo_shadowed);
 
     dbg(DBG_ANON, "shadow_put: 0x%p, down to %d, nrespages = %d\n",
         o, o->mmo_refcount - 1, o->mmo_nrespages);
@@ -130,6 +131,8 @@ shadow_put(mmobj_t *o)
     if (0 < --o->mmo_refcount) {
         return;
     }
+
+    o->mmo_shadowed->mmo_ops->put(o->mmo_shadowed);
 
     KASSERT(0 == o->mmo_nrespages);
     KASSERT(0 == o->mmo_refcount);
