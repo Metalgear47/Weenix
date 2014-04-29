@@ -52,6 +52,7 @@ static mmobj_ops_t shadow_mmobj_ops = {
 void
 shadow_init()
 {
+    dbg(DBG_VM, "shadow function hook\n");
     shadow_allocator = slab_allocator_create("shadow object", sizeof(mmobj_t));
     KASSERT(shadow_allocator);
         /*NOT_YET_IMPLEMENTED("VM: shadow_init");*/
@@ -66,6 +67,7 @@ shadow_init()
 mmobj_t *
 shadow_create()
 {
+    dbg(DBG_VM, "shadow function hook\n");
     mmobj_t *mmo = slab_obj_alloc(shadow_allocator);
     if (mmo) {
         mmobj_init(mmo, &shadow_mmobj_ops);
@@ -84,6 +86,7 @@ shadow_create()
 static void
 shadow_ref(mmobj_t *o)
 {
+    dbg(DBG_VM, "shadow function hook\n");
     KASSERT(o);
     KASSERT(o->mmo_refcount >= 0);
 
@@ -104,6 +107,7 @@ shadow_ref(mmobj_t *o)
 static void
 shadow_put(mmobj_t *o)
 {
+    dbg(DBG_VM, "shadow function hook\n");
     KASSERT(o);
 
     KASSERT(0 <= o->mmo_nrespages);
@@ -153,8 +157,12 @@ shadow_put(mmobj_t *o)
 static int
 shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
+    dbg(DBG_VM, "shadow function hook\n");
     if (forwrite == 0) {
-        while (o != o->mmo_un.mmo_bottom_obj) {
+        mmobj_t *bottom_obj = o->mmo_un.mmo_bottom_obj;
+        KASSERT(bottom_obj);
+
+        while (o != bottom_obj) {
             *pf = pframe_get_resident(o, pagenum);
             if (*pf) {
                 return 0;
@@ -185,8 +193,12 @@ shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 static int
 shadow_fillpage(mmobj_t *o, pframe_t *pf)
 {
+    dbg(DBG_VM, "shadow function hook\n");
     KASSERT(o == pf->pf_obj);
-    while (o != o->mmo_un.mmo_bottom_obj) {
+    mmobj_t *bottom_obj = o->mmo_un.mmo_bottom_obj;
+    KASSERT(bottom_obj);
+
+    while (o != bottom_obj) {
         pframe_t *pf_source = pframe_get_resident(o, pf->pf_pagenum);
         if (pf_source) {
             /*pf_source can be the same as pf*/
@@ -219,6 +231,7 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
 static int
 shadow_dirtypage(mmobj_t *o, pframe_t *pf)
 {
+    dbg(DBG_VM, "shadow function hook\n");
     KASSERT(o);
     KASSERT(pf);
     KASSERT(pf->pf_addr);
@@ -232,6 +245,7 @@ shadow_dirtypage(mmobj_t *o, pframe_t *pf)
 static int
 shadow_cleanpage(mmobj_t *o, pframe_t *pf)
 {
+    dbg(DBG_VM, "shadow function hook\n");
     KASSERT(o);
     KASSERT(pf);
     KASSERT(pf->pf_addr);
