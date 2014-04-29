@@ -189,8 +189,11 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
     while (o != o->mmo_un.mmo_bottom_obj) {
         pframe_t *pf_source = pframe_get_resident(o, pf->pf_pagenum);
         if (pf_source) {
-            KASSERT(pf_source != pf);
-            memcpy(pf->pf_addr, pf_source->pf_addr, PAGE_SIZE);
+            /*pf_source can be the same as pf*/
+            /*KASSERT(pf_source != pf);*/
+            if (pf_source != pf) {
+                memcpy(pf->pf_addr, pf_source->pf_addr, PAGE_SIZE);
+            }
             return 0;
         }
         o = o->mmo_shadowed;
