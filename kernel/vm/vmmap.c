@@ -712,10 +712,12 @@ int
 vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 {
     char *buff = (char *)buf;
-    uint32_t pagenum = ADDR_TO_PN(vaddr);
-    uint32_t offset = PAGE_OFFSET(vaddr);
+    uint32_t addr = (uint32_t)vaddr;
     
     while (count > 0) {
+        uint32_t pagenum = ADDR_TO_PN(addr);
+        uint32_t offset = PAGE_OFFSET(addr);
+
         /*get the vmarea*/
         vmarea_t *vmarea = vmmap_lookup(map, pagenum);
         KASSERT(vmarea);
@@ -736,7 +738,9 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
         memcpy(buff, readptr, readlen);
 
         count -= readlen;
-        offset = 0;
+        buff += readlen;
+        addr += readlen;
+        KASSERT(count == 0 || PAGE_ALIGNED(addr));
     }
 
     KASSERT(count == 0);
@@ -757,18 +761,20 @@ int
 vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 {
     char *buff = (char *)buf;
-    uint32_t pagenum = ADDR_TO_PN(vaddr);
-    uint32_t offset = PAGE_OFFSET(vaddr);
+    uint32_t addr = (uint32_t)vaddr;
     
     while (count > 0) {
+        uint32_t pagenum = ADDR_TO_PN(vaddr);
+        uint32_t offset = PAGE_OFFSET(vaddr);
+
         /*get the vmarea*/
         vmarea_t *vmarea = vmmap_lookup(map, pagenum);
         KASSERT(vmarea);
 
         /*get the pageframe*/
         pframe_t *pf;
-        int err = vmarea->vma_obj->mmo_ops->lookuppage(vmarea->vma_obj, 
-                    get_pagenum(vmarea, pagenum), 1, &pf);
+        int err = pframe_lookup(vmarea->vma_obj, get_pagenum(vmarea, pagenum), 
+                    1, &pf);
         if (err < 0) {
             KASSERT(pf == NULL);
             return err;
@@ -782,7 +788,9 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
         pframe_dirty(pf);
 
         count -= writelen;
-        offset = 0;
+        buff += writelen;
+        addr += writelen;
+        KASSERT(count == 0 || PAGE_ALIGNED(addr));
     }
 
     KASSERT(count == 0);
