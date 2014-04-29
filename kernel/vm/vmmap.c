@@ -409,7 +409,9 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     } else {
         /*vmmap_remove(map, lopage, npages);*/
         /*should not remove here, what if something went south later*/
-        remove = 1;
+        if (!vmmap_is_range_empty(map, lopage, npages)) {
+            remove = 1;
+        }
         /*just mark it as remove needed*/
     }
 
@@ -423,7 +425,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 
     vma_result->vma_start = lopage;
     vma_result->vma_end = lopage + npages;
-    vma_result->vma_off = ADDR_TO_PN(off); /*what about vma_off?*/
+    vma_result->vma_off = ADDR_TO_PN(off);
 
     vma_result->vma_prot = prot;
     vma_result->vma_flags = flags;
@@ -458,7 +460,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
              *and also pin the pframe if it's just allocated
              *during calling fillpage
              */
-            err = mmobj_anon->mmo_ops->lookuppage(mmobj_anon, 
+            err = pframe_lookup(mmobj_anon, 
                     get_pagenum(vma_result, pagenum), 1, &pf);
             if (err < 0) {
                 KASSERT(pf == NULL);
@@ -503,7 +505,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
                 forwrite = 1;
             }
 
-            err = mmobj_file->mmo_ops->lookuppage(mmobj_file, 
+            err = pframe_lookup(mmobj_file, 
                     get_pagenum(vma_result, pagenum), forwrite, &pf);
             if (err < 0) {
                 KASSERT(pf == NULL);
@@ -518,13 +520,15 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 
             /*take care of off*/
             /*use it to call fillpage of vnode*/
-            err = file->vn_ops->fillpage(file, 
-                get_pagenum(vma_result, pagenum) * PAGE_SIZE + off, pf->pf_addr);
-            if (err < 0) {
-                vmarea_free(vma_result);
-                mmobj_file->mmo_ops->put(mmobj_file);
-                return err;
-            }
+            /*
+             *err = file->vn_ops->fillpage(file, 
+             *    get_pagenum(vma_result, pagenum) * PAGE_SIZE + off, pf->pf_addr);
+             *if (err < 0) {
+             *    vmarea_free(vma_result);
+             *    mmobj_file->mmo_ops->put(mmobj_file);
+             *    return err;
+             *}
+             */
         }
 
         vma_result->vma_obj = mmobj_file;
