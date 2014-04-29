@@ -121,7 +121,7 @@ shadow_put(mmobj_t *o)
         pframe_t *pframe_cur;
         list_iterate_begin(&o->mmo_respages, pframe_cur, pframe_t, pf_olink) {
             KASSERT(pframe_cur->pf_obj == o);
-            pframe_unpin(pframe_cur);
+            /*pframe_unpin(pframe_cur);*/
             /*uncache the page frame*/
             pframe_clean(pframe_cur);
             

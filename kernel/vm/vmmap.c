@@ -480,8 +480,10 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     if (flags & MAP_PRIVATE) {
         /*create a shadow object*/
         mmobj_t *mmobj_shadow = shadow_create();
+        KASSERT(vma_result->vma_obj == mmobj_bottom_obj(vma_result->vma_obj));
         mmobj_shadow->mmo_shadowed = mmobj_bottom_obj(vma_result->vma_obj);
         mmobj_shadow->mmo_un.mmo_bottom_obj = mmobj_bottom_obj(vma_result->vma_obj);
+        list_insert_head(&vma_result->vma_obj->mmo_un.mmo_vmas, &vma_result->vma_olink);
         vma_result->vma_obj = mmobj_shadow;
         mmobj_shadow->mmo_ops->ref(mmobj_shadow);
     }
