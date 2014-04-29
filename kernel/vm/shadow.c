@@ -219,6 +219,12 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
 static int
 shadow_dirtypage(mmobj_t *o, pframe_t *pf)
 {
+    KASSERT(o);
+    KASSERT(pf);
+    KASSERT(pf->pf_addr);
+    KASSERT(o == pf->pf_obj);
+
+    return 0;
         NOT_YET_IMPLEMENTED("VM: shadow_dirtypage");
         return -1;
 }
@@ -226,6 +232,12 @@ shadow_dirtypage(mmobj_t *o, pframe_t *pf)
 static int
 shadow_cleanpage(mmobj_t *o, pframe_t *pf)
 {
+    KASSERT(o);
+    KASSERT(pf);
+    KASSERT(pf->pf_addr);
+    KASSERT(o == pf->pf_obj);
+
+    return 0;
         NOT_YET_IMPLEMENTED("VM: shadow_cleanpage");
         return -1;
 }
