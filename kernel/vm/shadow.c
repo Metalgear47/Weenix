@@ -162,10 +162,10 @@ shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
         KASSERT(o->mmo_shadowed == NULL);
         return pframe_get(o, pagenum, pf);
     } else {
-        panic("for now\n");
+        return pframe_get(o, pagenum, pf);
     }
-        NOT_YET_IMPLEMENTED("VM: shadow_lookuppage");
-        return 0;
+        /*NOT_YET_IMPLEMENTED("VM: shadow_lookuppage");*/
+        /*return 0;*/
 }
 
 /* As per the specification in mmobj.h, fill the page frame starting
