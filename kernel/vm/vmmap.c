@@ -24,7 +24,9 @@
 #include "mm/mman.h"
 #include "mm/mmobj.h"
 
+#define USER_PAGE_LOW  USER_MEM_LOW / PAGE_SIZE
 #define USER_PAGE_HIGH USER_MEM_HIGH / PAGE_SIZE
+
 #define VMMAP_FLAG 1
 #define dprintf(...)                    \
         if (VMMAP_FLAG) {               \
@@ -59,7 +61,7 @@ get_pagenum(vmarea_t *vmarea, uint32_t pagenum)
 static int
 valid_pagenumber(uint32_t pagenum)
 {
-    return (pagenum < USER_PAGE_HIGH);
+    return (pagenum >= USER_PAGE_LOW && pagenum < USER_PAGE_HIGH);
 }
 
 static slab_allocator_t *vmmap_allocator;
@@ -216,7 +218,7 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
     /*low-high*/
     if (dir == VMMAP_DIR_LOHI || dir == 0) {
         if list_empty(&map->vmm_list) {
-            return 0;
+            return USER_PAGE_LOW;
         }
 
         list_link_t *list = &map->vmm_list;
@@ -225,13 +227,14 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
             if (vma_cur->vma_plink.l_prev == list) {
                 /*no prev*/
                 /*head of list*/
-                if (vma_cur->vma_start >= npages) {
-                    return 0;
+                if (vma_cur->vma_start >= npages + USER_PAGE_LOW) {
+                    return USER_PAGE_LOW;
                 }
             } else {
                 /*prev is a vmarea*/
                 vmarea_t *vma_prev = list_item(vma_cur->vma_plink.l_prev, vmarea_t, vma_plink);
                 KASSERT(vma_prev);
+                KASSERT(vma_cur->vma_start >= vma_prev->vma_end);
                 if (vma_cur->vma_start - vma_prev->vma_end >= npages) {
                     return vma_prev->vma_end;
                 }
@@ -263,6 +266,7 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
                 /*next is a vmarea*/
                 vmarea_t *vma_next = list_item(vma_cur->vma_plink.l_next, vmarea_t, vma_plink);
                 KASSERT(vma_next);
+                KASSERT(vma_next->vma_start >= vma_cur->vma_end);
                 if (vma_next->vma_start - vma_cur->vma_end >= npages) {
                     return vma_cur->vma_end;
                 }
@@ -270,8 +274,8 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
         } list_iterate_end();
 
         KASSERT(vma_cur->vma_plink.l_prev == list);
-        if (vma_cur->vma_start >= npages) {
-            return 0;
+        if (vma_cur->vma_start - USER_PAGE_LOW >= npages) {
+            return USER_PAGE_LOW;
         } else {
             return -1;
         }
@@ -287,9 +291,9 @@ vmarea_t *
 vmmap_lookup(vmmap_t *map, uint32_t vfn)
 {
     KASSERT(map);
+    dprintf("vmmap_lookup, vfn is %u(%#.5x)\n", vfn, vfn);
     /*assumption here is that the vfn is already auditted by some other routine*/
     KASSERT(valid_pagenumber(vfn));
-    dprintf("vmmap_lookup, vfn is %u(%#.5x)\n", vfn, vfn);
     print_vmmap(map);
 
     vmarea_t *vma;
