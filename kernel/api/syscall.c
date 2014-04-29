@@ -67,6 +67,7 @@ sys_read(read_args_t *arg)
     void *kaddr = page_alloc();
     size_t count = kern_args.nbytes;
     char *buff = (char *)kern_args.buf;
+    int total_read = 0;
 
     while (count > 0) {
         size_t readlen = MIN(PAGE_SIZE, count);
@@ -87,6 +88,7 @@ sys_read(read_args_t *arg)
 
         count -= actual_read;
         buff += actual_read;
+        total_read += actual_read;
         if ((unsigned)actual_read != readlen) {
             break;
         }
@@ -102,7 +104,7 @@ sys_read(read_args_t *arg)
  */
     page_free(kaddr);
 
-    return err;
+    return total_read;
         /*NOT_YET_IMPLEMENTED("VM: sys_read");*/
         /*return -1;*/
 }
@@ -122,17 +124,47 @@ sys_write(write_args_t *arg)
     }
 
     void *kaddr = page_alloc();
+    size_t count = kern_args.nbytes;
+    char *buff = (char *)kern_args.buf;
+    int total_write = 0;
 
-    copy_from_user(kaddr, kern_args.buf, kern_args.nbytes);
-    err = do_write(kern_args.fd, kaddr, kern_args.nbytes);
-    if (err < 0) {
-        curthr->kt_errno = -err;
-        return -1;
+    while (count > 0) {
+        size_t writelen = MIN(PAGE_SIZE, count);
+
+        err = copy_from_user(kaddr, buff, writelen);
+        if (err < 0) {
+            curthr->kt_errno = -err;
+            return -1;
+        }
+        KASSERT(err == 0);
+
+        int actual_write = do_write(kern_args.fd, kaddr, writelen);
+        if (actual_write < 0) {
+            curthr->kt_errno = -actual_write;
+            return -1;
+        }
+        KASSERT((unsigned)actual_write <= writelen);
+
+        count -= actual_write;
+        buff += actual_write;
+        total_write += actual_write;
+        if ((unsigned)actual_write != writelen) {
+            break;
+        }
     }
+
+    /*
+     *copy_from_user(kaddr, kern_args.buf, kern_args.nbytes);
+     *err = do_write(kern_args.fd, kaddr, kern_args.nbytes);
+     *if (err < 0) {
+     *    curthr->kt_errno = -err;
+     *    return -1;
+     *}
+     */
 
     page_free(kaddr);
 
-    return err;
+    return total_write;
         /*NOT_YET_IMPLEMENTED("VM: sys_write");*/
         /*return -1;*/
 }
