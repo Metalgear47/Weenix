@@ -39,6 +39,7 @@ static mmobj_ops_t anon_mmobj_ops = {
 void
 anon_init()
 {
+    dbg(DBG_ANON, "anon function hook\n");
     anon_allocator = slab_allocator_create("anonymous object", sizeof(mmobj_t));
     KASSERT(anon_allocator);
         /*NOT_YET_IMPLEMENTED("VM: anon_init");*/
@@ -53,6 +54,7 @@ anon_init()
 mmobj_t *
 anon_create()
 {
+    dbg(DBG_ANON, "anon function hook\n");
     mmobj_t *mmo = slab_obj_alloc(anon_allocator);
     if (mmo) {
         mmobj_init(mmo, &anon_mmobj_ops);
@@ -99,7 +101,7 @@ anon_put(mmobj_t *o)
     dbg(DBG_ANON, "anon_put: 0x%p, down to %d, nrespages = %d\n",
         o, o->mmo_refcount - 1, o->mmo_nrespages);
 
-    if (o->mmo_refcount == (o->mmo_nrespages - 1)) {
+    if ((o->mmo_refcount - 1) == o->mmo_nrespages) {
         pframe_t *pframe_cur;
         list_iterate_begin(&o->mmo_respages, pframe_cur, pframe_t, pf_olink) {
             KASSERT(pframe_cur->pf_obj == o);
@@ -132,6 +134,7 @@ anon_put(mmobj_t *o)
 static int
 anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
+    dbg(DBG_ANON, "anon function hook\n");
     KASSERT(o);
 
     int err = pframe_get(o, pagenum, pf);
@@ -154,6 +157,7 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 static int
 anon_fillpage(mmobj_t *o, pframe_t *pf)
 {
+    dbg(DBG_ANON, "anon function hook\n");
     KASSERT(o);
     KASSERT(pf);
     KASSERT(pf->pf_addr);
@@ -170,6 +174,7 @@ anon_fillpage(mmobj_t *o, pframe_t *pf)
 static int
 anon_dirtypage(mmobj_t *o, pframe_t *pf)
 {
+    dbg(DBG_ANON, "anon function hook\n");
     KASSERT(o);
     KASSERT(pf);
     KASSERT(pf->pf_addr);
@@ -183,6 +188,7 @@ anon_dirtypage(mmobj_t *o, pframe_t *pf)
 static int
 anon_cleanpage(mmobj_t *o, pframe_t *pf)
 {
+    dbg(DBG_ANON, "anon function hook\n");
     KASSERT(o);
     KASSERT(pf);
     KASSERT(pf->pf_addr);

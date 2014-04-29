@@ -98,6 +98,7 @@ vmarea_free(vmarea_t *vma)
 vmmap_t *
 vmmap_create(void)
 {
+    dbg(DBG_MM, "vmmap function hook\n");
     vmmap_t *newvmm = (vmmap_t *)slab_obj_alloc(vmmap_allocator);
     if (newvmm) {
         list_init(&newvmm->vmm_list);
@@ -114,6 +115,7 @@ vmmap_create(void)
 void
 vmmap_destroy(vmmap_t *map)
 {
+    dbg(DBG_MM, "vmmap function hook\n");
     KASSERT(map);
 
     /*vmarea_t pointer*/
@@ -146,6 +148,7 @@ vmmap_destroy(vmmap_t *map)
 void
 vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 {
+    dbg(DBG_MM, "vmmap function hook\n");
     KASSERT(map);
 
     KASSERT(newvma);
@@ -209,6 +212,7 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 int
 vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 {
+    dbg(DBG_MM, "vmmap function hook\n");
     KASSERT(map);
 
     dprintf("find_range, vmmap is:\n");
@@ -290,6 +294,7 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 vmarea_t *
 vmmap_lookup(vmmap_t *map, uint32_t vfn)
 {
+    dbg(DBG_MM, "vmmap function hook\n");
     KASSERT(map);
     dprintf("vmmap_lookup, vfn is %u(%#.5x)\n", vfn, vfn);
     /*assumption here is that the vfn is already auditted by some other routine*/
@@ -316,6 +321,7 @@ vmmap_lookup(vmmap_t *map, uint32_t vfn)
 vmmap_t *
 vmmap_clone(vmmap_t *map)
 {
+    dbg(DBG_MM, "vmmap function hook\n");
     vmmap_t *newmap = vmmap_create();
     if (newmap == NULL) {
         return NULL;
@@ -389,6 +395,7 @@ int
 vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
           int prot, int flags, off_t off, int dir, vmarea_t **new)
 {
+    dbg(DBG_MM, "vmmap function hook\n");
     KASSERT(map);
     KASSERT(PAGE_ALIGNED(off));
 
@@ -450,35 +457,33 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
          */
         mmobj_anon->mmo_ops->ref(mmobj_anon);
 
-        uint32_t pagenum = lopage;
-        for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
-            int err;
-            pframe_t *pf = NULL;
-            /*
-             *lookup(alloc) the page
-             *lookuppage will also fill the page to 0s
-             *and also pin the pframe if it's just allocated
-             *during calling fillpage
-             */
-            err = pframe_lookup(mmobj_anon, 
-                    get_pagenum(vma_result, pagenum), 1, &pf);
-            if (err < 0) {
-                KASSERT(pf == NULL);
-
-                /*cleanup the struct that I've allocated*/
-                vmarea_free(vma_result);
-                mmobj_anon->mmo_ops->put(mmobj_anon);
-
-                return err;
-            }
-
-            /*
-             *since vmmap_map is the first time we get the page frame
-             *for this mmobj, we pin it here
-             */
-            /*move it to fillpage*/
-            /*pframe_pin(pf);*/
-        }
+/*
+ *        uint32_t pagenum = lopage;
+ *        for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
+ *            int err;
+ *            pframe_t *pf = NULL;
+ *            [>lookup(alloc) the page<]
+ *            [>lookuppage will also fill the page to 0s<]
+ *            [>and also pin the pframe if it's just allocated<]
+ *            [>during calling fillpage<]
+ *            err = pframe_lookup(mmobj_anon, 
+ *                    get_pagenum(vma_result, pagenum), 1, &pf);
+ *            if (err < 0) {
+ *                KASSERT(pf == NULL);
+ *
+ *                [>cleanup the struct that I've allocated<]
+ *                vmarea_free(vma_result);
+ *                mmobj_anon->mmo_ops->put(mmobj_anon);
+ *
+ *                return err;
+ *            }
+ *
+ *            [>since vmmap_map is the first time we get the page frame<]
+ *            [>for this mmobj, we pin it here<]
+ *            [>move it to fillpage<]
+ *            [>pframe_pin(pf);<]
+ *        }
+ */
 
         /*hook it up with the virtual memory area*/
         /*not quite sure*/
@@ -496,40 +501,40 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 
         mmobj_file->mmo_ops->ref(mmobj_file);
 
-        uint32_t pagenum = lopage;
-        for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
-            pframe_t *pf = NULL;
-
-            int forwrite = 0;
-            if (prot & PROT_WRITE) {
-                forwrite = 1;
-            }
-
-            err = pframe_lookup(mmobj_file, 
-                    get_pagenum(vma_result, pagenum), forwrite, &pf);
-            if (err < 0) {
-                KASSERT(pf == NULL);
-
-                vmarea_free(vma_result);
-                mmobj_file->mmo_ops->put(mmobj_file);
-                return err;
-            }
-
-            KASSERT(pf);
-            KASSERT(pf->pf_addr);
-
-            /*take care of off*/
-            /*use it to call fillpage of vnode*/
-            /*
-             *err = file->vn_ops->fillpage(file, 
-             *    get_pagenum(vma_result, pagenum) * PAGE_SIZE + off, pf->pf_addr);
-             *if (err < 0) {
-             *    vmarea_free(vma_result);
-             *    mmobj_file->mmo_ops->put(mmobj_file);
-             *    return err;
-             *}
-             */
-        }
+/*
+ *        uint32_t pagenum = lopage;
+ *        for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
+ *            pframe_t *pf = NULL;
+ *
+ *            int forwrite = 0;
+ *            if (prot & PROT_WRITE) {
+ *                forwrite = 1;
+ *            }
+ *
+ *            err = pframe_lookup(mmobj_file, 
+ *                    get_pagenum(vma_result, pagenum), forwrite, &pf);
+ *            if (err < 0) {
+ *                KASSERT(pf == NULL);
+ *
+ *                vmarea_free(vma_result);
+ *                mmobj_file->mmo_ops->put(mmobj_file);
+ *                return err;
+ *            }
+ *
+ *            KASSERT(pf);
+ *            KASSERT(pf->pf_addr);
+ *
+ *            [>take care of off<]
+ *            [>use it to call fillpage of vnode<]
+ *            [>err = file->vn_ops->fillpage(file, <]
+ *                [>get_pagenum(vma_result, pagenum) * PAGE_SIZE + off, pf->pf_addr);<]
+ *            [>if (err < 0) {<]
+ *                [>vmarea_free(vma_result);<]
+ *                [>mmobj_file->mmo_ops->put(mmobj_file);<]
+ *                [>return err;<]
+ *            [>}<]
+ *        }
+ */
 
         vma_result->vma_obj = mmobj_file;
     }
@@ -587,6 +592,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 int
 vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 {
+    dbg(DBG_MM, "vmmap function hook\n");
     KASSERT(map);
     /*KASSERT(!(list_empty(&map->vmm_list)));*/
     if (list_empty(&map->vmm_list)) {
@@ -681,6 +687,7 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 int
 vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
+    dbg(DBG_MM, "vmmap function hook\n");
     KASSERT(map);
 
     dprintf("find if the range [%u(%#.5x), %u(%#.5x)) is empty in map:\n", 
@@ -715,6 +722,7 @@ vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 int
 vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 {
+    dbg(DBG_MM, "vmmap function hook\n");
     char *buff = (char *)buf;
     uint32_t addr = (uint32_t)vaddr;
     
@@ -764,6 +772,7 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 int
 vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
 {
+    dbg(DBG_MM, "vmmap function hook\n");
     char *buff = (char *)buf;
     uint32_t addr = (uint32_t)vaddr;
     

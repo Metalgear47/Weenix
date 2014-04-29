@@ -413,7 +413,7 @@ void
 pframe_pin(pframe_t *pf)
 {
     KASSERT(pf->pf_pincount >= 0 && "Bad thing happened, pincount is negative.\n");
-    dbg(DBG_PFRAME, "called on pframe %p. with pincount: %d\n", pf, pf->pf_pincount);
+    dbg(DBG_PFRAME, "called on pframe %p. with pincount: %d, total pinned: %d\n", pf, pf->pf_pincount, npinned);
 
     pf->pf_pincount++;
     if (pf->pf_pincount == 1){
@@ -446,7 +446,7 @@ void
 pframe_unpin(pframe_t *pf)
 {
     KASSERT(pf->pf_pincount > 0);
-    dbg(DBG_PFRAME, "called on pframe %p.with pincount: %d\n", pf, pf->pf_pincount);
+    dbg(DBG_PFRAME, "called on pframe %p.with pincount: %d, total pinned: %d\n", pf, pf->pf_pincount, npinned);
 
     pf->pf_pincount--;
     if (pf->pf_pincount == 0) {
