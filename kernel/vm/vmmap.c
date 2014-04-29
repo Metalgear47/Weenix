@@ -457,34 +457,6 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
          */
         mmobj_anon->mmo_ops->ref(mmobj_anon);
 
-/*
- *        uint32_t pagenum = lopage;
- *        for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
- *            int err;
- *            pframe_t *pf = NULL;
- *            [>lookup(alloc) the page<]
- *            [>lookuppage will also fill the page to 0s<]
- *            [>and also pin the pframe if it's just allocated<]
- *            [>during calling fillpage<]
- *            err = pframe_lookup(mmobj_anon, 
- *                    get_pagenum(vma_result, pagenum), 1, &pf);
- *            if (err < 0) {
- *                KASSERT(pf == NULL);
- *
- *                [>cleanup the struct that I've allocated<]
- *                vmarea_free(vma_result);
- *                mmobj_anon->mmo_ops->put(mmobj_anon);
- *
- *                return err;
- *            }
- *
- *            [>since vmmap_map is the first time we get the page frame<]
- *            [>for this mmobj, we pin it here<]
- *            [>move it to fillpage<]
- *            [>pframe_pin(pf);<]
- *        }
- */
-
         /*hook it up with the virtual memory area*/
         /*not quite sure*/
         vma_result->vma_obj = mmobj_anon;
@@ -500,41 +472,6 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         }
 
         mmobj_file->mmo_ops->ref(mmobj_file);
-
-/*
- *        uint32_t pagenum = lopage;
- *        for (pagenum = lopage ; pagenum < hipage ; pagenum++) {
- *            pframe_t *pf = NULL;
- *
- *            int forwrite = 0;
- *            if (prot & PROT_WRITE) {
- *                forwrite = 1;
- *            }
- *
- *            err = pframe_lookup(mmobj_file, 
- *                    get_pagenum(vma_result, pagenum), forwrite, &pf);
- *            if (err < 0) {
- *                KASSERT(pf == NULL);
- *
- *                vmarea_free(vma_result);
- *                mmobj_file->mmo_ops->put(mmobj_file);
- *                return err;
- *            }
- *
- *            KASSERT(pf);
- *            KASSERT(pf->pf_addr);
- *
- *            [>take care of off<]
- *            [>use it to call fillpage of vnode<]
- *            [>err = file->vn_ops->fillpage(file, <]
- *                [>get_pagenum(vma_result, pagenum) * PAGE_SIZE + off, pf->pf_addr);<]
- *            [>if (err < 0) {<]
- *                [>vmarea_free(vma_result);<]
- *                [>mmobj_file->mmo_ops->put(mmobj_file);<]
- *                [>return err;<]
- *            [>}<]
- *        }
- */
 
         vma_result->vma_obj = mmobj_file;
     }
