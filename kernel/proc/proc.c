@@ -423,7 +423,8 @@ CheckAgain:
     /*cleanup the thread*/
     kthread_t *kthr;
     list_iterate_begin(&child_proc->p_threads, kthr, kthread_t, kt_plink) {
-        page_free((void *)kthr->kt_ctx.c_kstack);
+        /*work around for now*/
+        page_free_n((void *)kthr->kt_ctx.c_kstack, 1 + (DEFAULT_STACK_SIZE >> PAGE_SHIFT));
         kthread_destroy(kthr);
     } list_iterate_end();
     KASSERT(list_empty(&child_proc->p_threads));

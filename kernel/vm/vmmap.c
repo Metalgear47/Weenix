@@ -49,6 +49,13 @@ print_vmarea(vmarea_t *vmarea)
             vmarea->vma_off, vmarea->vma_off);
 }
 
+uint32_t
+get_pagenum(vmarea_t *vmarea, uint32_t pagenum)
+{
+    KASSERT(pagenum >= vmarea->vma_start && pagenum < vmarea->vma_end);
+    return pagenum - vmarea->vma_start + vmarea->vma_off;
+}
+
 static int
 valid_pagenumber(uint32_t pagenum)
 {
@@ -82,13 +89,6 @@ vmarea_free(vmarea_t *vma)
 {
         KASSERT(NULL != vma);
         slab_obj_free(vmarea_allocator, vma);
-}
-
-uint32_t
-get_pagenum(vmarea_t *vmarea, uint32_t pagenum)
-{
-    KASSERT(pagenum >= vmarea->vma_start && pagenum < vmarea->vma_end);
-    return pagenum - vmarea->vma_start + vmarea->vma_off;
 }
 
 /* Create a new vmmap, which has no vmareas and does
@@ -149,6 +149,7 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
     KASSERT(newvma);
     /*sanity check for newvma*/
     KASSERT(newvma->vma_end > newvma->vma_start);
+    KASSERT(newvma->vma_start >= USER_MEM_LOW / PAGE_SIZE);
 
     dprintf("vmmap_insert is called:\n");
     dprintf("before inserting, the vmmap is:\n");

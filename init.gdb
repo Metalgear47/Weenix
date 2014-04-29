@@ -13,7 +13,10 @@ break bootstrap
 # break ata.c:533
 # break vmmap.c:443
 # break vmmap_remove
-break handle_pagefault
+#break handle_pagefault
 #break pt_virt_to_phys
+add-symbol-file user/usr/bin/hello.exec 0x08048094
+b main
+#b sys_open
 
 continue
