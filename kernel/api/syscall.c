@@ -65,13 +65,41 @@ sys_read(read_args_t *arg)
     }
 
     void *kaddr = page_alloc();
-    err = do_read(kern_args.fd, kaddr, kern_args.nbytes);
-    if (err < 0) {
-        curthr->kt_errno = -err;
-        return -1;
-    }
+    size_t count = kern_args.nbytes;
+    char *buff = (char *)kern_args.buf;
 
-    copy_to_user(kern_args.buf, kaddr, err);
+    while (count > 0) {
+        size_t readlen = MIN(PAGE_SIZE, count);
+
+        int actual_read = do_read(kern_args.fd, kaddr, readlen);
+        if (actual_read < 0) {
+            curthr->kt_errno = -actual_read;
+            return -1;
+        }
+        KASSERT((unsigned)actual_read <= readlen);
+
+        err = copy_to_user(buff, kaddr, actual_read);
+        if (err < 0) {
+            curthr->kt_errno = -err;
+            return -1;
+        }
+        KASSERT(err == 0);
+
+        count -= actual_read;
+        buff += actual_read;
+        if ((unsigned)actual_read != readlen) {
+            break;
+        }
+    }
+/*
+ *    err = do_read(kern_args.fd, kaddr, kern_args.nbytes);
+ *    if (err < 0) {
+ *        curthr->kt_errno = -err;
+ *        return -1;
+ *    }
+ *
+ *    copy_to_user(kern_args.buf, kaddr, err);
+ */
     page_free(kaddr);
 
     return err;
