@@ -17,6 +17,7 @@ break bootstrap
 #break pt_virt_to_phys
 add-symbol-file user/usr/bin/hello.exec 0x08048094
 b main
+b pagefault.c:56
 #b sys_open
 
 continue

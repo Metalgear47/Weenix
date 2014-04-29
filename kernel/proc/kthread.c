@@ -83,7 +83,7 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     KASSERT(NULL != kthread_struct->kt_kstack);
 
     /*errno*/
-    kthread_struct->kt_retval = NULL;
+    kthread_struct->kt_retval = (void *)0;
 
     KASSERT(NULL != p);
     kthread_struct->kt_proc = p;

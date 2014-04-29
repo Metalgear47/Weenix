@@ -345,8 +345,12 @@ vmmap_clone(vmmap_t *map)
 
 FAIL:
     list_iterate_begin(&newmap->vmm_list, area_cur, vmarea_t, vma_plink) {
+        /*no need to put mmobj*/
         list_remove(&area_cur->vma_plink);
         vmarea_free(area_cur);
+
+        /*vmmap_destroy*/
+
     } list_iterate_end();
 
     slab_obj_free(vmmap_allocator, newmap);
@@ -580,7 +584,10 @@ int
 vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 {
     KASSERT(map);
-    /*KASSERT(!list_empty(&map->vmm_list));*/
+    /*KASSERT(!(list_empty(&map->vmm_list)));*/
+    if (list_empty(&map->vmm_list)) {
+        return 0;
+    }
 
     dprintf("before vmmap_remove:\n");
     print_vmmap(map);
@@ -604,6 +611,8 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             if (vma_new == NULL) {
                 return -ENOSPC;
             }
+
+            /*left part*/
             vma_new->vma_start = vma->vma_start;
             vma_new->vma_end = lopage;
             vma_new->vma_off = vma->vma_off;
@@ -678,6 +687,7 @@ vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
     list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
         if ((vma->vma_start >= startvfn + npages) || (vma->vma_end <= startvfn)) {
             /*nothing*/
+            /*no overlapping*/
         } else {
             dprintf("Hmm, not empty, found some overlapping\n");
             return 0;
@@ -712,8 +722,8 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
 
         /*get the pageframe*/
         pframe_t *pf;
-        int err = vmarea->vma_obj->mmo_ops->lookuppage(vmarea->vma_obj, 
-                    get_pagenum(vmarea, pagenum), 0, &pf);
+        int err = pframe_lookup(vmarea->vma_obj, get_pagenum(vmarea, pagenum),
+                    0, &pf);
         if (err < 0) {
             KASSERT(pf == NULL);
             return err;

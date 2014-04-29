@@ -52,6 +52,9 @@ void
 handle_pagefault(uintptr_t vaddr, uint32_t cause)
 {
     dbg(DBG_MM, "vaddr is %#.8x, cause is %u\n", vaddr, cause);
+    if (vaddr == 0x20000) {
+        dbg(DBG_MM, "123");
+    }
 
     /*get the virtual page number*/
     int pagenum = ADDR_TO_PN(vaddr);
