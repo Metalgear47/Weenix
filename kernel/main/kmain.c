@@ -348,12 +348,9 @@ initproc_run(int arg1, void *arg2)
      /*========================*/
 
 
-    char *argv[2];
-    argv[0] = "hello";
-    argv[1] = NULL;
-    char *envp[1];
-    envp[0] = NULL;
-    kernel_execve("/usr/bin/hello", argv, envp);
+    char *argv[4] = {"args", "123", "456", NULL};
+    char *envp[1] = {NULL};
+    kernel_execve("/usr/bin/args", argv, envp);
     
     panic("panic for now");
 
