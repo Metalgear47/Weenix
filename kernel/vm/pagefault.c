@@ -52,9 +52,6 @@ void
 handle_pagefault(uintptr_t vaddr, uint32_t cause)
 {
     dbg(DBG_MM, "vaddr is %#.8x, cause is %u\n", vaddr, cause);
-    if (vaddr == 0x20000) {
-        dbg(DBG_MM, "123");
-    }
 
     /*get the virtual page number*/
     int pagenum = ADDR_TO_PN(vaddr);
@@ -85,7 +82,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
     /*get the actual page frame*/
     KASSERT(area->vma_obj);
     pframe_t *pf = NULL;
-    int err = area->vma_obj->mmo_ops->lookuppage(area->vma_obj, 
+    int err = pframe_lookup(area->vma_obj, 
                 pagenum - area->vma_start + area->vma_off, forwrite, &pf);
 
     /*TODO: redo it when shadow object is done*/
@@ -95,7 +92,8 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
     KASSERT(pf->pf_addr);
 
     if (forwrite) {
-        err = area->vma_obj->mmo_ops->dirtypage(area->vma_obj, pf);
+        KASSERT(area->vma_obj == pf->pf_obj);
+        err = pframe_dirty(pf);
         KASSERT(err == 0);
     }
 
