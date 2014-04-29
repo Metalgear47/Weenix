@@ -182,8 +182,30 @@ shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 static int
 shadow_fillpage(mmobj_t *o, pframe_t *pf)
 {
-        NOT_YET_IMPLEMENTED("VM: shadow_fillpage");
+    KASSERT(o == pf->pf_obj);
+    while (o != o->mmo_un.mmo_bottom_obj) {
+        pframe_t *pf_source = pframe_get_resident(o, pf->pf_pagenum);
+        if (pf_source) {
+            KASSERT(pf_source != pf);
+            memcpy(pf->pf_addr, pf_source->pf_addr, PAGE_SIZE);
+            return 0;
+        }
+        o = o->mmo_shadowed;
+    }
+
+    KASSERT(o->mmo_shadowed == NULL);
+    pframe_t *pf_source = NULL;
+    int err = pframe_get(o, pf->pf_pagenum, &pf_source);
+    if (err < 0) {
+        KASSERT(pf_source == NULL);
         return 0;
+    }
+    
+    KASSERT(pf_source);
+    memcpy(pf->pf_addr, pf_source->pf_addr, PAGE_SIZE);
+    return 0;
+        /*NOT_YET_IMPLEMENTED("VM: shadow_fillpage");*/
+        /*return 0;*/
 }
 
 /* These next two functions are not difficult. */
