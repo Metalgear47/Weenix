@@ -19,14 +19,18 @@
 #include "vm/vmmap.h"
 #include "vm/mmap.h"
 
+/*
+ *my own include
+ */
+#include "fs/fcntl.h"
+#include "fs/stat.h"
+
 #define VALID_ADDR(addr) ((uint32_t)addr >= USER_MEM_LOW && \
                             (uint32_t)addr < USER_MEM_HIGH)
     /*EACCES*/
     /*A file descriptor refers to a non-regular file. Or MAP_PRIVATE was requested, but fd is not open for reading. Or MAP_SHARED was requested and PROT_WRITE is set, but fd is not open in read/write (O_RDWR) mode. Or PROT_WRITE is set, but the file is append-only.*/
     /*EAGAIN*/
     /*The file has been locked, or too much memory has been locked (see setrlimit(2)).*/
-    /*EBADF*/
-    /*fd is not a valid file descriptor (and MAP_ANONYMOUS was not set).*/
     /*ENFILE*/
     /*The system limit on the total number of open files has been reached.*/
     /*ENODEV*/
@@ -74,7 +78,36 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         return -EINVAL;
     }
 
+    /*EBADF*/
+    /*fd is not a valid file descriptor (and MAP_ANONYMOUS was not set).*/
+    if (((flags & MAP_ANON) == 0) && (fd < 0 || fd > NFILES)) {
+        return -EBADF;
+    }
+    file_t *file = fget(fd);
+    if (file == NULL) {
+        return -EBADF;
+    }
 
+    vnode_t *vnode = file->f_vnode;
+    KASSERT(vnode);
+    if (!S_ISREG(vnode->vn_mode)) {
+        fput(file);
+        return -EACCES;
+    }
+    if (map_type == MAP_PRIVATE && (file->f_mode == O_WRONLY)) {
+        /*not open for reading*/
+        fput(file);
+        return -EACCES;
+    }
+    if (map_type == MAP_SHARED && (prot & PROT_WRITE) &&
+            (file->f_mode != O_RDWR)) {
+        fput(file);
+        return -EACCES;
+    }
+    if ((prot & PROT_WRITE) && file->f_mode == O_APPEND) {
+        fput(file);
+        return -EACCES;
+    }
         NOT_YET_IMPLEMENTED("VM: do_mmap");
         return -1;
 }
