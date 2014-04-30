@@ -201,6 +201,10 @@ sys_getdents(getdents_args_t *arg)
             return -1;
         }
         KASSERT(actual_read == 0 || actual_read == sizeof(dirent_t));
+        /*no more dirents, just break out*/
+        if (actual_read == 0) {
+            break;
+        }
 
         char *uaddr = (char *)kern_args.dirp + i * sizeof(dirent_t);
         err = copy_to_user(uaddr, &dirent, sizeof(dirent_t));
