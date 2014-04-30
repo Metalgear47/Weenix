@@ -214,11 +214,13 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
     }
 
     KASSERT(o->mmo_shadowed == NULL);
+    KASSERT(o == bottom_obj);
+
     pframe_t *pf_source = NULL;
     int err = pframe_get(o, pf->pf_pagenum, &pf_source);
     if (err < 0) {
         KASSERT(pf_source == NULL);
-        return 0;
+        return err;
     }
     
     KASSERT(pf_source);

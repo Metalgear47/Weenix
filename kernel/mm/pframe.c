@@ -553,6 +553,9 @@ pframe_free(pframe_t *pf)
         KASSERT(!pframe_is_busy(pf));
 
         dbg(DBG_PFRAME, "uncaching page %d of obj %p\n", pf->pf_pagenum, pf->pf_obj);
+    if ((uintptr_t)pf->pf_obj == 0xc1ea71fc && pf->pf_pagenum == 5) {
+        dbg(DBG_PFRAME, "123");
+    }
 
         mmobj_t *o = pf->pf_obj;
 
