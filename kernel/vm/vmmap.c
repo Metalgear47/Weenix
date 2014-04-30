@@ -504,6 +504,10 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         }
     }
 
+    if (new) {
+        *new = vma_result;
+    }
+
     vmmap_insert(map, vma_result);
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: vmmap_map");*/
