@@ -108,7 +108,7 @@ anon_put(mmobj_t *o)
             pframe_unpin(pframe_cur);
             /*uncache the page frame*/
             /*maybe no need to free it here*/
-            /*pframe_clean(pframe_cur);*/
+            pframe_clean(pframe_cur);
             /*o->mmo_ops->cleanpage(o, pframe_cur);*/
 
             pframe_free(pframe_cur);
