@@ -15,7 +15,7 @@ break bootstrap
 # break vmmap_remove
 #break handle_pagefault
 #break pt_virt_to_phys
-add-symbol-file user/usr/bin/segfault.exec 0x08048094
+add-symbol-file user/bin/uname.exec 0x08048094
 b main
 #b shadow_lookuppage
 #b shadow_fillpage

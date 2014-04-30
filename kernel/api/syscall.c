@@ -181,8 +181,42 @@ sys_write(write_args_t *arg)
 static int
 sys_getdents(getdents_args_t *arg)
 {
-        NOT_YET_IMPLEMENTED("VM: sys_getdents");
+    getdents_args_t kern_args;
+    int err;
+
+    if ((err = copy_from_user(&kern_args, arg, sizeof(getdents_args_t))) < 0) {
+        curthr->kt_errno = -err;
         return -1;
+    }
+
+    dirent_t dirent;
+    size_t maxdir = kern_args.count / sizeof(dirent_t);
+
+    size_t i;
+    int total_read = 0;
+    for (i = 0 ; i < maxdir ; i++) {
+        int actual_read = do_getdent(kern_args.fd, &dirent);
+        if (actual_read < 0) {
+            curthr->kt_errno = -actual_read;
+            return -1;
+        }
+        KASSERT(actual_read == 0 || actual_read == sizeof(dirent_t));
+
+        char *uaddr = (char *)kern_args.dirp + i * sizeof(dirent_t);
+        err = copy_to_user(uaddr, &dirent, sizeof(dirent_t));
+        if (err < 0) {
+            curthr->kt_errno = -err;
+            return -1;
+        }
+        KASSERT(err == 0);
+
+        /*only increment total_read when copy_to_user succeed*/
+        total_read += actual_read;
+    }
+
+    return total_read;
+        /*NOT_YET_IMPLEMENTED("VM: sys_getdents");*/
+        /*return -1;*/
 }
 
 #ifdef __MOUNTING__
