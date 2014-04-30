@@ -123,7 +123,10 @@ shadow_put(mmobj_t *o)
             KASSERT(pframe_cur->pf_obj == o);
             pframe_unpin(pframe_cur);
             /*uncache the page frame*/
-            pframe_clean(pframe_cur);
+            /*pframe_clean(pframe_cur);*/
+            if (pframe_is_dirty(pframe_cur)) {
+                pframe_clean(pframe_cur);
+            }
             
             pframe_free(pframe_cur);
         } list_iterate_end();
@@ -205,8 +208,6 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
             /*pf_source can be the same as pf*/
             KASSERT(pf_source != pf);
             memcpy(pf->pf_addr, pf_source->pf_addr, PAGE_SIZE);
-            /*pframe_dirty(pf);*/
-            pframe_dirty(pf_source);
             pframe_pin(pf);
             return 0;
         }
@@ -225,8 +226,6 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
     
     KASSERT(pf_source);
     memcpy(pf->pf_addr, pf_source->pf_addr, PAGE_SIZE);
-    /*pframe_dirty(pf);*/
-    pframe_dirty(pf_source);
     pframe_pin(pf);
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: shadow_fillpage");*/
