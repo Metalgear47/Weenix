@@ -204,10 +204,8 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
         if (pf_source) {
             /*pf_source can be the same as pf*/
             KASSERT(pf_source != pf);
-            /*if (pf_source != pf) {*/
             memcpy(pf->pf_addr, pf_source->pf_addr, PAGE_SIZE);
             pframe_pin(pf);
-            /*}*/
             return 0;
         }
         o = o->mmo_shadowed;
