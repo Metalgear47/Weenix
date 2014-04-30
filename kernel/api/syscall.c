@@ -74,6 +74,7 @@ sys_read(read_args_t *arg)
 
         int actual_read = do_read(kern_args.fd, kaddr, readlen);
         if (actual_read < 0) {
+            page_free(kaddr);
             curthr->kt_errno = -actual_read;
             return -1;
         }
@@ -81,6 +82,7 @@ sys_read(read_args_t *arg)
 
         err = copy_to_user(buff, kaddr, actual_read);
         if (err < 0) {
+            page_free(kaddr);
             curthr->kt_errno = -err;
             return -1;
         }
@@ -133,6 +135,7 @@ sys_write(write_args_t *arg)
 
         err = copy_from_user(kaddr, buff, writelen);
         if (err < 0) {
+            page_free(kaddr);
             curthr->kt_errno = -err;
             return -1;
         }
@@ -140,6 +143,7 @@ sys_write(write_args_t *arg)
 
         int actual_write = do_write(kern_args.fd, kaddr, writelen);
         if (actual_write < 0) {
+            page_free(kaddr);
             curthr->kt_errno = -actual_write;
             return -1;
         }

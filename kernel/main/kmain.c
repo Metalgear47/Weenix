@@ -348,9 +348,9 @@ initproc_run(int arg1, void *arg2)
      /*========================*/
 
 
-    char *argv[2] = {"init", NULL};
+    char *argv[3] = {"uname", "-a", NULL};
     char *envp[1] = {NULL};
-    kernel_execve("/sbin/init", argv, envp);
+    kernel_execve("/bin/uname", argv, envp);
     
     panic("panic for now");
 

@@ -17,9 +17,10 @@ break bootstrap
 #break pt_virt_to_phys
 add-symbol-file user/bin/uname.exec 0x08048094
 b main
+b sys_write
 #b shadow_lookuppage
 #b shadow_fillpage
-b pframe.c:557
+#b pframe.c:557
 #b pagefault.c:56
 #b sys_open
 
