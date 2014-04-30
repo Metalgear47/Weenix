@@ -348,9 +348,14 @@ initproc_run(int arg1, void *arg2)
      /*========================*/
 
 
+    KASSERT(0 == do_open("/dev/tty0", 0));
+    KASSERT(1 == do_open("/dev/tty0", 1));
+
     char *argv[3] = {"uname", "-a", NULL};
+    /*char *argv[3] = {"args", "-a", NULL};*/
     char *envp[1] = {NULL};
     kernel_execve("/bin/uname", argv, envp);
+    /*kernel_execve("/usr/bin/args", argv, envp);*/
     
     panic("panic for now");
 
