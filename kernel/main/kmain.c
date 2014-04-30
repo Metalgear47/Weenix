@@ -348,9 +348,9 @@ initproc_run(int arg1, void *arg2)
      /*========================*/
 
 
-    char *argv[2] = {"hello", NULL};
+    char *argv[2] = {"segfault", NULL};
     char *envp[1] = {NULL};
-    kernel_execve("/usr/bin/hello", argv, envp);
+    kernel_execve("/usr/bin/segfault", argv, envp);
     
     panic("panic for now");
 

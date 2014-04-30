@@ -15,8 +15,10 @@ break bootstrap
 # break vmmap_remove
 #break handle_pagefault
 #break pt_virt_to_phys
-#add-symbol-file user/usr/bin/hello.exec 0x08048094
-#b main
+add-symbol-file user/usr/bin/segfault.exec 0x08048094
+b main
+b shadow_lookuppage
+b shadow_fillpage
 #b pagefault.c:56
 #b sys_open
 

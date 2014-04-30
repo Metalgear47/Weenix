@@ -298,7 +298,7 @@ vmmap_lookup(vmmap_t *map, uint32_t vfn)
     KASSERT(map);
     dprintf("vmmap_lookup, vfn is %u(%#.5x)\n", vfn, vfn);
     /*assumption here is that the vfn is already auditted by some other routine*/
-    KASSERT(valid_pagenumber(vfn));
+    /*KASSERT(valid_pagenumber(vfn));*/
     print_vmmap(map);
 
     vmarea_t *vma;
@@ -480,10 +480,16 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     if (flags & MAP_PRIVATE) {
         /*create a shadow object*/
         mmobj_t *mmobj_shadow = shadow_create();
+
         KASSERT(vma_result->vma_obj == mmobj_bottom_obj(vma_result->vma_obj));
-        mmobj_shadow->mmo_shadowed = mmobj_bottom_obj(vma_result->vma_obj);
+        KASSERT(vma_result->vma_obj->mmo_shadowed == NULL);
+
+        mmobj_shadow->mmo_shadowed = vma_result->vma_obj;
         mmobj_shadow->mmo_un.mmo_bottom_obj = mmobj_bottom_obj(vma_result->vma_obj);
+
         list_insert_head(&vma_result->vma_obj->mmo_un.mmo_vmas, &vma_result->vma_olink);
+        /*the old vma_obj has been refed before*/
+
         vma_result->vma_obj = mmobj_shadow;
         mmobj_shadow->mmo_ops->ref(mmobj_shadow);
     }

@@ -121,7 +121,7 @@ shadow_put(mmobj_t *o)
         pframe_t *pframe_cur;
         list_iterate_begin(&o->mmo_respages, pframe_cur, pframe_t, pf_olink) {
             KASSERT(pframe_cur->pf_obj == o);
-            /*pframe_unpin(pframe_cur);*/
+            pframe_unpin(pframe_cur);
             /*uncache the page frame*/
             pframe_clean(pframe_cur);
             
@@ -198,14 +198,16 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
     mmobj_t *bottom_obj = o->mmo_un.mmo_bottom_obj;
     KASSERT(bottom_obj);
 
+    o = o->mmo_shadowed;
     while (o != bottom_obj) {
         pframe_t *pf_source = pframe_get_resident(o, pf->pf_pagenum);
         if (pf_source) {
             /*pf_source can be the same as pf*/
-            /*KASSERT(pf_source != pf);*/
-            if (pf_source != pf) {
-                memcpy(pf->pf_addr, pf_source->pf_addr, PAGE_SIZE);
-            }
+            KASSERT(pf_source != pf);
+            /*if (pf_source != pf) {*/
+            memcpy(pf->pf_addr, pf_source->pf_addr, PAGE_SIZE);
+            pframe_pin(pf);
+            /*}*/
             return 0;
         }
         o = o->mmo_shadowed;
@@ -221,6 +223,7 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
     
     KASSERT(pf_source);
     memcpy(pf->pf_addr, pf_source->pf_addr, PAGE_SIZE);
+    pframe_pin(pf);
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: shadow_fillpage");*/
         /*return 0;*/
