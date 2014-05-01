@@ -444,7 +444,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 
     /*vma_olink is initialized during alloc, still unclear, what to do?*/
 
-    if (file == NULL) {
+    if ((flags & MAP_ANON) || (file == NULL)) {
         mmobj_t *mmobj_anon = anon_create();
         if (mmobj_anon == NULL) {
             vmarea_free(vma_result);
