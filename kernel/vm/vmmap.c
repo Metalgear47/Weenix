@@ -492,6 +492,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 
         vma_result->vma_obj = mmobj_shadow;
         mmobj_shadow->mmo_ops->ref(mmobj_shadow);
+        mmobj_shadow->mmo_un.mmo_bottom_obj->mmo_ops->ref(mmobj_shadow->mmo_un.mmo_bottom_obj);
     }
 
     /*time for the final move*/

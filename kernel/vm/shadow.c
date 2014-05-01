@@ -140,6 +140,7 @@ shadow_put(mmobj_t *o)
     }
 
     o->mmo_shadowed->mmo_ops->put(o->mmo_shadowed);
+    o->mmo_un.mmo_bottom_obj->mmo_ops->put(o->mmo_un.mmo_bottom_obj);
 
     KASSERT(0 == o->mmo_nrespages);
     KASSERT(0 == o->mmo_refcount);
