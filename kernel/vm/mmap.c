@@ -27,8 +27,6 @@
 
 #define VALID_ADDR(addr) ((uint32_t)addr >= USER_MEM_LOW && \
                             (uint32_t)addr < USER_MEM_HIGH)
-    /*EACCES*/
-    /*A file descriptor refers to a non-regular file. Or MAP_PRIVATE was requested, but fd is not open for reading. Or MAP_SHARED was requested and PROT_WRITE is set, but fd is not open in read/write (O_RDWR) mode. Or PROT_WRITE is set, but the file is append-only.*/
     /*EAGAIN*/
     /*The file has been locked, or too much memory has been locked (see setrlimit(2)).*/
     /*ENFILE*/
@@ -88,6 +86,8 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         return -EBADF;
     }
 
+    /*EACCES*/
+    /*A file descriptor refers to a non-regular file. Or MAP_PRIVATE was requested, but fd is not open for reading. Or MAP_SHARED was requested and PROT_WRITE is set, but fd is not open in read/write (O_RDWR) mode. Or PROT_WRITE is set, but the file is append-only.*/
     vnode_t *vnode = file->f_vnode;
     KASSERT(vnode);
     if (!S_ISREG(vnode->vn_mode)) {
@@ -108,6 +108,18 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         fput(file);
         return -EACCES;
     }
+
+    if (off + (signed)len >= vnode->vn_len) {
+        /*exceeding the file size*/
+        fput(file);
+        return -EINVAL;
+    }
+
+    /*
+     *TODO: handling MAP_ANON
+     */
+
+    
         NOT_YET_IMPLEMENTED("VM: do_mmap");
         return -1;
 }
