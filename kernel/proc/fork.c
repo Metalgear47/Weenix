@@ -134,7 +134,8 @@ do_fork(struct regs *regs)
 
     /*not gonna use the vmmap created during proc_create*/
     vmmap_destroy(newproc->p_vmmap);
-    /**1**/
+
+    /**1** DONE*/
     newmap->vmm_proc = newproc;
     newproc->p_vmmap = newmap;
 
@@ -145,20 +146,26 @@ do_fork(struct regs *regs)
             newproc->p_files[i] = curproc->p_files[i];
             fref(newproc->p_files[i]);
         } else {
-            KASSERT(newproc->p_files == NULL);
+            KASSERT(newproc->p_files[i] == NULL);
         }
     }
 
     /*bulletin 8*/
     KASSERT(!(list_empty(&curproc->p_threads)));
+    /*only one thread for each process*/
     KASSERT(curproc->p_threads.l_next == curproc->p_threads.l_prev);
     kthread_t *oldthr = list_item(curproc->p_threads.l_next, kthread_t, kt_plink);
     KASSERT(oldthr);
     kthread_t *newthr = kthread_clone(oldthr);
+    /**4** kt_proc, kt_plink*/
     KASSERT(newthr);
-    newthr->kt_proc = newproc;
 
-    /*bulletin 7*/
+    /**2** DONE*/
+    /**4** DONE*/
+    newthr->kt_proc = newproc;
+    list_insert_head(&newproc->p_threads, &newthr->kt_plink);
+
+    /*bulletin 5*/
     newthr->kt_ctx.c_pdptr = newproc->p_pagedir;
     newthr->kt_ctx.c_eip = (uintptr_t)userland_entry;
     newthr->kt_ctx.c_esp = fork_setup_stack(regs, newthr->kt_kstack);
@@ -166,16 +173,16 @@ do_fork(struct regs *regs)
 
     /*bulletin 9: seems already been set during proc_create*/
 
-    /*bulletin 10*/
-    sched_make_runnable(newthr);
-
     /*bulletin 4*/
     /*not sure which pagetable to flush*/
     pagedir_t *pagedir = pt_get();
     pt_unmap_range(pagedir, USER_MEM_LOW, USER_MEM_HIGH);
     tlb_flush_all();
 
+    /*bulletin 10*/
+    sched_make_runnable(newthr);
+
     return 0;
-        NOT_YET_IMPLEMENTED("VM: do_fork");
-        return 0;
+        /*NOT_YET_IMPLEMENTED("VM: do_fork");*/
+        /*return 0;*/
 }
