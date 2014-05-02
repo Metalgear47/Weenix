@@ -150,6 +150,12 @@ do_fork(struct regs *regs)
     KASSERT(newthr);
     newthr->kt_proc = newproc;
 
+    /*bulletin 7*/
+    newthr->kt_ctx.c_pdptr = newproc->p_pagedir;
+    newthr->kt_ctx.c_eip = (uintptr_t)userland_entry;
+    newthr->kt_ctx.c_esp = fork_setup_stack(regs, newthr->kt_kstack);
+    /*c_kstack and c_kstacksz is set during kthread_clone*/
+
     /*bulletin 9: seems already been set during proc_create*/
 
     /*bulletin 10*/
