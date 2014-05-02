@@ -52,6 +52,15 @@ fork_setup_stack(const regs_t *regs, void *kstack)
 int
 do_fork(struct regs *regs)
 {
+    proc_t *newproc = proc_create(curproc->p_comm);
+    KASSERT(newproc != NULL);
+
+    /*not gonna use the vmmap created during proc_create*/
+    vmmap_destroy(newproc->p_vmmap);
+    vmmap_t *newmap = vmmap_clone(curproc->p_vmmap);
+    if (newmap == NULL) {
+        return -ENOMEM;
+    }
         NOT_YET_IMPLEMENTED("VM: do_fork");
         return 0;
 }
