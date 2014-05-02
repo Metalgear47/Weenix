@@ -69,7 +69,7 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
     vmarea_t *oldarea;
     list_iterate_begin(&oldmap->vmm_list, oldarea, vmarea_t, vma_plink) {
         vmarea_t *newarea;
-        newarea = vmmap_lookup(oldmap, newarea->vma_start);
+        newarea = vmmap_lookup(newmap, oldarea->vma_start);
         if (oldarea->vma_flags & MAP_SHARED) {
             KASSERT(newarea->vma_flags & MAP_SHARED);
             continue;
@@ -77,6 +77,12 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
         KASSERT(newarea->vma_flags & MAP_PRIVATE);
         KASSERT(oldarea->vma_flags & MAP_PRIVATE);
         KASSERT(newarea->vma_obj == oldarea->vma_obj);
+        KASSERT(newarea->vma_start == oldarea->vma_start);
+        KASSERT(newarea->vma_end == oldarea->vma_end);
+        KASSERT(newarea->vma_off == oldarea->vma_off);
+        KASSERT(newarea->vma_prot == oldarea->vma_prot);
+        KASSERT(newarea->vma_vmmap = newmap);
+        KASSERT(oldarea->vma_vmmap = oldmap);
 
         mmobj_t *shadowed = newarea->vma_obj;
         mmobj_t *bottom = mmobj_bottom_obj(shadowed);
@@ -93,7 +99,9 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
         bottom->mmo_ops->ref(bottom);
 
         newarea->vma_obj = newshadow;
+        newshadow->mmo_ops->ref(newshadow);
         oldarea->vma_obj = oldshadow;
+        oldshadow->mmo_ops->ref(oldshadow);
     } list_iterate_end();
 }
 
