@@ -343,6 +343,8 @@ vmmap_clone(vmmap_t *map)
         area_new->vma_prot = area_cur->vma_prot;
         area_new->vma_flags = area_cur->vma_flags;
 
+        area_new->vma_vmmap = newmap;
+
         list_init(&area_new->vma_plink);
         vmmap_insert(newmap, area_new);
         list_init(&area_new->vma_olink);
