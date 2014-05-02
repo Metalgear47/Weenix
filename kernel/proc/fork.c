@@ -60,6 +60,43 @@ proc_destroy(proc_t *proc)
     /*p_vmmap will be handled just after proc_create*/
 }
 
+void
+vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
+{
+    KASSERT(newmap);
+    KASSERT(oldmap);
+
+    vmarea_t *oldarea;
+    list_iterate_begin(&oldmap->vmm_list, oldarea, vmarea_t, vma_plink) {
+        vmarea_t *newarea;
+        newarea = vmmap_lookup(oldmap, newarea->vma_start);
+        if (oldarea->vma_flags & MAP_SHARED) {
+            KASSERT(newarea->vma_flags & MAP_SHARED);
+            continue;
+        }
+        KASSERT(newarea->vma_flags & MAP_PRIVATE);
+        KASSERT(oldarea->vma_flags & MAP_PRIVATE);
+        KASSERT(newarea->vma_obj == oldarea->vma_obj);
+
+        mmobj_t *shadowed = newarea->vma_obj;
+        mmobj_t *bottom = mmobj_bottom_obj(shadowed);
+        mmobj_t *newshadow = shadow_create();
+        KASSERT(newshadow);
+        mmobj_t *oldshadow = shadow_create();
+        KASSERT(oldshadow);
+
+        newshadow->mmo_shadowed = shadowed;
+        newshadow->mmo_un.mmo_bottom_obj = bottom;
+        bottom->mmo_ops->ref(bottom);
+        oldshadow->mmo_shadowed = shadowed;
+        oldshadow->mmo_un.mmo_bottom_obj = bottom;
+        bottom->mmo_ops->ref(bottom);
+
+        newarea->vma_obj = newshadow;
+        oldarea->vma_obj = oldshadow;
+    } list_iterate_end();
+}
+
 /*
  * The implementation of fork(2). Once this works,
  * you're practically home free. This is what the
@@ -69,15 +106,18 @@ proc_destroy(proc_t *proc)
 int
 do_fork(struct regs *regs)
 {
+    vmmap_t *newmap = vmmap_clone(curproc->p_vmmap);
+    if (newmap == NULL) {
+        return -ENOMEM;
+    }
+
+
+
     proc_t *newproc = proc_create(curproc->p_comm);
     KASSERT(newproc != NULL);
 
     /*not gonna use the vmmap created during proc_create*/
     vmmap_destroy(newproc->p_vmmap);
-    vmmap_t *newmap = vmmap_clone(curproc->p_vmmap);
-    if (newmap == NULL) {
-        return -ENOMEM;
-    }
         NOT_YET_IMPLEMENTED("VM: do_fork");
         return 0;
 }
