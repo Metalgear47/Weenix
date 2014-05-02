@@ -99,6 +99,7 @@ proc_create(char *name)
     strcpy(proc_struct->p_comm, name);
     
     /*exit value? p_status not set here.*/
+    proc_struct->p_status = 1024;
 
     list_init(&proc_struct->p_threads);
     list_init(&proc_struct->p_children);
@@ -118,7 +119,6 @@ proc_create(char *name)
     if (PID_IDLE != proc_struct->p_pid) {
         KASSERT(NULL != curproc);
         proc_struct->p_pproc = curproc;
-        /*not sure about the parent process.*/
 
         KASSERT(curproc == proc_struct->p_pproc);
         list_insert_tail(&proc_struct->p_pproc->p_children, &proc_struct->p_child_link);
@@ -146,6 +146,7 @@ proc_create(char *name)
     /* VM */
     proc_struct->p_vmmap = vmmap_create();
     KASSERT(proc_struct->p_vmmap);
+    proc_struct->p_vmmap->vmm_proc = proc_struct;
 
     dbg(DBG_PROC, "Created process with name: %s\n", name);
     dbginfo(DBG_PROC, proc_info, proc_struct);
