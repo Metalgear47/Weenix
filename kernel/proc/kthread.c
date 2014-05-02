@@ -83,6 +83,7 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     KASSERT(NULL != kthread_struct->kt_kstack);
 
     /*errno*/
+    kthread_struct->kt_errno = 1024;
     kthread_struct->kt_retval = (void *)0;
 
     KASSERT(NULL != p);
@@ -189,8 +190,39 @@ kthread_exit(void *retval)
 kthread_t *
 kthread_clone(kthread_t *thr)
 {
-        NOT_YET_IMPLEMENTED("VM: kthread_clone");
-        return NULL;
+    KASSERT(NULL != kthread_allocator);
+
+    kthread_t *newthr = slab_obj_alloc(kthread_allocator);
+    KASSERT(NULL != newthr);
+
+    newthr->kt_kstack = alloc_stack();
+    KASSERT(NULL != newthr->kt_kstack);
+
+    newthr->kt_retval = (void *)0;
+    newthr->kt_errno = 1024;
+
+    /*kt_proc is gonna be initialized by the caller of this function*/
+
+    void *ctx_stack = alloc_stack();
+    KASSERT(NULL != ctx_stack);
+
+    newthr->kt_ctx.c_kstack = (uintptr_t)ctx_stack;
+    newthr->kt_ctx.c_kstacksz = DEFAULT_STACK_SIZE;
+    /*the rest should be initialized by do_fork*/
+
+    newthr->kt_cancelled = 0;
+
+    newthr->kt_state = KT_RUN;
+    /*it's gonna be made runnable soon*/
+
+    newthr->kt_wchan = NULL;
+
+    list_link_init(&newthr->kt_qlink);
+    list_link_init(&newthr->kt_plink);
+
+    return newthr;
+        /*NOT_YET_IMPLEMENTED("VM: kthread_clone");*/
+        /*return NULL;*/
 }
 
 /*
