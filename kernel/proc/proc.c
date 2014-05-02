@@ -109,6 +109,7 @@ proc_create(char *name)
     sched_queue_init(&proc_struct->p_wait);
 
     proc_struct->p_pagedir = pt_create_pagedir();
+    KASSERT(proc_struct->p_pagedir);
 
     list_link_init(&proc_struct->p_list_link);
     list_insert_tail(&_proc_list, &proc_struct->p_list_link);

@@ -115,6 +115,7 @@ int
 do_fork(struct regs *regs)
 {
     /*bulletin 2*/
+    /*clone also take care about reffing the original object*/
     vmmap_t *newmap = vmmap_clone(curproc->p_vmmap);
     if (newmap == NULL) {
         return -ENOMEM;
@@ -122,21 +123,20 @@ do_fork(struct regs *regs)
 
     /*bulletin 3*/
     vmmap_shadow(newmap, curproc->p_vmmap);
-    /*need to add to newproc's vmmap*/
-
-    /*bulletin 4*/
-    /*not sure which pagetable to flush*/
-    pagedir_t *pagedir = pt_get();
-    pt_unmap_range(pagedir, USER_MEM_LOW, USER_MEM_HIGH);
-    tlb_flush_all();
+    /**1**need to add to newproc's vmmap*/
 
     /*bulletin 1*/
-    proc_t *newproc = proc_create(curproc->p_comm);
     /*bulletin 7 set up p_cwd is also handled by proc_create*/
+    proc_t *newproc = proc_create(curproc->p_comm);
     KASSERT(newproc != NULL);
+    /**2** p_threads*/
+    /**3** p_brk, p_start_brk*/
 
     /*not gonna use the vmmap created during proc_create*/
     vmmap_destroy(newproc->p_vmmap);
+    /**1**/
+    newmap->vmm_proc = newproc;
+    newproc->p_vmmap = newmap;
 
     /*bulletin 6*/
     int i = 0;
@@ -168,6 +168,12 @@ do_fork(struct regs *regs)
 
     /*bulletin 10*/
     sched_make_runnable(newthr);
+
+    /*bulletin 4*/
+    /*not sure which pagetable to flush*/
+    pagedir_t *pagedir = pt_get();
+    pt_unmap_range(pagedir, USER_MEM_LOW, USER_MEM_HIGH);
+    tlb_flush_all();
 
     return 0;
         NOT_YET_IMPLEMENTED("VM: do_fork");

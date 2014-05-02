@@ -15,10 +15,10 @@ break bootstrap
 # break vmmap_remove
 #break handle_pagefault
 #break pt_virt_to_phys
-add-symbol-file user/bin/uname.exec 0x08048094
+add-symbol-file user/usr/bin/forkbomb.exec 0x08048094
 b main
-b sys_write
-b tty_write
+#b sys_write
+#b tty_write
 #b shadow_lookuppage
 #b shadow_fillpage
 #b pframe.c:557
