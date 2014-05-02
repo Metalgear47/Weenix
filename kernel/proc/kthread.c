@@ -198,8 +198,8 @@ kthread_clone(kthread_t *thr)
     newthr->kt_kstack = alloc_stack();
     KASSERT(NULL != newthr->kt_kstack);
 
-    newthr->kt_retval = (void *)0;
-    newthr->kt_errno = 1024;
+    newthr->kt_retval = thr->kt_retval;
+    newthr->kt_errno = thr->kt_errno;
 
     /*kt_proc is gonna be initialized by the caller of this function*/
 
@@ -210,12 +210,14 @@ kthread_clone(kthread_t *thr)
     newthr->kt_ctx.c_kstacksz = DEFAULT_STACK_SIZE;
     /*the rest should be initialized by do_fork*/
 
-    newthr->kt_cancelled = 0;
+    newthr->kt_cancelled = thr->kt_cancelled;
 
-    newthr->kt_state = KT_RUN;
+    newthr->kt_state = thr->kt_state;
     /*it's gonna be made runnable soon*/
 
-    newthr->kt_wchan = NULL;
+    newthr->kt_wchan = thr->kt_wchan;
+    /*assert for now, just my assumption*/
+    KASSERT(newthr->kt_wchan == NULL);
 
     list_link_init(&newthr->kt_qlink);
     list_link_init(&newthr->kt_plink);
