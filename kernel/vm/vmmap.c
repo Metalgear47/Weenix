@@ -332,7 +332,9 @@ vmmap_clone(vmmap_t *map)
     list_iterate_begin(&map->vmm_list, area_cur, vmarea_t, vma_plink) {
         vmarea_t *area_new = vmarea_alloc();
         if (area_new == NULL) {
-            goto FAIL;
+            vmmap_destroy(newmap);
+            return NULL;
+            /*goto FAIL;*/
         }
         area_new->vma_start = area_cur->vma_start;
         area_new->vma_end = area_cur->vma_end;
@@ -343,13 +345,15 @@ vmmap_clone(vmmap_t *map)
 
         list_init(&area_new->vma_plink);
         vmmap_insert(newmap, area_new);
-        area_new->vma_obj = NULL;
         list_init(&area_new->vma_olink);
+
+        area_new->vma_obj = area_cur->vma_obj;
+        area_new->vma_obj->mmo_ops->ref(area_new->vma_obj);
     } list_iterate_end();
 
     return newmap;
 
-FAIL:
+/*FAIL:*/
     list_iterate_begin(&newmap->vmm_list, area_cur, vmarea_t, vma_plink) {
         /*no need to put mmobj*/
         list_remove(&area_cur->vma_plink);
