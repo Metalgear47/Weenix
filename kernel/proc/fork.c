@@ -106,13 +106,22 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
 int
 do_fork(struct regs *regs)
 {
+    /*bulletin 2*/
     vmmap_t *newmap = vmmap_clone(curproc->p_vmmap);
     if (newmap == NULL) {
         return -ENOMEM;
     }
 
+    /*bulletin 3*/
+    vmmap_shadow(newmap, curproc->p_vmmap);
 
+    /*bulletin 4*/
+    /*not sure which pagetable to flush*/
+    pagedir_t *pagedir = pt_get();
+    pt_unmap_range(pagedir, USER_MEM_LOW, USER_MEM_HIGH);
+    tlb_flush_all();
 
+    /*bulletin 1*/
     proc_t *newproc = proc_create(curproc->p_comm);
     KASSERT(newproc != NULL);
 
