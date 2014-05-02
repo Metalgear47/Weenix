@@ -114,6 +114,7 @@ do_fork(struct regs *regs)
 
     /*bulletin 3*/
     vmmap_shadow(newmap, curproc->p_vmmap);
+    /*need to add to newproc's vmmap*/
 
     /*bulletin 4*/
     /*not sure which pagetable to flush*/
@@ -123,10 +124,22 @@ do_fork(struct regs *regs)
 
     /*bulletin 1*/
     proc_t *newproc = proc_create(curproc->p_comm);
+    /*bulletin 7 set up p_cwd is also handled by proc_create*/
     KASSERT(newproc != NULL);
 
     /*not gonna use the vmmap created during proc_create*/
     vmmap_destroy(newproc->p_vmmap);
+
+    /*bulletin 6*/
+    int i = 0;
+    for (i = 0 ; i < NFILES ; i++) {
+        if (curproc->p_files[i]) {
+            newproc->p_files[i] = curproc->p_files[i];
+            fref(newproc->p_files[i]);
+        } else {
+            KASSERT(newproc->p_files == NULL);
+        }
+    }
         NOT_YET_IMPLEMENTED("VM: do_fork");
         return 0;
 }
