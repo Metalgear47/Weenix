@@ -42,6 +42,23 @@ fork_setup_stack(const regs_t *regs, void *kstack)
         return esp;
 }
 
+void
+proc_destroy(proc_t *proc)
+{
+    KASSERT(proc);
+
+    /*p_pagedir*/
+    pt_destroy_pagedir(proc->p_pagedir);
+
+    /*no need to deal with p_files: they are all NULL pointers*/
+
+    /*p_cwd*/
+    if (proc->p_cwd) {
+        vput(proc->p_cwd);
+    }
+
+    /*p_vmmap will be handled just after proc_create*/
+}
 
 /*
  * The implementation of fork(2). Once this works,
