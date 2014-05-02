@@ -140,6 +140,22 @@ do_fork(struct regs *regs)
             KASSERT(newproc->p_files == NULL);
         }
     }
+
+    /*bulletin 8*/
+    KASSERT(!(list_empty(&curproc->p_threads)));
+    KASSERT(curproc->p_threads.l_next == curproc->p_threads.l_prev);
+    kthread_t *oldthr = list_item(curproc->p_threads.l_next, kthread_t, kt_plink);
+    KASSERT(oldthr);
+    kthread_t *newthr = kthread_clone(oldthr);
+    KASSERT(newthr);
+    newthr->kt_proc = newproc;
+
+    /*bulletin 9: seems already been set during proc_create*/
+
+    /*bulletin 10*/
+    sched_make_runnable(newthr);
+
+    return 0;
         NOT_YET_IMPLEMENTED("VM: do_fork");
         return 0;
 }
