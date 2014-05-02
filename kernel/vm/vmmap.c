@@ -127,6 +127,7 @@ vmmap_destroy(vmmap_t *map)
         vma->vma_obj->mmo_ops->put(vma->vma_obj);
         /*remove it from the list*/
         list_remove(&vma->vma_plink);
+        list_remove(&vma->vma_olink);
 
         /*also have to take care of vma_olink*/
         /*and in vmmap_clone*/
@@ -348,6 +349,10 @@ vmmap_clone(vmmap_t *map)
         list_init(&area_new->vma_plink);
         vmmap_insert(newmap, area_new);
         list_init(&area_new->vma_olink);
+        mmobj_t *bottom = mmobj_bottom_obj(area_cur->vma_obj);
+        KASSERT(bottom);
+        /*dbg(DBG_TEST, "%p\n", bottom);*/
+        /*list_insert_head(&bottom->mmo_un.mmo_vmas, &area_new->vma_olink);*/
 
         area_new->vma_obj = area_cur->vma_obj;
         area_new->vma_obj->mmo_ops->ref(area_new->vma_obj);
@@ -449,6 +454,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     vma_result->vma_obj = NULL;
 
     /*vma_olink is initialized during alloc, still unclear, what to do?*/
+    /*list_insert_head(&vma_result->vma_obj->mmo_un.mmo_vmas, &vma_result->vma_olink);*/
 
     if ((flags & MAP_ANON) || (file == NULL)) {
         mmobj_t *mmobj_anon = anon_create();
@@ -493,7 +499,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         mmobj_shadow->mmo_shadowed = vma_result->vma_obj;
         mmobj_shadow->mmo_un.mmo_bottom_obj = mmobj_bottom_obj(vma_result->vma_obj);
 
-        /*list_insert_head(&vma_result->vma_obj->mmo_un.mmo_vmas, &vma_result->vma_olink);*/
+        list_insert_head(&vma_result->vma_obj->mmo_un.mmo_vmas, &vma_result->vma_olink);
         /*the old vma_obj has been refed before*/
 
         vma_result->vma_obj = mmobj_shadow;
@@ -598,6 +604,8 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             list_init(&vma_new->vma_plink);
             list_insert_before(&vma->vma_plink, &vma_new->vma_plink);
             list_init(&vma_new->vma_olink);
+            mmobj_t *bottom = mmobj_bottom_obj(vma->vma_obj);
+            list_insert_head(&bottom->mmo_un.mmo_vmas, &vma_new->vma_olink);
             /*not sure about what I could do here with olink*/
 
             vma->vma_off = hipage - vma->vma_start + vma->vma_off;
@@ -627,7 +635,7 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             list_remove(&vma->vma_plink);
             /*for NOW omit vma_olink*/
             /*not sure about removing it*/
-            /*list_remove(&vma->vma_olink);*/
+            list_remove(&vma->vma_olink);
             vmarea_free(vma);
             continue;
         }
