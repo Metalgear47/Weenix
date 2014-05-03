@@ -98,6 +98,9 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
         oldshadow->mmo_un.mmo_bottom_obj = bottom;
         bottom->mmo_ops->ref(bottom);
 
+        list_insert_head(&bottom->vma_obj->mmo_un.mmo_vmas, &newarea->vma_olink);
+        list_insert_head(&bottom->vma_obj->mmo_un.mmo_vmas, &oldarea->vma_olink);
+
         newarea->vma_obj = newshadow;
         newshadow->mmo_ops->ref(newshadow);
         oldarea->vma_obj = oldshadow;
