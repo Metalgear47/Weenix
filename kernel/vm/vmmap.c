@@ -123,16 +123,16 @@ vmmap_destroy(vmmap_t *map)
 
     /*traversal thru vmm_list and remove it*/
     list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
-        /*since there is 1 less pointer pointing to vma_obj, put it*/
-        vma->vma_obj->mmo_ops->put(vma->vma_obj);
         /*remove it from the list*/
         list_remove(&vma->vma_plink);
+
+        /*it could be on no list*/
         if (list_link_is_linked(&vma->vma_olink)) {
             list_remove(&vma->vma_olink);
         }
 
-        /*also have to take care of vma_olink*/
-        /*and in vmmap_clone*/
+        /*since there is 1 less pointer pointing to vma_obj, put it*/
+        vma->vma_obj->mmo_ops->put(vma->vma_obj);
 
         /*reclaim the memory*/
         vmarea_free(vma);
@@ -157,7 +157,8 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
     KASSERT(newvma);
     /*sanity check for newvma*/
     KASSERT(newvma->vma_end > newvma->vma_start);
-    KASSERT(newvma->vma_start >= USER_MEM_LOW / PAGE_SIZE);
+    KASSERT(newvma->vma_start >= USER_PAGE_LOW);
+    KASSERT(newvma->vma_end < USER_PAGE_HIGH);
 
     dprintf("vmmap_insert is called:\n");
     dprintf("before inserting, the vmmap is:\n");

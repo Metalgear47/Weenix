@@ -137,6 +137,7 @@ do_fork(struct regs *regs)
 
     /*not gonna use the vmmap created during proc_create*/
     vmmap_destroy(newproc->p_vmmap);
+    newproc->p_vmmap = NULL;
 
     /**1** DONE*/
     newmap->vmm_proc = newproc;
