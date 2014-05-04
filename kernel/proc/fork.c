@@ -70,13 +70,18 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
     list_iterate_begin(&oldmap->vmm_list, oldarea, vmarea_t, vma_plink) {
         vmarea_t *newarea;
         newarea = vmmap_lookup(newmap, oldarea->vma_start);
+        KASSERT(newarea);
+        KASSERT(newarea->vma_obj);
+
         if (oldarea->vma_flags & MAP_SHARED) {
+            /*it's shared map*/
+            /*no need to do anything*/
             KASSERT(newarea->vma_flags & MAP_SHARED);
             continue;
         }
+
         KASSERT(newarea->vma_flags & MAP_PRIVATE);
         KASSERT(oldarea->vma_flags & MAP_PRIVATE);
-        KASSERT(newarea->vma_obj == oldarea->vma_obj);
         KASSERT(newarea->vma_start == oldarea->vma_start);
         KASSERT(newarea->vma_end == oldarea->vma_end);
         KASSERT(newarea->vma_off == oldarea->vma_off);
@@ -84,8 +89,15 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
         KASSERT(newarea->vma_vmmap = newmap);
         KASSERT(oldarea->vma_vmmap = oldmap);
 
+        /*
+         * new area's object is the same as old area's
+         * and it's already been reffed
+         */
+        KASSERT(newarea->vma_obj == oldarea->vma_obj);
         mmobj_t *shadowed = oldarea->vma_obj;
         mmobj_t *bottom = mmobj_bottom_obj(shadowed);
+
+        /*creating 2 shadow object*/
         mmobj_t *newshadow = shadow_create();
         KASSERT(newshadow);
         mmobj_t *oldshadow = shadow_create();
