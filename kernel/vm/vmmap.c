@@ -358,6 +358,8 @@ vmmap_clone(vmmap_t *map)
         vmmap_insert(newmap, area_new);
 
         list_link_init(&area_new->vma_olink);
+        /*olink need future attention*/
+
         mmobj_t *bottom = mmobj_bottom_obj(area_cur->vma_obj);
         KASSERT(bottom);
         KASSERT(bottom->mmo_shadowed == NULL);
@@ -508,15 +510,20 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         KASSERT(vma_result->vma_obj == mmobj_bottom_obj(vma_result->vma_obj));
         KASSERT(vma_result->vma_obj->mmo_shadowed == NULL);
 
+        /*let it shadow the original object*/
         mmobj_shadow->mmo_shadowed = vma_result->vma_obj;
+        KASSERT(mmobj_shadow != mmobj_shadow->mmo_shadowed);
+        /*no need to ref it here because it's reffed above*/
+
+        /*also assign the bottom obj for the shadow object*/
         mmobj_shadow->mmo_un.mmo_bottom_obj = mmobj_bottom_obj(vma_result->vma_obj);
+        /*ref it*/
+        mmobj_shadow->mmo_un.mmo_bottom_obj->mmo_ops->ref(mmobj_shadow->mmo_un.mmo_bottom_obj);
 
         list_insert_head(&vma_result->vma_obj->mmo_un.mmo_vmas, &vma_result->vma_olink);
-        /*the old vma_obj has been refed before*/
 
         vma_result->vma_obj = mmobj_shadow;
         mmobj_shadow->mmo_ops->ref(mmobj_shadow);
-        mmobj_shadow->mmo_un.mmo_bottom_obj->mmo_ops->ref(mmobj_shadow->mmo_un.mmo_bottom_obj);
     }
 
     /*time for the final move*/
