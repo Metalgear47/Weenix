@@ -66,12 +66,14 @@ shadowd(int arg1, void *arg2)
                                         /* ref last, so if all processes on this branch die while shadowd is
                                          * sleeping, the branch won't get destroyed until shadowd() is done
                                          * with it */
+                                        dbg(DBG_FORK, "reffing.\n");
                                         last->mmo_ops->ref(last);
                                         while (NULL != o && NULL != o->mmo_shadowed) {
                                                 mmobj_t *shadow = o->mmo_shadowed;
                                                 /* iff the object has only one parent, and is not right under vm_area */
                                                 KASSERT(o != last);
                                                 if (o->mmo_refcount - o->mmo_nrespages == 1) {
+                                                        dbg(DBG_FORK, "if.\n");
                                                         /* migrate all its pages to last, and remove it from the shadow tree */
                                                         pframe_t *pf;
                                                         list_iterate_begin(&o->mmo_respages, pf, pframe_t, pf_olink) {
@@ -90,6 +92,7 @@ shadowd(int arg1, void *arg2)
                                                         KASSERT(o->mmo_refcount == 1 && o->mmo_nrespages == 0);
                                                         o->mmo_ops->put(o);
                                                 } else {
+                                                        dbg(DBG_FORK, "if.\n");
                                                         KASSERT(o->mmo_refcount - o->mmo_nrespages == 2);
                                                         o->mmo_ops->ref(o);
                                                         last->mmo_ops->put(last);

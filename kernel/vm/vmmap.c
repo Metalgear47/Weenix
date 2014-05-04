@@ -127,7 +127,9 @@ vmmap_destroy(vmmap_t *map)
         vma->vma_obj->mmo_ops->put(vma->vma_obj);
         /*remove it from the list*/
         list_remove(&vma->vma_plink);
-        list_remove(&vma->vma_olink);
+        if (list_link_is_linked(&vma->vma_olink)) {
+            list_remove(&vma->vma_olink);
+        }
 
         /*also have to take care of vma_olink*/
         /*and in vmmap_clone*/
@@ -337,6 +339,8 @@ vmmap_clone(vmmap_t *map)
             return NULL;
             /*goto FAIL;*/
         }
+
+        /*copy the field into new area*/
         area_new->vma_start = area_cur->vma_start;
         area_new->vma_end = area_cur->vma_end;
         area_new->vma_off = area_cur->vma_off;
@@ -346,9 +350,11 @@ vmmap_clone(vmmap_t *map)
 
         area_new->vma_vmmap = newmap;
 
-        list_init(&area_new->vma_plink);
+        /*add it to the new map*/
+        list_link_init(&area_new->vma_plink);
         vmmap_insert(newmap, area_new);
-        list_init(&area_new->vma_olink);
+
+        list_link_init(&area_new->vma_olink);
         mmobj_t *bottom = mmobj_bottom_obj(area_cur->vma_obj);
         KASSERT(bottom);
         /*dbg(DBG_TEST, "%p\n", bottom);*/

@@ -84,7 +84,7 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
         KASSERT(newarea->vma_vmmap = newmap);
         KASSERT(oldarea->vma_vmmap = oldmap);
 
-        mmobj_t *shadowed = newarea->vma_obj;
+        mmobj_t *shadowed = oldarea->vma_obj;
         mmobj_t *bottom = mmobj_bottom_obj(shadowed);
         mmobj_t *newshadow = shadow_create();
         KASSERT(newshadow);
@@ -98,8 +98,8 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
         oldshadow->mmo_un.mmo_bottom_obj = bottom;
         bottom->mmo_ops->ref(bottom);
 
-        list_insert_head(&bottom->vma_obj->mmo_un.mmo_vmas, &newarea->vma_olink);
-        list_insert_head(&bottom->vma_obj->mmo_un.mmo_vmas, &oldarea->vma_olink);
+        /*list_insert_head(&bottom->mmo_un.mmo_vmas, &newarea->vma_olink);*/
+        /*list_insert_head(&bottom->mmo_un.mmo_vmas, &oldarea->vma_olink);*/
 
         newarea->vma_obj = newshadow;
         newshadow->mmo_ops->ref(newshadow);
