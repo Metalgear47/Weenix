@@ -620,11 +620,18 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             vma_new->vma_obj = vma->vma_obj;
             vma_new->vma_obj->mmo_ops->ref(vma_new->vma_obj);
 
-            list_init(&vma_new->vma_plink);
+            list_link_init(&vma_new->vma_plink);
             list_insert_before(&vma->vma_plink, &vma_new->vma_plink);
-            list_init(&vma_new->vma_olink);
+
+            list_link_init(&vma_new->vma_olink);
             mmobj_t *bottom = mmobj_bottom_obj(vma->vma_obj);
-            list_insert_head(&bottom->mmo_un.mmo_vmas, &vma_new->vma_olink);
+            KASSERT(bottom->mmo_shadowed == NULL);
+
+            if (bottom != vma->vma_obj) {
+                /*only add it to the bottom's vmas when it's truly needed*/
+                KASSERT(vma->vma_obj->mmo_shadowed);
+                list_insert_head(&bottom->mmo_un.mmo_vmas, &vma_new->vma_olink);
+            }
             /*not sure about what I could do here with olink*/
 
             vma->vma_off = hipage - vma->vma_start + vma->vma_off;
@@ -654,7 +661,11 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             list_remove(&vma->vma_plink);
             /*for NOW omit vma_olink*/
             /*not sure about removing it*/
-            list_remove(&vma->vma_olink);
+            if (list_link_is_linked(&vma->vma_olink)) {
+                list_remove(&vma->vma_olink);
+            } else {
+                panic("wohoo");
+            }
             vmarea_free(vma);
             continue;
         }
