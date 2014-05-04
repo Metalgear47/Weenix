@@ -370,8 +370,8 @@ vmmap_clone(vmmap_t *map)
             KASSERT(area_cur->vma_obj != bottom);
         }
 
-        /*area_new->vma_obj = area_cur->vma_obj;*/
-        /*area_new->vma_obj->mmo_ops->ref(area_new->vma_obj);*/
+        area_new->vma_obj = area_cur->vma_obj;
+        area_new->vma_obj->mmo_ops->ref(area_new->vma_obj);
     } list_iterate_end();
 
     return newmap;

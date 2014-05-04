@@ -77,8 +77,10 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
             /*it's shared map*/
             /*no need to do anything*/
             KASSERT(newarea->vma_flags & MAP_SHARED);
-            newarea->vma_obj = oldare->vma_obj;
-            newarea->vma_obj->mmo_ops->ref(newarea->vma_obj);
+
+            /*newarea->vma_obj = oldare->vma_obj;*/
+            /*newarea->vma_obj->mmo_ops->ref(newarea->vma_obj);*/
+
             continue;
         }
 
@@ -105,16 +107,23 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
         mmobj_t *oldshadow = shadow_create();
         KASSERT(oldshadow);
 
+        /*assign shadowed and bottom field*/
         newshadow->mmo_shadowed = shadowed;
+        KASSERT(newshadow->mmo_shadowed != newshadow);
+        /*no need to ref, this pointer substitute the newarea->vma_obj pointer*/
         newshadow->mmo_un.mmo_bottom_obj = bottom;
         bottom->mmo_ops->ref(bottom);
+
         oldshadow->mmo_shadowed = shadowed;
+        KASSERT(oldshadow->mmo_shadowed != oldshadow);
+        /*no need to ref, this pointer substitute the oldarea->vma_obj pointer*/
         oldshadow->mmo_un.mmo_bottom_obj = bottom;
         bottom->mmo_ops->ref(bottom);
 
         /*list_insert_head(&bottom->mmo_un.mmo_vmas, &newarea->vma_olink);*/
         /*list_insert_head(&bottom->mmo_un.mmo_vmas, &oldarea->vma_olink);*/
 
+        /*update vma_obj field*/
         newarea->vma_obj = newshadow;
         newshadow->mmo_ops->ref(newshadow);
         oldarea->vma_obj = oldshadow;
