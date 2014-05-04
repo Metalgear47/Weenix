@@ -359,23 +359,19 @@ vmmap_clone(vmmap_t *map)
 
         list_link_init(&area_new->vma_olink);
         /*olink need future attention*/
+        KASSERT(area_cur->vma_obj->mmo_shadowed != area_cur->vma_obj);
 
-        mmobj_t *shadowed = area_cur->vma_obj;
-        mmobj_t *bottom = mmobj_bottom_obj(shadowed);
+        mmobj_t *bottom = mmobj_bottom_obj(area_cur->vma_obj);
         KASSERT(bottom);
         KASSERT(bottom->mmo_shadowed == NULL);
-        /*dbg(DBG_TEST, "%p\n", bottom);*/
-        /*list_insert_head(&bottom->mmo_un.mmo_vmas, &area_new->vma_olink);*/
+        KASSERT(bottom != bottom->mmo_shadowed);
 
-        area_new->vma_obj = area_cur->vma_obj;
-        area_new->vma_obj->mmo_ops->ref(area_new->vma_obj);
-
-        if (shadowed->mmo_shadowed == NULL) {
-            KASSERT(shadowed == bottom);
-        } else {
-            KASSERT(shadowed != bottom);
-            /*it's a shadow object*/
+        if (area_cur->vma_obj->mmo_shadowed != NULL) {
+            KASSERT(area_cur->vma_obj != bottom);
         }
+
+        /*area_new->vma_obj = area_cur->vma_obj;*/
+        /*area_new->vma_obj->mmo_ops->ref(area_new->vma_obj);*/
     } list_iterate_end();
 
     return newmap;

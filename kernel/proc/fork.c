@@ -77,6 +77,8 @@ vmmap_shadow(vmmap_t *newmap, vmmap_t *oldmap)
             /*it's shared map*/
             /*no need to do anything*/
             KASSERT(newarea->vma_flags & MAP_SHARED);
+            newarea->vma_obj = oldare->vma_obj;
+            newarea->vma_obj->mmo_ops->ref(newarea->vma_obj);
             continue;
         }
 
