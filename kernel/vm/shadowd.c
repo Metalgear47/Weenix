@@ -92,7 +92,7 @@ shadowd(int arg1, void *arg2)
                                                         KASSERT(o->mmo_refcount == 1 && o->mmo_nrespages == 0);
                                                         o->mmo_ops->put(o);
                                                 } else {
-                                                        dbg(DBG_FORK, "if.\n");
+                                                        dbg(DBG_FORK, "else.\n");
                                                         KASSERT(o->mmo_refcount - o->mmo_nrespages == 2);
                                                         o->mmo_ops->ref(o);
                                                         last->mmo_ops->put(last);
