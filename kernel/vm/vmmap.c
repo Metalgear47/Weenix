@@ -199,10 +199,12 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
     list_insert_tail(list, &newvma->vma_plink);
     newvma->vma_vmmap = map;
 
-    dprintf("after inserting, the vmmap is:\n");
-    print_vmmap(map);
-    dprintf("the vmarea inserted is:\n");
-    print_vmarea(newvma);
+    /*
+     *dprintf("after inserting, the vmmap is:\n");
+     *print_vmmap(map);
+     *dprintf("the vmarea inserted is:\n");
+     *print_vmarea(newvma);
+     */
         /*NOT_YET_IMPLEMENTED("VM: vmmap_insert");*/
 }
 
@@ -358,6 +360,7 @@ vmmap_clone(vmmap_t *map)
         list_link_init(&area_new->vma_olink);
         mmobj_t *bottom = mmobj_bottom_obj(area_cur->vma_obj);
         KASSERT(bottom);
+        KASSERT(bottom->mmo_shadowed == NULL);
         /*dbg(DBG_TEST, "%p\n", bottom);*/
         /*list_insert_head(&bottom->mmo_un.mmo_vmas, &area_new->vma_olink);*/
 
@@ -368,18 +371,20 @@ vmmap_clone(vmmap_t *map)
     return newmap;
 
 /*FAIL:*/
-    list_iterate_begin(&newmap->vmm_list, area_cur, vmarea_t, vma_plink) {
-        /*no need to put mmobj*/
-        list_remove(&area_cur->vma_plink);
-        vmarea_free(area_cur);
-
-        /*vmmap_destroy*/
-
-    } list_iterate_end();
-
-    slab_obj_free(vmmap_allocator, newmap);
-
-    return NULL;
+/*
+ *    list_iterate_begin(&newmap->vmm_list, area_cur, vmarea_t, vma_plink) {
+ *        [>no need to put mmobj<]
+ *        list_remove(&area_cur->vma_plink);
+ *        vmarea_free(area_cur);
+ *
+ *        [>vmmap_destroy<]
+ *
+ *    } list_iterate_end();
+ *
+ *    slab_obj_free(vmmap_allocator, newmap);
+ *
+ *    return NULL;
+ */
         /*NOT_YET_IMPLEMENTED("VM: vmmap_clone");*/
         /*return NULL;*/
 }
