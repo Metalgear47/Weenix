@@ -192,6 +192,9 @@ do_fork(struct regs *regs)
     newthr->kt_proc = newproc;
     list_insert_head(&newproc->p_threads, &newthr->kt_plink);
 
+    /*the return value*/
+    regs->r_eax = 0;
+
     /*bulletin 5*/
     newthr->kt_ctx.c_pdptr = newproc->p_pagedir;
     newthr->kt_ctx.c_eip = (uintptr_t)userland_entry;
