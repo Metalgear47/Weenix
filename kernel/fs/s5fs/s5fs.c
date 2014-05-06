@@ -479,6 +479,8 @@ s5fs_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
     KASSERT(file->vn_mmobj.mmo_nrespages >= 0);
 
     *ret = &file->vn_mmobj;
+    /*ref it because the ret pointer will outlive this function*/
+    file->vn_mmobj.mmo_ops->ref(&file->vn_mmobj);
 
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: s5fs_mmap");*/
