@@ -596,6 +596,8 @@ static int test_mmap_beyond(void)
 
 int main(int argc, char **argv)
 {
+    open("/dev/tty0", O_RDONLY, 0);
+    open("/dev/tty0", O_WRONLY, 0);
         if (argc != 1) {
                 fprintf(stderr,
                         "USAGE: memtest\n");
