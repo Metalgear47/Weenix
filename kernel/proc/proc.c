@@ -379,6 +379,8 @@ CheckAgain:
         proc_t *proc_iter;
         list_iterate_begin(&curproc->p_children, proc_iter, proc_t, p_child_link) {
             if (PROC_DEAD == proc_iter->p_state) {
+                child_exist = 1;
+
                 /*record child's pid*/
                 child_pid = proc_iter->p_pid;
 
@@ -410,13 +412,19 @@ CheckAgain:
         goto CheckAgain;
     }
 
+    /*
+     *if (child_exist == 0) {
+     *    return -ECHILD;
+     *}
+     */
+
     /*pid is not child of curproc*/
     if (child_proc == NULL && pid > 0) {
         return -ECHILD;
     }
 
     /*no dead child found*/
-    if (child_proc == NULL && -1 == pid) {
+    if (child_proc == NULL && -1 == child_pid) {
         dbg(DBG_PROC, "Aha! None of your children are dead, put yourself to sleep...\n");
         /*sched_make_runnable(curthr);*/
         /*sched_switch();*/

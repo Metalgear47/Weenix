@@ -23,6 +23,7 @@ break bootstrap
 #b shadow_fillpage
 #b pframe.c:557
 #b pagefault.c:56
-b sys_halt
+#b sys_halt
+b do_waitpid
 
 continue

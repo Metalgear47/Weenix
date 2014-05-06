@@ -213,7 +213,7 @@ do_fork(struct regs *regs)
     /*bulletin 10*/
     sched_make_runnable(newthr);
 
-    return 0;
+    return newproc->p_pid;
         /*NOT_YET_IMPLEMENTED("VM: do_fork");*/
         /*return 0;*/
 }
