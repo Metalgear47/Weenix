@@ -270,7 +270,7 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
                 /*no prev*/
                 /*head of list*/
                 if (USER_PAGE_HIGH - vma_cur->vma_end >= npages) {
-                    return vma_cur->vma_end;
+                    return (USER_PAGE_HIGH - npages);
                 }
             } else {
                 /*next is a vmarea*/
@@ -278,14 +278,14 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
                 KASSERT(vma_next);
                 KASSERT(vma_next->vma_start >= vma_cur->vma_end);
                 if (vma_next->vma_start - vma_cur->vma_end >= npages) {
-                    return vma_cur->vma_end;
+                    return (USER_PAGE_HIGH - npages);
                 }
             }
         } list_iterate_end();
 
         KASSERT(vma_cur->vma_plink.l_prev == list);
         if (vma_cur->vma_start - USER_PAGE_LOW >= npages) {
-            return USER_PAGE_LOW;
+            return vma_cur->vma_start - npages;
         } else {
             return -1;
         }

@@ -57,6 +57,7 @@ int
 do_mmap(void *addr, size_t len, int prot, int flags,
         int fd, off_t off, void **ret)
 {
+    dbg(DBG_VM, "do_mmap function hook\n");
     /*EINVAL*/
     /*We don't like addr, length, or offset (e.g., they are too large, or not aligned on a page boundary).*/
     /*EINVAL*/
@@ -146,12 +147,20 @@ CheckDone:
     if (err < 0) {
         return (int)MAP_FAILED;
     }
+
     if (addr == NULL) {
-        tlb_flush_range((uintptr_t)PN_TO_ADDR(area->vma_start), ADDR_TO_PN(len) + 1);
+        uintptr_t newaddr = (uintptr_t)PN_TO_ADDR(area->vma_start);
+        if (ret) {
+            *ret = (void *)newaddr;
+        }
+        tlb_flush_range(newaddr, ADDR_TO_PN(len) + 1);
     } else {
+        if (ret) {
+            *ret = addr;
+        }
         tlb_flush_range((uintptr_t)addr, ADDR_TO_PN(len) + 1);
     }
-    return (uintptr_t)PN_TO_ADDR(area->vma_start);
+    return 0;
         /*NOT_YET_IMPLEMENTED("VM: do_mmap");*/
         /*return -1;*/
 }
