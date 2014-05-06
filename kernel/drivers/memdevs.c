@@ -131,6 +131,17 @@ zero_read(bytedev_t *dev, int offset, void *buf, int count)
 static int
 zero_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
 {
-        NOT_YET_IMPLEMENTED("VM: zero_mmap");
-        return -1;
+    KASSERT(file);
+    KASSERT(vma);
+
+    /*How to watch the refcount?*/
+    KASSERT(file->vn_mmobj.mmo_refcount >= 0);
+    KASSERT(file->vn_mmobj.mmo_nrespages >= 0);
+
+    *ret = &file->vn_mmobj;
+    file->vn_mmobj.mmo_ops->ref(&file->vn_mmobj);
+
+    return 0;
+        /*NOT_YET_IMPLEMENTED("VM: zero_mmap");*/
+        /*return -1;*/
 }
