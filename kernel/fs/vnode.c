@@ -485,8 +485,13 @@ special_file_write(vnode_t *file, off_t offset, const void *buf, size_t count)
 static int
 special_file_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
 {
-        NOT_YET_IMPLEMENTED("VM: special_file_mmap");
-        return 0;
+    bytedev_t *bytedev = file->vn_cdev;
+    KASSERT(bytedev);
+    KASSERT(bytedev->cd_ops);
+
+    return bytedev->cd_ops->mmap(file, vma, ret);
+        /*NOT_YET_IMPLEMENTED("VM: special_file_mmap");*/
+        /*return 0;*/
 }
 
 /* Stat is currently the only filesystem specific routine that we have to worry
