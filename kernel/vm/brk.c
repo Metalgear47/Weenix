@@ -56,6 +56,22 @@
 int
 do_brk(void *addr, void **ret)
 {
+    if (addr == NULL) {
+        return (uintptr_t)curproc->p_brk;
+    }
+
+    uintptr_t start_brk = (uintptr_t)curproc->p_start_brk;
+    uintptr_t brk = (uintptr_t)curproc->p_brk;
+    uintptr_t vaddr = (uintptr_t)addr;
+    uint32_t lopage = (uint32_t)PAGE_ALIGN_DOWN(start_brk);
+
+    if (vaddr < start_brk) {
+        return -EINVAL;
+    }
+
+    if (brk == start_brk) {
+        KASSERT(NULL == vmmap_lookup(curproc->p_vmmap, lopage));
+    }
         NOT_YET_IMPLEMENTED("VM: do_brk");
         return 0;
 }
