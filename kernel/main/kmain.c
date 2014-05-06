@@ -356,9 +356,15 @@ initproc_run(int arg1, void *arg2)
      *kernel_execve("/bin/stat", argv, envp);
      */
 
-    char *argv[2] = {"spin", NULL};
+    char *argv[2] = {"sh", NULL};
     char *envp[1] = {NULL};
     kernel_execve("/bin/sh", argv, envp);
+
+    /*
+     *char *argv[2] = {"spin", NULL};
+     *char *envp[1] = {NULL};
+     *kernel_execve("/usr/sbin/spin", argv, envp);
+     */
 
     /*
      *char *argv[2] = {"forktest", NULL};

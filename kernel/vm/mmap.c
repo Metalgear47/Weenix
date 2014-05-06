@@ -76,18 +76,23 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         return -EINVAL;
     }
 
+    file_t *file = NULL;
+    vnode_t *vnode = NULL;
+
     /*EBADF*/
     /*fd is not a valid file descriptor (and MAP_ANONYMOUS was not set).*/
-    if (((flags & MAP_ANON) == 0) && (fd < 0 || fd > NFILES)) {
-        return -EBADF;
-    }
-    file_t *file = fget(fd);
-    if (file == NULL) {
-        return -EBADF;
+    if ((flags & MAP_ANON) == 0)  {
+        file_t *file = fget(fd);
+        if (file == NULL) {
+            return -EBADF;
+        }
+    } else {
+        goto CheckDone;
     }
 
     /*EACCES*/
     /*A file descriptor refers to a non-regular file. Or MAP_PRIVATE was requested, but fd is not open for reading. Or MAP_SHARED was requested and PROT_WRITE is set, but fd is not open in read/write (O_RDWR) mode. Or PROT_WRITE is set, but the file is append-only.*/
+    KASSERT(f);
     vnode_t *vnode = file->f_vnode;
     KASSERT(vnode);
     if (!S_ISREG(vnode->vn_mode)) {
@@ -119,7 +124,13 @@ do_mmap(void *addr, size_t len, int prot, int flags,
      *TODO: handling MAP_ANON
      */
 
-    
+CheckDone:
+    int ret = do_mmap(curproc->p_vmmap, vnode, ADDR_TO_PN(addr), ADDR_TO_PN(len),
+                        prot, flags, off, VMMAP_DIR_HILO, (vmarea_t **)ret);
+    if (file) {
+        fput(file);
+    }
+    return ret;
         NOT_YET_IMPLEMENTED("VM: do_mmap");
         return -1;
 }
