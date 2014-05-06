@@ -151,7 +151,20 @@ CheckDone:
 int
 do_munmap(void *addr, size_t len)
 {
-        NOT_YET_IMPLEMENTED("VM: do_munmap");
-        return -1;
+    uintptr_t vaddr = (uintptr_t)addr;
+    if (!PAGE_ALIGNED(vaddr)) {
+        return -EINVAL;
+    }
+    if (!PAGE_ALIGNED(len)) {
+        return -EINVAL;
+    }
+
+    uint32_t lopage = ADDR_TO_PN(vaddr);
+    uint32_t npages = ADDR_TO_PN(len);
+
+    int ret = vmmap_remove(curproc->p_vmmap, lopage, npages);
+    return ret;
+        /*NOT_YET_IMPLEMENTED("VM: do_munmap");*/
+        /*return -1;*/
 }
 
