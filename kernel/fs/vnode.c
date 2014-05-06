@@ -515,8 +515,13 @@ special_file_stat(vnode_t *vnode, struct stat *ss)
 static int
 special_file_fillpage(vnode_t *file, off_t offset, void *pagebuf)
 {
-        NOT_YET_IMPLEMENTED("VM: special_file_fillpage");
-        return 0;
+    bytedev_t *bytedev = file->vn_cdev;
+    KASSERT(bytedev);
+    KASSERT(bytedev->cd_ops);
+
+    return bytedev->cd_ops->fillpage(file, offset, pagebuf);
+        /*NOT_YET_IMPLEMENTED("VM: special_file_fillpage");*/
+        /*return 0;*/
 }
 
 /* Just as with mmap above, pass the call through to the
