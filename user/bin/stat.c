@@ -25,6 +25,8 @@ const char *modestr(int mode) {
 }
 
 int main(int argc, char **argv) {
+  open("/dev/tty0", O_RDONLY, 0);
+  open("/dev/tty0", O_WRONLY, 0);
   if (argc != 2) {
     printf("usage: stat file\n");
     return 1;

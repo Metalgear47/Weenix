@@ -7,6 +7,7 @@
 #include <unistd.h>
 #include <sys/utsname.h>
 #include <stdio.h>
+#include <fcntl.h>
 
 char *TAS = "weenix brought to you by:\n"
             "1998: jal, dep, kma, mcc, cd, tor\n"
@@ -27,6 +28,8 @@ int main(int argc, char **argv)
         int     ii;
 
         uname(&un);
+        open("/dev/tty0", O_RDONLY, 0);
+        open("/dev/tty0", O_WRONLY, 0);
 
         for (ii = 1; ii < argc ; ii++) {
                 if (argv[ii][0] == '-') {
