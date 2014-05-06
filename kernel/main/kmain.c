@@ -356,9 +356,15 @@ initproc_run(int arg1, void *arg2)
      *kernel_execve("/bin/stat", argv, envp);
      */
 
+    /*
+     *char *argv[2] = {"forktest", NULL};
+     *char *envp[1] = {NULL};
+     *kernel_execve("/usr/bin/forktest", argv, envp);
+     */
+
     char *argv[2] = {"forktest", NULL};
     char *envp[1] = {NULL};
-    kernel_execve("/usr/bin/forktest", argv, envp);
+    kernel_execve("/sbin/init", argv, envp);
 
     /*
      *char *argv[2] = {"halt", NULL};
