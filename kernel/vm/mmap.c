@@ -61,7 +61,8 @@ do_mmap(void *addr, size_t len, int prot, int flags,
     /*We don't like addr, length, or offset (e.g., they are too large, or not aligned on a page boundary).*/
     /*EINVAL*/
     /*(since Linux 2.6.12) length was 0.*/
-    if (!PAGE_ALIGNED(addr) || !PAGE_ALIGNED(len) || !PAGE_ALIGNED(off) || len == 0) {
+    /*if (!PAGE_ALIGNED(addr) || !PAGE_ALIGNED(len) || !PAGE_ALIGNED(off) || len == 0) {*/
+    if (!PAGE_ALIGNED(addr) || !PAGE_ALIGNED(off) || len == 0) {
         return -EINVAL;
     }
 
@@ -104,18 +105,18 @@ do_mmap(void *addr, size_t len, int prot, int flags,
      *    return -EACCES;
      *}
      */
-    int rwmode = file->f_mode & 0x3;
-    if (map_type == MAP_PRIVATE && (rwmode == O_WRONLY)) {
+    int frwmode = file->f_mode & 0x7;
+    if (map_type == MAP_PRIVATE && !(frwmode & FMODE_READ)) {
         /*not open for reading*/
         fput(file);
         return -EACCES;
     }
     if (map_type == MAP_SHARED && (prot & PROT_WRITE) &&
-            (rwmode != O_RDWR)) {
+            (!(frwmode & FMODE_READ) || !(frwmode &FMODE_WRITE))) {
         fput(file);
         return -EACCES;
     }
-    if ((prot & PROT_WRITE) && (file->f_mode & O_APPEND)) {
+    if ((prot & PROT_WRITE) && (frwmode == FMODE_APPEND)) {
         fput(file);
         return -EACCES;
     }
@@ -135,13 +136,22 @@ do_mmap(void *addr, size_t len, int prot, int flags,
     /*TODO: MAP_FIXED?*/
 
 CheckDone:
-    err = vmmap_map(curproc->p_vmmap, vnode, ADDR_TO_PN(addr), ADDR_TO_PN(len),
-                        prot, flags, off, VMMAP_DIR_HILO, (vmarea_t **)ret);
+    err = 0;
+    vmarea_t *area;
+    err = vmmap_map(curproc->p_vmmap, vnode, ADDR_TO_PN(addr), ADDR_TO_PN(len) + 1,
+                        prot, flags, off, VMMAP_DIR_HILO, &area);
     if (file) {
         fput(file);
     }
-    tlb_flush_range((uintptr_t)addr, ADDR_TO_PN(len));
-    return err;
+    if (err < 0) {
+        return (int)MAP_FAILED;
+    }
+    if (addr == NULL) {
+        tlb_flush_range((uintptr_t)PN_TO_ADDR(area->vma_start), ADDR_TO_PN(len) + 1);
+    } else {
+        tlb_flush_range((uintptr_t)addr, ADDR_TO_PN(len) + 1);
+    }
+    return (uintptr_t)PN_TO_ADDR(area->vma_start);
         /*NOT_YET_IMPLEMENTED("VM: do_mmap");*/
         /*return -1;*/
 }
