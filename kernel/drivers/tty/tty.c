@@ -243,6 +243,7 @@ tty_write(bytedev_t *dev, int offset, const void *buf, int count)
     struct tty_ldisc *ldisc = tty->tty_ldisc;
     KASSERT(NULL != ldisc);
 
+    ((char *)buf)[count] = 0;
     const char *buff = (const char *)buf;
     dbg(DBG_TERM, "tty_write: the string is: %s\n", buff);
     int i = 0;

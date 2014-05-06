@@ -65,9 +65,11 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         return -EINVAL;
     }
 
-    if (!VALID_ADDR(addr) || !VALID_ADDR((uint32_t)addr + len)) {
-        return -EINVAL;
-    }
+    /*
+     *if (!VALID_ADDR(addr) || !VALID_ADDR((uint32_t)addr + len)) {
+     *    return -EINVAL;
+     *}
+     */
 
     /*EINVAL*/
     /*flags contained neither MAP_PRIVATE or MAP_SHARED, or contained both of these values.*/
@@ -83,7 +85,7 @@ do_mmap(void *addr, size_t len, int prot, int flags,
     /*EBADF*/
     /*fd is not a valid file descriptor (and MAP_ANONYMOUS was not set).*/
     if ((flags & MAP_ANON) == 0)  {
-        file_t *file = fget(fd);
+        file = fget(fd);
         if (file == NULL) {
             return -EBADF;
         }
@@ -96,10 +98,12 @@ do_mmap(void *addr, size_t len, int prot, int flags,
     KASSERT(file);
     vnode = file->f_vnode;
     KASSERT(vnode);
-    if (!S_ISREG(vnode->vn_mode)) {
-        fput(file);
-        return -EACCES;
-    }
+    /*
+     *if (!S_ISREG(vnode->vn_mode)) {
+     *    fput(file);
+     *    return -EACCES;
+     *}
+     */
     int rwmode = file->f_mode & 0x3;
     if (map_type == MAP_PRIVATE && (rwmode == O_WRONLY)) {
         /*not open for reading*/
@@ -116,11 +120,13 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         return -EACCES;
     }
 
-    if (off + (signed)len >= vnode->vn_len) {
-        /*exceeding the file size*/
-        fput(file);
-        return -EINVAL;
-    }
+    /*
+     *if (off + (signed)len >= vnode->vn_len) {
+     *    [>exceeding the file size<]
+     *    fput(file);
+     *    return -EINVAL;
+     *}
+     */
 
     /*
      *TODO: handling MAP_ANON
