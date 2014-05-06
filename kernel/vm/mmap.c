@@ -134,9 +134,10 @@ CheckDone:
     if (file) {
         fput(file);
     }
+    tlb_flush_range((uintptr_t)addr, ADDR_TO_PN(len));
     return err;
-        NOT_YET_IMPLEMENTED("VM: do_mmap");
-        return -1;
+        /*NOT_YET_IMPLEMENTED("VM: do_mmap");*/
+        /*return -1;*/
 }
 
 
