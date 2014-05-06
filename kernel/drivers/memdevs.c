@@ -138,8 +138,10 @@ zero_mmap(vnode_t *file, vmarea_t *vma, mmobj_t **ret)
     KASSERT(file->vn_mmobj.mmo_refcount >= 0);
     KASSERT(file->vn_mmobj.mmo_nrespages >= 0);
 
-    *ret = &file->vn_mmobj;
-    /*file->vn_mmobj.mmo_ops->ref(&file->vn_mmobj);*/
+    *ret = anon_create();
+    if (*ret == NULL) {
+        return -ENOMEM;
+    }
 
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: zero_mmap");*/

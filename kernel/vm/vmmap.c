@@ -61,7 +61,7 @@ get_pagenum(vmarea_t *vmarea, uint32_t pagenum)
 static int
 valid_pagenumber(uint32_t pagenum)
 {
-    return (pagenum >= USER_PAGE_LOW && pagenum < USER_PAGE_HIGH);
+    return (pagenum >= USER_PAGE_LOW && pagenum <= USER_PAGE_HIGH);
 }
 
 static slab_allocator_t *vmmap_allocator;
@@ -158,7 +158,7 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
     /*sanity check for newvma*/
     KASSERT(newvma->vma_end > newvma->vma_start);
     KASSERT(newvma->vma_start >= USER_PAGE_LOW);
-    KASSERT(newvma->vma_end < USER_PAGE_HIGH);
+    KASSERT(newvma->vma_end <= USER_PAGE_HIGH);
 
     dprintf("vmmap_insert is called:\n");
     dprintf("before inserting, the vmmap is:\n");
@@ -195,7 +195,7 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
     } list_iterate_end();
 
     KASSERT(vma_cur->vma_plink.l_next == list);
-    KASSERT(vma_cur->vma_end <= newvma->vma_start);
+    KASSERT(vma_cur->vma_end >= newvma->vma_start);
     list_insert_tail(list, &newvma->vma_plink);
     newvma->vma_vmmap = map;
 
