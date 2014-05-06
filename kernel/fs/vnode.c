@@ -536,7 +536,7 @@ special_file_dirtypage(vnode_t *file, off_t offset)
     KASSERT(bytedev);
     KASSERT(bytedev->cd_ops);
 
-    return bytedev->cd_ops->dirtypage(file, offset, pagebuf);
+    return bytedev->cd_ops->dirtypage(file, offset);
         /*NOT_YET_IMPLEMENTED("VM: special_file_dirtypage");*/
         /*return 0;*/
 }
