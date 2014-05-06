@@ -269,6 +269,10 @@ proc_kill_all()
     proc_t *proc_iter;
     list_iterate_begin(&_proc_list, proc_iter, proc_t, p_list_link) {
         /*no direct children of idle proces, not curproc*/
+        if (PID_IDLE == proc_iter->p_pid) {
+            continue;
+        }
+
         if (PID_IDLE != proc_iter->p_pproc->p_pid || curproc != proc_iter) {
             list_remove(&proc_iter->p_list_link);
             list_remove(&proc_iter->p_child_link);
