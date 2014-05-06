@@ -78,6 +78,7 @@ do_mmap(void *addr, size_t len, int prot, int flags,
 
     file_t *file = NULL;
     vnode_t *vnode = NULL;
+    int err = 0;
 
     /*EBADF*/
     /*fd is not a valid file descriptor (and MAP_ANONYMOUS was not set).*/
@@ -92,24 +93,25 @@ do_mmap(void *addr, size_t len, int prot, int flags,
 
     /*EACCES*/
     /*A file descriptor refers to a non-regular file. Or MAP_PRIVATE was requested, but fd is not open for reading. Or MAP_SHARED was requested and PROT_WRITE is set, but fd is not open in read/write (O_RDWR) mode. Or PROT_WRITE is set, but the file is append-only.*/
-    KASSERT(f);
-    vnode_t *vnode = file->f_vnode;
+    KASSERT(file);
+    vnode = file->f_vnode;
     KASSERT(vnode);
     if (!S_ISREG(vnode->vn_mode)) {
         fput(file);
         return -EACCES;
     }
-    if (map_type == MAP_PRIVATE && (file->f_mode == O_WRONLY)) {
+    int rwmode = file->f_mode & 0x3;
+    if (map_type == MAP_PRIVATE && (rwmode == O_WRONLY)) {
         /*not open for reading*/
         fput(file);
         return -EACCES;
     }
     if (map_type == MAP_SHARED && (prot & PROT_WRITE) &&
-            (file->f_mode != O_RDWR)) {
+            (rwmode != O_RDWR)) {
         fput(file);
         return -EACCES;
     }
-    if ((prot & PROT_WRITE) && file->f_mode == O_APPEND) {
+    if ((prot & PROT_WRITE) && (file->f_mode & O_APPEND)) {
         fput(file);
         return -EACCES;
     }
@@ -124,13 +126,15 @@ do_mmap(void *addr, size_t len, int prot, int flags,
      *TODO: handling MAP_ANON
      */
 
+    /*TODO: MAP_FIXED?*/
+
 CheckDone:
-    int ret = do_mmap(curproc->p_vmmap, vnode, ADDR_TO_PN(addr), ADDR_TO_PN(len),
+    err = vmmap_map(curproc->p_vmmap, vnode, ADDR_TO_PN(addr), ADDR_TO_PN(len),
                         prot, flags, off, VMMAP_DIR_HILO, (vmarea_t **)ret);
     if (file) {
         fput(file);
     }
-    return ret;
+    return err;
         NOT_YET_IMPLEMENTED("VM: do_mmap");
         return -1;
 }
