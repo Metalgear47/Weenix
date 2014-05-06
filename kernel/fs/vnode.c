@@ -532,8 +532,13 @@ special_file_fillpage(vnode_t *file, off_t offset, void *pagebuf)
 static int
 special_file_dirtypage(vnode_t *file, off_t offset)
 {
-        NOT_YET_IMPLEMENTED("VM: special_file_dirtypage");
-        return 0;
+    bytedev_t *bytedev = file->vn_cdev;
+    KASSERT(bytedev);
+    KASSERT(bytedev->cd_ops);
+
+    return bytedev->cd_ops->dirtypage(file, offset, pagebuf);
+        /*NOT_YET_IMPLEMENTED("VM: special_file_dirtypage");*/
+        /*return 0;*/
 }
 
 /* Just as with mmap above, pass the call through to the
