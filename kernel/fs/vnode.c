@@ -549,8 +549,13 @@ special_file_dirtypage(vnode_t *file, off_t offset)
 static int
 special_file_cleanpage(vnode_t *file, off_t offset, void *pagebuf)
 {
-        NOT_YET_IMPLEMENTED("VM: special_file_cleanpage");
-        return 0;
+    bytedev_t *bytedev = file->vn_cdev;
+    KASSERT(bytedev);
+    KASSERT(bytedev->cd_ops);
+
+    return bytedev->cd_ops->cleanpage(file, offset, pagebuf);
+        /*NOT_YET_IMPLEMENTED("VM: special_file_cleanpage");*/
+        /*return 0;*/
 }
 
 /*
