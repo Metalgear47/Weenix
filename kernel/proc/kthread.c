@@ -90,6 +90,7 @@ kthread_create(struct proc *p, kthread_func_t func, long arg1, void *arg2)
     kthread_struct->kt_proc = p;
 
     void *ctx_stack = alloc_stack();
+    /*void *ctx_stack = kthread_struct->kt_kstack;*/
     KASSERT(NULL != ctx_stack);
 
     context_setup(&kthread_struct->kt_ctx, func, arg1, arg2, ctx_stack, DEFAULT_STACK_SIZE, p->p_pagedir);
@@ -204,6 +205,7 @@ kthread_clone(kthread_t *thr)
     /*kt_proc is gonna be initialized by the caller of this function*/
 
     void *ctx_stack = alloc_stack();
+    /*void *ctx_stack = newthr->kt_kstack;*/
     KASSERT(NULL != ctx_stack);
 
     newthr->kt_ctx.c_kstack = (uintptr_t)ctx_stack;
