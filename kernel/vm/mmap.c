@@ -163,6 +163,7 @@ do_munmap(void *addr, size_t len)
     uint32_t npages = ADDR_TO_PN(len);
 
     int ret = vmmap_remove(curproc->p_vmmap, lopage, npages);
+    tlb_flush_range(vaddr, npages);
     return ret;
         /*NOT_YET_IMPLEMENTED("VM: do_munmap");*/
         /*return -1;*/
