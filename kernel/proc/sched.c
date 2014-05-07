@@ -113,6 +113,11 @@ sched_sleep_on(ktqueue_t *q)
 
     /*it should already be set to KT_RUN when it's added to runq*/
     KASSERT(curthr->kt_state == KT_RUN);
+
+    if (curthr->kt_cancelled == 1) {
+        kthread_exit((void *)curproc->p_status);
+    }
+
     return;
         /*NOT_YET_IMPLEMENTED("PROCS: sched_sleep_on");*/
 }
@@ -277,9 +282,11 @@ sched_switch(void)
 
     dbg(DBG_SCHED, "Going back to proc: %s\n", curproc->p_comm);
 
-    if (curthr->kt_cancelled == 1 && curproc->p_pid != PID_INIT) {
-        kthread_exit((void *)curproc->p_status);
-    }
+    /*
+     *if (curthr->kt_cancelled == 1 && curproc->p_pid != PID_INIT) {
+     *    kthread_exit((void *)curproc->p_status);
+     *}
+     */
 
     return;
         /*NOT_YET_IMPLEMENTED("PROCS: sched_switch");*/

@@ -380,15 +380,15 @@ initproc_run(int arg1, void *arg2)
      *kernel_execve("/usr/bin/forkbomb", argv, envp);
      */
 
-    char *argv[2] = {"forktest", NULL};
-    char *envp[1] = {NULL};
-    kernel_execve("/sbin/init", argv, envp);
-
     /*
-     *char *argv[2] = {"halt", NULL};
+     *char *argv[2] = {"forktest", NULL};
      *char *envp[1] = {NULL};
-     *kernel_execve("/sbin/halt", argv, envp);
+     *kernel_execve("/sbin/init", argv, envp);
      */
+
+    char *argv[2] = {"halt", NULL};
+    char *envp[1] = {NULL};
+    kernel_execve("/sbin/halt", argv, envp);
 
     /*
      *char *argv[3] = {"args", "-a", NULL};
