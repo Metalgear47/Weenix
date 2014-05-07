@@ -203,7 +203,9 @@ do_fork(struct regs *regs)
     /*newthr->kt_ctx.c_kstack = (uintptr_t)newthr->kt_kstack;*/
     /*c_kstack and c_kstacksz is set during kthread_clone*/
 
-    /*bulletin 9: seems already been set during proc_create*/
+    /*bulletin 9: need to copy brk and start_brk over*/
+    newproc->p_brk = curproc->p_brk;
+    newproc->p_start_brk = curproc->p_start_brk;
 
     /*bulletin 4*/
     /*not sure which pagetable to flush*/
