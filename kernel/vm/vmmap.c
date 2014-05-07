@@ -670,7 +670,7 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             if (list_link_is_linked(&vma->vma_olink)) {
                 list_remove(&vma->vma_olink);
             } else {
-                panic("wohoo");
+                /*panic("wohoo");*/
             }
             vmarea_free(vma);
             continue;

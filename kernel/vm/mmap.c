@@ -186,6 +186,8 @@ do_munmap(void *addr, size_t len)
 
     int ret = vmmap_remove(curproc->p_vmmap, lopage, npages);
     tlb_flush_range(vaddr, npages);
+    pagedir_t *pd = pt_get();
+    pt_unmap_range(pd, vaddr, (uintptr_t)PN_TO_ADDR(lopage + npages));
     return ret;
         /*NOT_YET_IMPLEMENTED("VM: do_munmap");*/
         /*return -1;*/
