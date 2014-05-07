@@ -146,12 +146,6 @@ kthread_cancel(kthread_t *kthr, void *retval)
     } else {
         sched_cancel(kthr);
         kthr->kt_retval = retval;
-        /*what if the thread is running*/
-        /*
-         *if (KT_RUN == kthr->kt_state) {
-         *    list_remove(&kthr->kt_qlink);
-         *}
-         */
         /*if the thread's sleep is not cancellable, we do nothing else here*/
     }
 

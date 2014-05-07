@@ -421,10 +421,12 @@ CheckAgain:
         goto CheckAgain;
     }
 
-    /*pid is not child of curproc*/
-    if (child_proc == NULL && pid > 0) {
-        return -ECHILD;
-    }
+    /*
+     *[>pid is not child of curproc<]
+     *if (child_proc == NULL && pid > 0) {
+     *    return -ECHILD;
+     *}
+     */
 
     /*no dead child found*/
     if (child_proc == NULL && -1 == child_pid) {
