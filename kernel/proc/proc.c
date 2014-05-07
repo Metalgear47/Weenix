@@ -275,9 +275,8 @@ proc_kill_all()
             continue;
         }
 
+        /*don't kill direct children of idle process*/
         if (PID_IDLE != proc_iter->p_pproc->p_pid || curproc != proc_iter) {
-            /*list_remove(&proc_iter->p_list_link);*/
-            /*list_remove(&proc_iter->p_child_link);*/
             proc_kill(proc_iter, 0);
         }
     } list_iterate_end();
