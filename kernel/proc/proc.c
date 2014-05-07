@@ -365,8 +365,13 @@ do_waitpid(pid_t pid, int options, int *status)
         return -ECHILD;
     }
 
-    /*sched_make_runnable(curthr);*/
-    /*sched_switch();*/
+    if (pid < 0 && pid != -1) {
+        return -EINVAL;
+    }
+
+    if (options != 0) {
+        return -EINVAL;
+    }
 
 CheckAgain:
     dbg(DBG_PROC, "do_waitpid now starts collecting one child process.\n");
@@ -378,8 +383,8 @@ CheckAgain:
     if (-1 == pid) {
         proc_t *proc_iter;
         list_iterate_begin(&curproc->p_children, proc_iter, proc_t, p_child_link) {
+            child_exist = 1;
             if (PROC_DEAD == proc_iter->p_state) {
-                child_exist = 1;
 
                 /*record child's pid*/
                 child_pid = proc_iter->p_pid;
@@ -404,6 +409,10 @@ CheckAgain:
         } list_iterate_end();
     }
 
+    if (child_exist == 0) {
+        return -ECHILD;
+    }
+
     /*child exists but not dead yet*/
     if (child_exist && NULL == child_proc) {
         dbg(DBG_PROC, "The child current process is waiting for is not dead yet.\n");
@@ -411,12 +420,6 @@ CheckAgain:
         dbg(DBG_PROC, "Get woken up because it's child exited.\n");
         goto CheckAgain;
     }
-
-    /*
-     *if (child_exist == 0) {
-     *    return -ECHILD;
-     *}
-     */
 
     /*pid is not child of curproc*/
     if (child_proc == NULL && pid > 0) {
