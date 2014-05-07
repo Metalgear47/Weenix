@@ -88,9 +88,10 @@ do_brk(void *addr, void **ret)
     } else {
         KASSERT(area);
 
-        uint32_t hiaddr = (uint32_t)PAGE_ALIGN_DOWN(vaddr);
+        uint32_t hiaddr = (uint32_t)(vaddr - 1);
         uint32_t hipage = ADDR_TO_PN(hiaddr);
         if (hipage < area->vma_end) {
+            area->vma_end = hipage + 1;
             *ret = addr;
             curproc->p_brk = addr;
             return 0;
