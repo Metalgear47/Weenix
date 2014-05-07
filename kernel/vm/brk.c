@@ -69,8 +69,32 @@ do_brk(void *addr, void **ret)
         return -EINVAL;
     }
 
+    KASSERT(start_brk <= brk);
+
     if (brk == start_brk) {
         KASSERT(NULL == vmmap_lookup(curproc->p_vmmap, lopage));
+        panic("not ready");
+        if (vaddr == brk) {
+            panic("I'm not ready for this.\n");
+        } else {
+        }
+    } else {
+        vmarea_t *area = vmmap_lookup(curproc->p_vmmap, lopage);
+        KASSERT(area);
+
+        uint32_t hipage = (uint32_t)PAGE_ALIGN_DOWN(vaddr);
+        if (hipage < area->vma_end) {
+            *ret = addr;
+            return 0;
+        } else {
+            if (vmmap_is_range_empty(curproc->p_vmmap, area->vma_end,
+                                        hipage - area->vma_end)) {
+                *ret = addr;
+                return 0;
+            } else {
+                return -ENOMEM;
+            }
+        }
     }
         NOT_YET_IMPLEMENTED("VM: do_brk");
         return 0;

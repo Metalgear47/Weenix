@@ -153,12 +153,12 @@ CheckDone:
         if (ret) {
             *ret = (void *)newaddr;
         }
-        tlb_flush_range(newaddr, ADDR_TO_PN(len) + 1);
+        tlb_flush_range(newaddr, LEN_TO_PAGES(len));
     } else {
         if (ret) {
             *ret = addr;
         }
-        tlb_flush_range((uintptr_t)addr, ADDR_TO_PN(len) + 1);
+        tlb_flush_range((uintptr_t)addr, LEN_TO_PAGES(len));
     }
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: do_mmap");*/

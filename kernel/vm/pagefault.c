@@ -107,9 +107,5 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
             pt_virt_to_phys((uintptr_t)pf->pf_addr), pdflags, ptflags);
     KASSERT(err == 0);
 
-
-    /*tlb_flush(PAGE_ALIGN_DOWN(vaddr));*/
-
-    /*panic("heck, panic for now\n");*/
         /*NOT_YET_IMPLEMENTED("VM: handle_pagefault");*/
 }
