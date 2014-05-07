@@ -57,7 +57,8 @@ int
 do_brk(void *addr, void **ret)
 {
     if (addr == NULL) {
-        return (uintptr_t)curproc->p_brk;
+        *ret = curproc->p_brk;
+        return 0;
     }
 
     uintptr_t start_brk = (uintptr_t)curproc->p_start_brk;
