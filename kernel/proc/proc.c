@@ -247,10 +247,12 @@ proc_kill(proc_t *p, int status)
         kthread_t *kthr;
         list_iterate_begin(&p->p_threads, kthr, kthread_t, kt_plink) {
             /*remove it from parent's thread list*/
-            list_remove(&kthr->kt_plink);
+            /*list_remove(&kthr->kt_plink);*/
             /*cancel the thread*/
             kthread_cancel(kthr, (void *)(&status));
         } list_iterate_end();
+        p->p_status = status;
+        /*p->p_state = PROC_DEAD;*/
         /*proc_cleanup? -maybe not here, wait till syscall*/
     }
 
@@ -274,8 +276,8 @@ proc_kill_all()
         }
 
         if (PID_IDLE != proc_iter->p_pproc->p_pid || curproc != proc_iter) {
-            list_remove(&proc_iter->p_list_link);
-            list_remove(&proc_iter->p_child_link);
+            /*list_remove(&proc_iter->p_list_link);*/
+            /*list_remove(&proc_iter->p_child_link);*/
             proc_kill(proc_iter, 0);
         }
     } list_iterate_end();
