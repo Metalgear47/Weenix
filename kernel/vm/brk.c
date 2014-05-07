@@ -64,7 +64,7 @@ do_brk(void *addr, void **ret)
     uintptr_t start_brk = (uintptr_t)curproc->p_start_brk;
     uintptr_t brk = (uintptr_t)curproc->p_brk;
     uintptr_t vaddr = (uintptr_t)addr;
-    uint32_t lopage = (uint32_t)PAGE_ALIGN_DOWN(start_brk);
+    uint32_t lopage = ADDR_TO_PN(PAGE_ALIGN_DOWN(start_brk));
 
     if (vaddr < start_brk) {
         return -EINVAL;
@@ -74,10 +74,20 @@ do_brk(void *addr, void **ret)
 
     if (brk == start_brk) {
         KASSERT(NULL == vmmap_lookup(curproc->p_vmmap, lopage));
-        panic("not ready");
         if (vaddr == brk) {
             panic("I'm not ready for this.\n");
         } else {
+            uint32_t hipage = ADDR_TO_PN(vaddr);
+            int err = vmmap_map(curproc->p_vmmap, NULL, lopage, hipage - lopage + 1,
+                        PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON | MAP_FIXED,
+                        0, VMMAP_DIR_LOHI, NULL);
+            if (err < 0) {
+                return err;
+            }
+            KASSERT(err == 0);
+            *ret = addr;
+            curproc->p_brk = addr;
+            return 0;
         }
     } else {
         vmarea_t *area = vmmap_lookup(curproc->p_vmmap, lopage);
@@ -91,6 +101,7 @@ do_brk(void *addr, void **ret)
             if (vmmap_is_range_empty(curproc->p_vmmap, area->vma_end,
                                         hipage - area->vma_end)) {
                 *ret = addr;
+                curproc->p_brk = addr;
                 return 0;
             } else {
                 return -ENOMEM;

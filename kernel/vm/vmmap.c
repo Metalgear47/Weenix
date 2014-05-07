@@ -437,7 +437,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
         if (ret < 0) {
             KASSERT(ret == -1);
             /*not sure about the return value*/
-            return -1;
+            return -ENOMEM;
         }
         dprintf("the range found is: [%d(%#.5x), %d(%#.5x))\n", 
                 ret, ret, ret + npages, ret + npages);
