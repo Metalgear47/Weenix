@@ -151,17 +151,24 @@ CheckDone:
         return (int)MAP_FAILED;
     }
 
+    uint32_t pages = LEN_TO_PAGES(len);
     if (addr == NULL) {
         uintptr_t newaddr = (uintptr_t)PN_TO_ADDR(area->vma_start);
         if (ret) {
             *ret = (void *)newaddr;
         }
-        tlb_flush_range(newaddr, LEN_TO_PAGES(len));
+        tlb_flush_range(newaddr, pages);
+        pagedir_t *pd = pt_get();
+        pt_unmap_range(pd, newaddr,
+                        newaddr + (uintptr_t)PN_TO_ADDR(pages));
     } else {
         if (ret) {
             *ret = addr;
         }
-        tlb_flush_range((uintptr_t)addr, LEN_TO_PAGES(len));
+        tlb_flush_range((uintptr_t)addr, pages);
+        pagedir_t *pd = pt_get();
+        pt_unmap_range(pd, (uintptr_t)addr,
+                        (uintptr_t)addr + (uintptr_t)PN_TO_ADDR(pages));
     }
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: do_mmap");*/
