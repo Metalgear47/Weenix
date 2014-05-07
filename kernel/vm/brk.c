@@ -70,36 +70,32 @@ do_brk(void *addr, void **ret)
         return -EINVAL;
     }
 
+    if (vaddr >= USER_MEM_HIGH) {
+        return -ENOMEM;
+    }
+
+    if (vaddr == brk) {
+        panic("I'm not ready for this.\n");
+    }
+
     KASSERT(start_brk <= brk);
 
-    if (brk == start_brk) {
-        KASSERT(NULL == vmmap_lookup(curproc->p_vmmap, lopage));
-        if (vaddr == brk) {
-            panic("I'm not ready for this.\n");
-        } else {
-            uint32_t hipage = ADDR_TO_PN(vaddr);
-            int err = vmmap_map(curproc->p_vmmap, NULL, lopage, hipage - lopage + 1,
-                        PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON | MAP_FIXED,
-                        0, VMMAP_DIR_LOHI, NULL);
-            if (err < 0) {
-                return err;
-            }
-            KASSERT(err == 0);
-            *ret = addr;
-            curproc->p_brk = addr;
-            return 0;
-        }
+    vmarea_t *area = vmmap_lookup(curproc->p_vmmap, lopage);
+
+    if (area == NULL) {
+        panic("panic for now\n");
+        return -1;
     } else {
-        vmarea_t *area = vmmap_lookup(curproc->p_vmmap, lopage);
         KASSERT(area);
 
-        uint32_t hipage = (uint32_t)PAGE_ALIGN_DOWN(vaddr);
+        uint32_t hiaddr = (uint32_t)PAGE_ALIGN_DOWN(vaddr);
+        uint32_t hipage = ADDR_TO_PN(hiaddr);
         if (hipage < area->vma_end) {
             *ret = addr;
             return 0;
         } else {
             if (vmmap_is_range_empty(curproc->p_vmmap, area->vma_end,
-                                        hipage - area->vma_end)) {
+                                        hipage - area->vma_end + 1)) {
                 *ret = addr;
                 curproc->p_brk = addr;
                 return 0;
@@ -108,6 +104,6 @@ do_brk(void *addr, void **ret)
             }
         }
     }
-        NOT_YET_IMPLEMENTED("VM: do_brk");
-        return 0;
+        /*NOT_YET_IMPLEMENTED("VM: do_brk");*/
+        /*return 0;*/
 }
