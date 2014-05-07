@@ -59,6 +59,9 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         int fd, off_t off, void **ret)
 {
     dbg(DBG_VM, "do_mmap function hook\n");
+    if (len == (size_t)-1) {
+        return -EINVAL;
+    }
     /*EINVAL*/
     /*We don't like addr, length, or offset (e.g., they are too large, or not aligned on a page boundary).*/
     /*EINVAL*/
@@ -178,6 +181,9 @@ do_munmap(void *addr, size_t len)
 {
     uintptr_t vaddr = (uintptr_t)addr;
     if (!PAGE_ALIGNED(vaddr)) {
+        return -EINVAL;
+    }
+    if (len == (size_t)-1) {
         return -EINVAL;
     }
 
