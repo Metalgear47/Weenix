@@ -90,6 +90,9 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
 
     /*TODO: redo it when shadow object is done*/
 
+    if (err < 0) {
+        do_exit(EFAULT);
+    }
     KASSERT(err == 0);
     KASSERT(pf);
     KASSERT(pf->pf_addr);
