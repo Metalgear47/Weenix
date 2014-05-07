@@ -59,6 +59,9 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
     if (area == NULL) {
         proc_kill(curproc, EFAULT);
     }
+    if ((area->vma_prot & PROT_READ) == 0) {
+        do_exit(EFAULT);
+    }
 
     int forwrite = 0;
     uint32_t pdflags = PD_PRESENT | PD_USER;
