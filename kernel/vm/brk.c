@@ -96,6 +96,7 @@ do_brk(void *addr, void **ret)
         } else {
             if (vmmap_is_range_empty(curproc->p_vmmap, area->vma_end,
                                         hipage - area->vma_end + 1)) {
+                area->vma_end = hipage + 1;
                 *ret = addr;
                 curproc->p_brk = addr;
                 return 0;

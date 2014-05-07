@@ -6,6 +6,8 @@ break bootstrap
 add-symbol-file user/usr/bin/memtest.exec 0x08048094
 #b main
 #b usr/bin/tests/memtest.c:145
-b usr/bin/tests/memtest.c:146
+b usr/bin/tests/memtest.c:159
+b usr/bin/tests/memtest.c:161
+b usr/bin/tests/memtest.c:160
 
 continue
