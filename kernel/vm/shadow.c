@@ -175,7 +175,7 @@ shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
         }
         /*the bottom of the shadow chain whould not be a shadow object*/
         KASSERT(o->mmo_shadowed == NULL);
-        return pframe_get(o, pagenum, pf);
+        return pframe_lookup(o, pagenum, 0, pf);
         /*
          **pf = pframe_get_resident(o, pagenum);
          *if (*pf == NULL) {
