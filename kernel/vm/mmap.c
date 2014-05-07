@@ -27,6 +27,7 @@
 
 #define VALID_ADDR(addr) ((uint32_t)addr >= USER_MEM_LOW && \
                             (uint32_t)addr < USER_MEM_HIGH)
+#define LEN_TO_PAGES(len) len / PAGE_SIZE + ((len % PAGE_SIZE == 0) ? 0 : 1)
     /*EAGAIN*/
     /*The file has been locked, or too much memory has been locked (see setrlimit(2)).*/
     /*ENFILE*/
@@ -62,7 +63,6 @@ do_mmap(void *addr, size_t len, int prot, int flags,
     /*We don't like addr, length, or offset (e.g., they are too large, or not aligned on a page boundary).*/
     /*EINVAL*/
     /*(since Linux 2.6.12) length was 0.*/
-    /*if (!PAGE_ALIGNED(addr) || !PAGE_ALIGNED(len) || !PAGE_ALIGNED(off) || len == 0) {*/
     if (!PAGE_ALIGNED(addr) || !PAGE_ALIGNED(off) || len == 0) {
         return -EINVAL;
     }
@@ -139,7 +139,7 @@ do_mmap(void *addr, size_t len, int prot, int flags,
 CheckDone:
     err = 0;
     vmarea_t *area;
-    err = vmmap_map(curproc->p_vmmap, vnode, ADDR_TO_PN(addr), ADDR_TO_PN(len) + 1,
+    err = vmmap_map(curproc->p_vmmap, vnode, ADDR_TO_PN(addr), LEN_TO_PAGES(len),
                         prot, flags, off, VMMAP_DIR_HILO, &area);
     if (file) {
         fput(file);
@@ -180,12 +180,9 @@ do_munmap(void *addr, size_t len)
     if (!PAGE_ALIGNED(vaddr)) {
         return -EINVAL;
     }
-    if (!PAGE_ALIGNED(len)) {
-        return -EINVAL;
-    }
 
     uint32_t lopage = ADDR_TO_PN(vaddr);
-    uint32_t npages = ADDR_TO_PN(len);
+    uint32_t npages = LEN_TO_PAGES(len);
 
     int ret = vmmap_remove(curproc->p_vmmap, lopage, npages);
     tlb_flush_range(vaddr, npages);

@@ -195,7 +195,7 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
     } list_iterate_end();
 
     KASSERT(vma_cur->vma_plink.l_next == list);
-    KASSERT(vma_cur->vma_end >= newvma->vma_start);
+    KASSERT(vma_cur->vma_end <= newvma->vma_start);
     list_insert_tail(list, &newvma->vma_plink);
     newvma->vma_vmmap = map;
 
@@ -278,7 +278,7 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
                 KASSERT(vma_next);
                 KASSERT(vma_next->vma_start >= vma_cur->vma_end);
                 if (vma_next->vma_start - vma_cur->vma_end >= npages) {
-                    return (USER_PAGE_HIGH - npages);
+                    return (vma_next->vma_start - npages);
                 }
             }
         } list_iterate_end();
@@ -445,9 +445,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     } else {
         /*vmmap_remove(map, lopage, npages);*/
         /*should not remove here, what if something went south later*/
-        if (!vmmap_is_range_empty(map, lopage, npages)) {
-            remove = 1;
-        }
+        remove = 1;
         /*just mark it as remove needed*/
     }
 
@@ -500,6 +498,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
             KASSERT(mmobj_file == NULL);
             return err;
         }
+        KASSERT(mmobj_file);
 
         mmobj_file->mmo_ops->ref(mmobj_file);
 
@@ -586,6 +585,9 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
     KASSERT(map);
     /*KASSERT(!(list_empty(&map->vmm_list)));*/
     if (list_empty(&map->vmm_list)) {
+        return 0;
+    }
+    if (vmmap_is_range_empty(map, lopage, npages)) {
         return 0;
     }
 
