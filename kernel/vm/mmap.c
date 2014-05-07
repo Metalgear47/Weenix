@@ -197,6 +197,9 @@ do_munmap(void *addr, size_t len)
     uint32_t lopage = ADDR_TO_PN(vaddr);
     uint32_t npages = LEN_TO_PAGES(len);
 
+    if (vmmap_is_range_empty(curproc->p_vmmap, lopage, npages)) {
+        return 0;
+    }
     int ret = vmmap_remove(curproc->p_vmmap, lopage, npages);
     tlb_flush_range(vaddr, npages);
     pagedir_t *pd = pt_get();

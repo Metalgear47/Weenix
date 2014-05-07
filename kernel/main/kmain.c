@@ -362,9 +362,11 @@ initproc_run(int arg1, void *arg2)
      *kernel_execve("/bin/sh", argv, envp);
      */
 
-    char *argv[2] = {"memtest", NULL};
-    char *envp[1] = {NULL};
-    kernel_execve("/usr/bin/memtest", argv, envp);
+    /*
+     *char *argv[2] = {"memtest", NULL};
+     *char *envp[1] = {NULL};
+     *kernel_execve("/usr/bin/memtest", argv, envp);
+     */
 
     /*
      *char *argv[2] = {"spin", NULL};
@@ -378,11 +380,9 @@ initproc_run(int arg1, void *arg2)
      *kernel_execve("/usr/bin/forkbomb", argv, envp);
      */
 
-    /*
-     *char *argv[2] = {"forktest", NULL};
-     *char *envp[1] = {NULL};
-     *kernel_execve("/sbin/init", argv, envp);
-     */
+    char *argv[2] = {"forktest", NULL};
+    char *envp[1] = {NULL};
+    kernel_execve("/sbin/init", argv, envp);
 
     /*
      *char *argv[2] = {"halt", NULL};
