@@ -92,6 +92,7 @@ do_brk(void *addr, void **ret)
         uint32_t hipage = ADDR_TO_PN(hiaddr);
         if (hipage < area->vma_end) {
             *ret = addr;
+            curproc->p_brk = addr;
             return 0;
         } else {
             if (vmmap_is_range_empty(curproc->p_vmmap, area->vma_end,
