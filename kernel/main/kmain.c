@@ -235,7 +235,7 @@ idleproc_run(int arg1, void *arg2)
         KASSERT(PID_INIT == child);
         dbg(DBG_PROC, "The return value is %d\n", status);
         
-        panic("inspect the value\n");
+        /*panic("inspect the value\n");*/
 
 #ifdef __MTP__
         kthread_reapd_shutdown();
@@ -375,7 +375,7 @@ initproc_run(int arg1, void *arg2)
     /*
      *char *argv[2] = {"forktest", NULL};
      *char *envp[1] = {NULL};
-     *kernel_execve("/usr/bin/forktest", argv, envp);
+     *kernel_execve("/usr/bin/forkbomb", argv, envp);
      */
 
     /*

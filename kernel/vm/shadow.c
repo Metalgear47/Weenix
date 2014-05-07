@@ -176,14 +176,6 @@ shadow_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
         /*the bottom of the shadow chain whould not be a shadow object*/
         KASSERT(o->mmo_shadowed == NULL);
         return pframe_lookup(o, pagenum, 0, pf);
-        /*
-         **pf = pframe_get_resident(o, pagenum);
-         *if (*pf == NULL) {
-         *    return -EINVAL;
-         *}
-         *KASSERT(*pf);
-         *return 0;
-         */
     } else {
         return pframe_get(o, pagenum, pf);
     }
@@ -227,7 +219,7 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
     KASSERT(o == bottom_obj);
 
     pframe_t *pf_source = NULL;
-    int err = pframe_get(o, pf->pf_pagenum, &pf_source);
+    int err = pframe_lookup(o, pf->pf_pagenum, 1, &pf_source);
     if (err < 0) {
         KASSERT(pf_source == NULL);
         return err;

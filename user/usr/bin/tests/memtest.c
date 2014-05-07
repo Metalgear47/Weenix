@@ -618,16 +618,14 @@ int main(int argc, char **argv)
         /* printf("Linker magic: start 0x%p, text end 0x%p, data end 0x%p, bss end 0x%p\n",
                text_start, text_end, data_end, bss_end); */
         test_init();
-        /*
-         *childtest(test_overflow);
-         *childtest(test_mmap_bounds);
-         *childtest(test_brk_bounds);
-         *childtest(test_munmap);
-         *childtest(test_start_brk);
-         *childtest(test_brk_mmap);
-         *childtest(test_mmap_fill);
-         *childtest(test_mmap_repeat);
-         */
+        childtest(test_overflow);
+        childtest(test_mmap_bounds);
+        childtest(test_brk_bounds);
+        childtest(test_munmap);
+        childtest(test_start_brk);
+        childtest(test_brk_mmap);
+        childtest(test_mmap_fill);
+        childtest(test_mmap_repeat);
         childtest(test_mmap_beyond);
         test_fini();
 
