@@ -912,16 +912,14 @@ int vfstest_main(int argc, char **argv)
 
         syscall_success(chdir(root_dir));
 
-        /*
-         *vfstest_stat();
-         *vfstest_chdir();
-         *vfstest_mkdir();
-         *vfstest_paths();
-         *vfstest_fd();
-         *vfstest_open();
-         *vfstest_read();
-         *vfstest_getdents();
-         */
+        vfstest_stat();
+        vfstest_chdir();
+        vfstest_mkdir();
+        vfstest_paths();
+        vfstest_fd();
+        vfstest_open();
+        vfstest_read();
+        vfstest_getdents();
 
 #ifdef __VM__
         vfstest_s5fs_vm();
