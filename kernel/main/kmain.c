@@ -121,10 +121,8 @@ kmain()
         proc_init();
         kthread_init();
 
-#ifdef __DRIVERS__
         bytedev_init();
         blockdev_init();
-#endif
 
         void *bstack = page_alloc();
         pagedir_t *bpdir = pt_get();
@@ -380,15 +378,15 @@ initproc_run(int arg1, void *arg2)
      *kernel_execve("/usr/bin/forkbomb", argv, envp);
      */
 
-    /*
-     *char *argv[2] = {"forktest", NULL};
-     *char *envp[1] = {NULL};
-     *kernel_execve("/sbin/init", argv, envp);
-     */
-
-    char *argv[2] = {"stress", NULL};
+    char *argv[2] = {"forktest", NULL};
     char *envp[1] = {NULL};
-    kernel_execve("/usr/bin/stress", argv, envp);
+    kernel_execve("/sbin/init", argv, envp);
+
+    /*
+     *char *argv[2] = {"stress", NULL};
+     *char *envp[1] = {NULL};
+     *kernel_execve("/usr/bin/stress", argv, envp);
+     */
 
     /*
      *char *argv[2] = {"halt", NULL};

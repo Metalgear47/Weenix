@@ -47,6 +47,7 @@ bytedev_ops_t zero_dev_ops = {
 void
 memdevs_init()
 {
+    dbg(DBG_INIT, "memdevs_init is called\n");
     bytedev_t *null_dev = (bytedev_t *)kmalloc(sizeof(bytedev_t));
     null_dev->cd_id = MEM_NULL_DEVID;
     null_dev->cd_ops = &null_dev_ops;
