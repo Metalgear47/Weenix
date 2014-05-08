@@ -25,23 +25,16 @@
 #include "fs/fcntl.h"
 #include "fs/stat.h"
 
-#define VALID_ADDR(addr) ((uint32_t)addr >= USER_MEM_LOW && \
-                            (uint32_t)addr < USER_MEM_HIGH)
 #define LEN_TO_PAGES(len) len / PAGE_SIZE + ((len % PAGE_SIZE == 0) ? 0 : 1)
-    /*EAGAIN*/
-    /*The file has been locked, or too much memory has been locked (see setrlimit(2)).*/
-    /*ENFILE*/
-    /*The system limit on the total number of open files has been reached.*/
-    /*ENODEV*/
-    /*The underlying file system of the specified file does not support memory mapping.*/
-    /*ENOMEM*/
-    /*No memory is available, or the process's maximum number of mappings would have been exceeded.*/
-    /*EPERM*/
-    /*The prot argument asks for PROT_EXEC but the mapped area belongs to a file on a file system that was mounted no-exec.*/
-    /*ETXTBSY*/
-    /*MAP_DENYWRITE was set but the object specified by fd is open for writing.*/
-    /*EOVERFLOW*/
-    /*On 32-bit architecture together with the large file extension (i.e., using 64-bit off_t): the number of pages used for length plus number of pages used for offset would overflow unsigned long (32 bits).*/
+
+int valid_addr(void *addr, size_t len)
+{
+    uintptr_t vaddr = (uintptr_t)addr;
+    uintptr_t endaddr = vaddr + len;
+    int start = (vaddr >= USER_MEM_LOW && vaddr < USER_MEM_HIGH);
+    int end = (endaddr > USER_MEM_LOW && endaddr <= USER_MEM_HIGH);
+    return start && end;
+}
 
 /*
  * This function implements the mmap(2) syscall, but only
@@ -62,6 +55,11 @@ do_mmap(void *addr, size_t len, int prot, int flags,
     if (len == (size_t)-1) {
         return -EINVAL;
     }
+
+    if (addr != NULL && !valid_addr(addr, len)) {
+        return -EINVAL;
+    }
+
     /*EINVAL*/
     /*We don't like addr, length, or offset (e.g., they are too large, or not aligned on a page boundary).*/
     /*EINVAL*/
@@ -191,6 +189,9 @@ do_munmap(void *addr, size_t len)
         return -EINVAL;
     }
     if (len == (size_t)-1) {
+        return -EINVAL;
+    }
+    if (!valid_addr(addr, len)) {
         return -EINVAL;
     }
 

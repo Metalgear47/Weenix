@@ -7,6 +7,6 @@ add-symbol-file user/usr/bin/stress.exec 0x08048094
 #b main
 #b usr/bin/tests/memtest.c:145
 #b usr/bin/tests/memtest.c:590
-b usr/bin/tests/stress.c:193
+b usr/bin/tests/stress.c:234
 
 continue
