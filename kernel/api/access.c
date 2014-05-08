@@ -123,7 +123,9 @@ fail:
 int addr_perm(struct proc *p, const void *vaddr, int perm)
 {
     vmarea_t *area = vmmap_lookup(p->p_vmmap, ADDR_TO_PN(vaddr));
-    KASSERT(area != NULL);
+    if (area == NULL) {
+        return 0;
+    }
 
     if (perm & PROT_READ) {
         if ((area->vma_prot & PROT_READ) == 0) {
