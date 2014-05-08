@@ -67,7 +67,7 @@ do_brk(void *addr, void **ret)
     uint32_t lopage = ADDR_TO_PN(PAGE_ALIGN_DOWN(start_brk));
 
     if (vaddr < start_brk) {
-        return -EINVAL;
+        return -ENOMEM;
     }
 
     if (vaddr >= USER_MEM_HIGH) {
