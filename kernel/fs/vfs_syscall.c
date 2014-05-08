@@ -592,6 +592,12 @@ do_link(const char *from, const char *to)
         KASSERT(from_vnode == NULL);
         return err;
     }
+    if (S_ISDIR(from_vnode->vn_mode)) {
+        KASSERT(from_vnode);
+        vput(from_vnode);
+
+        return -EPERM;
+    }
 
     size_t namelen;
     const char *name = (const char *)kmalloc(sizeof(char) * (NAME_LEN + 1));
