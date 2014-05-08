@@ -124,9 +124,11 @@ shadow_put(mmobj_t *o)
             pframe_unpin(pframe_cur);
             /*uncache the page frame*/
             /*pframe_clean(pframe_cur);*/
-            if (pframe_is_dirty(pframe_cur)) {
-                pframe_clean(pframe_cur);
-            }
+            /*
+             *if (pframe_is_dirty(pframe_cur)) {
+             *    pframe_clean(pframe_cur);
+             *}
+             */
             
             pframe_free(pframe_cur);
         } list_iterate_end();
