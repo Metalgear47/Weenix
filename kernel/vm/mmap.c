@@ -60,6 +60,10 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         return -EINVAL;
     }
 
+    if (addr == NULL && (flags & MAP_FIXED)) {
+        return -EINVAL;
+    }
+
     /*EINVAL*/
     /*We don't like addr, length, or offset (e.g., they are too large, or not aligned on a page boundary).*/
     /*EINVAL*/
