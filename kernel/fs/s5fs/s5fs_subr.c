@@ -388,12 +388,14 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         }
 
         off_t file_length = end + 1;
-        /*update len in vnode*/
-        vnode->vn_len = file_length;
-        /*update size in s5_inode*/
-        inode->s5_size = (uint32_t)file_length;
-        dprintf("updating the file size to %d\n", file_length);
-        dprintf("inode length is %u\n", inode->s5_size);
+        if (file_length > vnode->vn_len) {
+            /*update len in vnode*/
+            vnode->vn_len = file_length;
+            /*update size in s5_inode*/
+            inode->s5_size = (uint32_t)file_length;
+            dprintf("updating the file size to %d\n", file_length);
+            dprintf("inode length is %u\n", inode->s5_size);
+        }
         /*dirty the inode*/
         s5_dirty_inode(VNODE_TO_S5FS(vnode), inode);
 
