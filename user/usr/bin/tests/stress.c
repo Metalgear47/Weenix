@@ -405,6 +405,8 @@ void brk_test()
 
 int main(int argc, char **argv)
 {
+    open("/dev/tty0", O_RDONLY, 0);
+    open("/dev/tty0", O_WRONLY, 0);
         (void) printf("Congrats!  You're running this executable.\n");
         (void) printf("Now let's see how you handle the tests...\n");
 

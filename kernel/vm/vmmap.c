@@ -470,6 +470,7 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
     vma_result->vma_obj = NULL;
 
     /*vma_olink is initialized during alloc, still unclear, what to do?*/
+    list_link_init(&vma_result->vma_olink);
     /*list_insert_head(&vma_result->vma_obj->mmo_un.mmo_vmas, &vma_result->vma_olink);*/
 
     if ((flags & MAP_ANON) || (file == NULL)) {
