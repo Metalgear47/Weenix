@@ -274,17 +274,19 @@ proc_kill_all()
         if (PID_IDLE == proc_iter->p_pid) {
             continue;
         }
-        if (proc_iter == proc_initproc) {
-            continue;
-        }
+        /*
+         *if (proc_iter == proc_initproc) {
+         *    continue;
+         *}
+         */
 
         /*don't kill direct children of idle process*/
-        if (PID_IDLE != proc_iter->p_pproc->p_pid || curproc != proc_iter) {
+        if (PID_IDLE != proc_iter->p_pproc->p_pid && curproc != proc_iter) {
             proc_kill(proc_iter, 0);
         }
     } list_iterate_end();
 
-    proc_kill(proc_initproc, 0);
+    /*proc_kill(proc_initproc, 0);*/
     /*kill current process*/
     do_exit(0);
 
