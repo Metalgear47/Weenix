@@ -758,7 +758,7 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
         count -= readlen;
         buff += readlen;
         addr += readlen;
-        KASSERT(count == 0 || PAGE_ALIGNED(addr));
+        /*KASSERT(count == 0 || PAGE_ALIGNED(addr));*/
     }
 
     KASSERT(count == 0);
@@ -809,7 +809,7 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
         count -= writelen;
         buff += writelen;
         addr += writelen;
-        KASSERT(count == 0 || PAGE_ALIGNED(addr));
+        /*KASSERT(count == 0 || PAGE_ALIGNED(addr));*/
     }
 
     KASSERT(count == 0);
