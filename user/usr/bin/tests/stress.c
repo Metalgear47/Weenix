@@ -413,8 +413,8 @@ int main(int argc, char **argv)
 
         mmap_test();
 
-        /*null_test();*/
-        /*zero_test();*/
+        null_test();
+        zero_test();
         brk_test();
 
         fault_test();

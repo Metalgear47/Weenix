@@ -3,10 +3,7 @@ handle SIGSEGV nostop noprint nopass
 break dbg_panic_halt
 break hard_shutdown
 break bootstrap
-add-symbol-file user/bin/sh.exec 0x08048094
-#b main
-#b usr/bin/tests/memtest.c:145
-#b usr/bin/tests/memtest.c:590
-b bin/sh.c:597
+add-symbol-file user/sbin/init.exec 0x08048094
+b sbin/init.c:75
 
 continue

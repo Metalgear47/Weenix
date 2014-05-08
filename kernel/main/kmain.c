@@ -121,8 +121,10 @@ kmain()
         proc_init();
         kthread_init();
 
+#ifdef __DRIVERS__
         bytedev_init();
         blockdev_init();
+#endif
 
         void *bstack = page_alloc();
         pagedir_t *bpdir = pt_get();
