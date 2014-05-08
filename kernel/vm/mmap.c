@@ -88,6 +88,9 @@ do_mmap(void *addr, size_t len, int prot, int flags,
     /*EBADF*/
     /*fd is not a valid file descriptor (and MAP_ANONYMOUS was not set).*/
     if ((flags & MAP_ANON) == 0)  {
+        if (fd < 0 || fd >= NFILES) {
+            return -EBADF;
+        }
         file = fget(fd);
         if (file == NULL) {
             return -EBADF;
