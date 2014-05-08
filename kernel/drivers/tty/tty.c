@@ -248,9 +248,6 @@ tty_write(bytedev_t *dev, int offset, const void *buf, int count)
     dbg(DBG_TERM, "tty_write: the string is: %s\n", buff);
     int i = 0;
     for (i = 0 ; i < count; i++) {
-        if ('\0' == buff[i]) {
-            break;
-        }
         const char *s = ldisc->ld_ops->process_char(ldisc, buff[i]);
         tty_echo(ttyd, s);
     }

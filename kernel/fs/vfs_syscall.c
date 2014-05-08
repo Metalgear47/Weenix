@@ -120,13 +120,6 @@ do_write(int fd, const void *buf, size_t nbytes)
         do_lseek(fd, 0, SEEK_END);
     }
 
-    /*how to set memdev's vnode in file_t*/
-    /*
-     *if (f->f_vnode->vn_cdev == NULL) {
-     *    f->f_vnode->vn_cdev = bytedev_lookup(MEM_NULL_DEVID);
-     *    KASSERT(f->f_vnode->vn_cdev);
-     *}
-     */
     int writelen = f->f_vnode->vn_ops->write(f->f_vnode, f->f_pos, buf, nbytes);
     if (writelen < 0) {
         fput(f);
