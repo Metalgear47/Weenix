@@ -75,6 +75,9 @@ do_brk(void *addr, void **ret)
     }
 
     if (vaddr == brk) {
+        *ret = addr;
+        KASSERT(curproc->p_brk == addr);
+        curproc->p_brk = addr;
         return 0;
     }
 

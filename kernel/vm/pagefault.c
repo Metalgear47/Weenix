@@ -57,10 +57,13 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
     int pagenum = ADDR_TO_PN(vaddr);
     vmarea_t *area = vmmap_lookup(curproc->p_vmmap, pagenum);
     if (area == NULL) {
-        proc_kill(curproc, EFAULT);
-    }
-    if ((area->vma_prot & PROT_READ) == 0) {
         do_exit(EFAULT);
+    }
+    /*check cause & FAULT_*/
+    if ((cause & FAULT_WRITE) == 0) {
+        if ((area->vma_prot & PROT_READ) == 0) {
+            do_exit(EFAULT);
+        }
     }
 
     int forwrite = 0;
@@ -103,7 +106,7 @@ handle_pagefault(uintptr_t vaddr, uint32_t cause)
         KASSERT(err == 0);
     }
 
-    pagedir_t *pagedir = pt_get();
+    pagedir_t *pagedir = curproc->p_pagedir;
 
     KASSERT(PAGE_ALIGN_DOWN(vaddr) == PN_TO_ADDR(pagenum));
     err = pt_map(pagedir, (uintptr_t)PN_TO_ADDR(pagenum), 

@@ -306,7 +306,9 @@ get_resident:
         if pframe_is_busy(*result) {
             dbg(DBG_PFRAME, "the pframe is resident and BUSY, gonna sleep on it.\n");
             sched_sleep_on(&((*result)->pf_waitq));
-            goto get_resident;
+            KASSERT(*result);
+            return 0;
+            /*goto get_resident;*/
         } else {
             dbg(DBG_PFRAME, "the pframe is resident and not busy, just return it.\n");
             KASSERT(o == (*result)->pf_obj);
