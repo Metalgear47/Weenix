@@ -195,7 +195,7 @@ do_munmap(void *addr, size_t len)
     if (!PAGE_ALIGNED(vaddr)) {
         return -EINVAL;
     }
-    if (len == (size_t)-1) {
+    if (len == (size_t)-1 || len == 0) {
         return -EINVAL;
     }
     if (!valid_addr(addr, len)) {
