@@ -54,9 +54,9 @@ memdevs_init()
     bytedev_register(null_dev);
 
     bytedev_t *zero_dev = (bytedev_t *)kmalloc(sizeof(bytedev_t));
-    null_dev->cd_id = MEM_ZERO_DEVID;
-    null_dev->cd_ops = &zero_dev_ops;
-    bytedev_register(null_dev);
+    zero_dev->cd_id = MEM_ZERO_DEVID;
+    zero_dev->cd_ops = &zero_dev_ops;
+    bytedev_register(zero_dev);
         /*NOT_YET_IMPLEMENTED("DRIVERS: memdevs_init");*/
 }
 
