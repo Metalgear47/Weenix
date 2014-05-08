@@ -75,7 +75,7 @@ do_brk(void *addr, void **ret)
     }
 
     if (vaddr == brk) {
-        panic("I'm not ready for this.\n");
+        return 0;
     }
 
     KASSERT(start_brk <= brk);
