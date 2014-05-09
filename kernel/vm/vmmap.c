@@ -34,22 +34,6 @@
         }
 /*my own macro*/
 
-static void
-print_vmmap(vmmap_t *vmmap)
-{
-    if (VMMAP_FLAG) {
-        dbginfo(DBG_VMMAP, vmmap_mapping_info, vmmap);
-    }
-}
-
-static void
-print_vmarea(vmarea_t *vmarea)
-{
-    dprintf("The vmarea is: [%u(%#.5x), %u(%#.5x)), offset is %u(%#.5x)\n", 
-            vmarea->vma_start, vmarea->vma_start,
-            vmarea->vma_end,  vmarea->vma_end, 
-            vmarea->vma_off, vmarea->vma_off);
-}
 
 uint32_t
 get_pagenum(vmarea_t *vmarea, uint32_t pagenum)
@@ -151,21 +135,6 @@ vmmap_destroy(vmmap_t *map)
 void
 vmmap_insert(vmmap_t *map, vmarea_t *newvma)
 {
-    dbg(DBG_MM, "vmmap function hook\n");
-    KASSERT(map);
-
-    KASSERT(newvma);
-    /*sanity check for newvma*/
-    KASSERT(newvma->vma_end > newvma->vma_start);
-    KASSERT(newvma->vma_start >= USER_PAGE_LOW);
-    KASSERT(newvma->vma_end <= USER_PAGE_HIGH);
-
-    dprintf("vmmap_insert is called:\n");
-    dprintf("before inserting, the vmmap is:\n");
-    print_vmmap(map);
-    dprintf("the vmarea to be inserted is:\n");
-    print_vmarea(newvma);
-
     if list_empty(&map->vmm_list) {
         list_insert_head(&map->vmm_list, &newvma->vma_plink);
         newvma->vma_vmmap = map;
@@ -194,17 +163,9 @@ vmmap_insert(vmmap_t *map, vmarea_t *newvma)
         }
     } list_iterate_end();
 
-    KASSERT(vma_cur->vma_plink.l_next == list);
-    KASSERT(vma_cur->vma_end <= newvma->vma_start);
     list_insert_tail(list, &newvma->vma_plink);
     newvma->vma_vmmap = map;
 
-    /*
-     *dprintf("after inserting, the vmmap is:\n");
-     *print_vmmap(map);
-     *dprintf("the vmarea inserted is:\n");
-     *print_vmarea(newvma);
-     */
         /*NOT_YET_IMPLEMENTED("VM: vmmap_insert");*/
 }
 
@@ -219,11 +180,6 @@ int
 vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 {
     dbg(DBG_MM, "vmmap function hook\n");
-    KASSERT(map);
-
-    dprintf("find_range, vmmap is:\n");
-    print_vmmap(map);
-    dprintf("looking for %u(%#.5x) pages\n", npages, npages);
 
     /*low-high*/
     if (dir == VMMAP_DIR_LOHI || dir == 0) {
@@ -300,13 +256,6 @@ vmmap_find_range(vmmap_t *map, uint32_t npages, int dir)
 vmarea_t *
 vmmap_lookup(vmmap_t *map, uint32_t vfn)
 {
-    dbg(DBG_MM, "vmmap function hook\n");
-    KASSERT(map);
-    dprintf("vmmap_lookup, vfn is %u(%#.5x)\n", vfn, vfn);
-    /*assumption here is that the vfn is already auditted by some other routine*/
-    /*KASSERT(valid_pagenumber(vfn));*/
-    print_vmmap(map);
-
     vmarea_t *vma;
 
     list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
@@ -376,21 +325,6 @@ vmmap_clone(vmmap_t *map)
 
     return newmap;
 
-/*FAIL:*/
-/*
- *    list_iterate_begin(&newmap->vmm_list, area_cur, vmarea_t, vma_plink) {
- *        [>no need to put mmobj<]
- *        list_remove(&area_cur->vma_plink);
- *        vmarea_free(area_cur);
- *
- *        [>vmmap_destroy<]
- *
- *    } list_iterate_end();
- *
- *    slab_obj_free(vmmap_allocator, newmap);
- *
- *    return NULL;
- */
         /*NOT_YET_IMPLEMENTED("VM: vmmap_clone");*/
         /*return NULL;*/
 }
@@ -582,20 +516,12 @@ vmmap_map(vmmap_t *map, vnode_t *file, uint32_t lopage, uint32_t npages,
 int
 vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 {
-    dbg(DBG_MM, "vmmap function hook\n");
-    KASSERT(map);
-    /*KASSERT(!(list_empty(&map->vmm_list)));*/
     if (list_empty(&map->vmm_list)) {
         return 0;
     }
     if (vmmap_is_range_empty(map, lopage, npages)) {
         return 0;
     }
-
-    dprintf("before vmmap_remove:\n");
-    print_vmmap(map);
-    dprintf("the range is [%u(%#.5x), %u(%#.5x))\n", 
-            lopage, lopage, lopage + npages, lopage + npages);
 
     vmarea_t *vma;
     uint32_t hipage = lopage + npages;
@@ -677,9 +603,6 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
             continue;
         }
     } list_iterate_end();
-    
-    dprintf("after vmmap_remove:\n");
-    print_vmmap(map);
 
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: vmmap_remove");*/
@@ -693,12 +616,6 @@ vmmap_remove(vmmap_t *map, uint32_t lopage, uint32_t npages)
 int
 vmmap_is_range_empty(vmmap_t *map, uint32_t startvfn, uint32_t npages)
 {
-    dbg(DBG_MM, "vmmap function hook\n");
-    KASSERT(map);
-
-    dprintf("find if the range [%u(%#.5x), %u(%#.5x)) is empty in map:\n", 
-            startvfn, startvfn, startvfn + npages, startvfn + npages);
-    print_vmmap(map);
 
     vmarea_t *vma;
     list_iterate_begin(&map->vmm_list, vma, vmarea_t, vma_plink) {
@@ -758,7 +675,6 @@ vmmap_read(vmmap_t *map, const void *vaddr, void *buf, size_t count)
         count -= readlen;
         buff += readlen;
         addr += readlen;
-        /*KASSERT(count == 0 || PAGE_ALIGNED(addr));*/
     }
 
     KASSERT(count == 0);
@@ -809,7 +725,6 @@ vmmap_write(vmmap_t *map, void *vaddr, const void *buf, size_t count)
         count -= writelen;
         buff += writelen;
         addr += writelen;
-        /*KASSERT(count == 0 || PAGE_ALIGNED(addr));*/
     }
 
     KASSERT(count == 0);
@@ -866,64 +781,4 @@ end:
         }
         */
         return osize - size;
-}
-
-/* ====================================================== */
-vmarea_t *
-vmarea_new(uint32_t start, uint32_t end)
-{
-    vmarea_t *vmarea = vmarea_alloc();
-    KASSERT(vmarea);
-    vmarea->vma_start = start;
-    vmarea->vma_end = end;
-    vmarea->vma_off = 0;
-
-    return vmarea;
-}
-
-void
-vmmap_unittest(void)
-{
-    vmmap_t *map = vmmap_create();
-    KASSERT(map);
-
-    vmmap_insert(map, vmarea_new(4,7));
-    print_vmmap(map);
-    vmmap_insert(map, vmarea_new(9,10));
-    vmmap_remove(map, 9, 1);
-
-    int lopage = vmmap_find_range(map, 2, VMMAP_DIR_LOHI);
-    dprintf("the range found is [%d, %d)\n", lopage, lopage + 2);
-
-    vmmap_insert(map, vmarea_new(0,2));
-    print_vmmap(map);
-
-    vmmap_insert(map, vmarea_new(2,3));
-    vmmap_insert(map, vmarea_new(7,10));
-    print_vmmap(map);
-
-    lopage = vmmap_find_range(map, 1, VMMAP_DIR_LOHI);
-    dprintf("the range found is [%d, %d)\n", lopage, lopage + 1);
-
-    lopage = vmmap_find_range(map, 1, VMMAP_DIR_HILO);
-    dprintf("the range found is [%d, %d)\n", lopage, lopage + 1);
-
-    vmmap_remove(map, 8,1);
-    print_vmmap(map);
-
-    vmmap_is_range_empty(map, 7, 1);
-    vmmap_is_range_empty(map, 8, 1);
-
-    KASSERT(vmmap_lookup(map, 8) == NULL);
-    KASSERT(vmmap_lookup(map, 9));
-
-    vmmap_remove(map, 1, 8);
-
-    lopage = vmmap_find_range(map, 8, VMMAP_DIR_LOHI);
-    dprintf("the range found is [%d, %d)\n", lopage, lopage + 8);
-
-    lopage = vmmap_find_range(map, 8, VMMAP_DIR_HILO);
-    dprintf("the range found is [%d, %d)\n", lopage, lopage + 8);
-
-    panic("Time to inspect the result\n");
 }

@@ -64,22 +64,10 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         return -EINVAL;
     }
 
-    /*EINVAL*/
-    /*We don't like addr, length, or offset (e.g., they are too large, or not aligned on a page boundary).*/
-    /*EINVAL*/
-    /*(since Linux 2.6.12) length was 0.*/
     if (!PAGE_ALIGNED(addr) || !PAGE_ALIGNED(off) || len == 0) {
         return -EINVAL;
     }
 
-    /*
-     *if (!VALID_ADDR(addr) || !VALID_ADDR((uint32_t)addr + len)) {
-     *    return -EINVAL;
-     *}
-     */
-
-    /*EINVAL*/
-    /*flags contained neither MAP_PRIVATE or MAP_SHARED, or contained both of these values.*/
     int map_type = flags & MAP_TYPE;
     if (map_type == 0 || map_type == MAP_TYPE) {
         return -EINVAL;
@@ -89,8 +77,6 @@ do_mmap(void *addr, size_t len, int prot, int flags,
     vnode_t *vnode = NULL;
     int err = 0;
 
-    /*EBADF*/
-    /*fd is not a valid file descriptor (and MAP_ANONYMOUS was not set).*/
     if ((flags & MAP_ANON) == 0)  {
         if (fd < 0 || fd >= NFILES) {
             return -EBADF;
@@ -103,17 +89,10 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         goto CheckDone;
     }
 
-    /*EACCES*/
-    /*A file descriptor refers to a non-regular file. Or MAP_PRIVATE was requested, but fd is not open for reading. Or MAP_SHARED was requested and PROT_WRITE is set, but fd is not open in read/write (O_RDWR) mode. Or PROT_WRITE is set, but the file is append-only.*/
     KASSERT(file);
     vnode = file->f_vnode;
     KASSERT(vnode);
-    /*
-     *if (!S_ISREG(vnode->vn_mode)) {
-     *    fput(file);
-     *    return -EACCES;
-     *}
-     */
+
     int frwmode = file->f_mode & 0x7;
     if (map_type == MAP_PRIVATE && !(frwmode & FMODE_READ)) {
         /*not open for reading*/
@@ -129,20 +108,6 @@ do_mmap(void *addr, size_t len, int prot, int flags,
         fput(file);
         return -EACCES;
     }
-
-    /*
-     *if (off + (signed)len >= vnode->vn_len) {
-     *    [>exceeding the file size<]
-     *    fput(file);
-     *    return -EINVAL;
-     *}
-     */
-
-    /*
-     *TODO: handling MAP_ANON
-     */
-
-    /*TODO: MAP_FIXED?*/
 
 CheckDone:
     err = 0;
