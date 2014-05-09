@@ -234,6 +234,8 @@ s5fs_read_vnode(vnode_t *vnode)
 
     dprintf("s5fs level call hook\n");
 
+    lock_vnode(vnode);
+
     int err = 0;
     pframe_t *pframe_inode_block = NULL;
     err = pframe_get(S5FS_TO_VMOBJ(fs), S5_INODE_BLOCK(vnode->vn_vno), &pframe_inode_block);
@@ -277,6 +279,9 @@ s5fs_read_vnode(vnode_t *vnode)
 
     vnode->vn_len = inode->s5_size;
     vnode->vn_i = (void *)inode;
+
+    unlock_vnode(vnode);
+
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_read_vnode");*/
 }
 
@@ -296,6 +301,8 @@ s5fs_delete_vnode(vnode_t *vnode)
     KASSERT(fs);
 
     dprintf("s5fs level call hook\n");
+
+    lock_vnode(vnode);
 
     int err = 0;
     pframe_t *pframe_inode_block = NULL;
@@ -318,6 +325,9 @@ s5fs_delete_vnode(vnode_t *vnode)
         s5_free_inode(vnode);
         pframe_unpin(pframe_inode_block);
     }
+
+    unlock_vnode(vnode);
+
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_delete_vnode");*/
 }
 
@@ -335,6 +345,8 @@ s5fs_query_vnode(vnode_t *vnode)
     s5fs_t *fs = VNODE_TO_S5FS(vnode);
     KASSERT(fs);
 
+    lock_vnode(vnode);
+
     int err = 0;
     pframe_t *pframe_inode_block = NULL;
     err = pframe_get(S5FS_TO_VMOBJ(fs), S5_INODE_BLOCK(vnode->vn_vno), &pframe_inode_block);
@@ -351,6 +363,9 @@ s5fs_query_vnode(vnode_t *vnode)
         KASSERT(inode->s5_linkcount == 1);
         return 0;
     }
+
+    unlock_vnode(vnode);
+
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_query_vnode");*/
         /*return 0;*/
 }
@@ -438,8 +453,12 @@ s5fs_read(vnode_t *vnode, off_t offset, void *buf, size_t len)
 
     dprintf("s5fs level call hook\n");
 
+    lock_vnode(vnode);
+
     /*read exceeds the end of the file*/
     if (offset >= vnode->vn_len) {
+        unlock_vnode(vnode);
+
         return 0;
     }
 
@@ -448,6 +467,8 @@ s5fs_read(vnode_t *vnode, off_t offset, void *buf, size_t len)
     int err = s5_read_file(vnode, offset, buf, len);
 
     /*kmutex_unlock(&vnode->vn_mutex);*/
+
+    unlock_vnode(vnode);
 
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_read");*/
@@ -463,11 +484,15 @@ s5fs_write(vnode_t *vnode, off_t offset, const void *buf, size_t len)
 
     dprintf("s5fs level call hook\n");
 
+    lock_vnode(vnode);
+
     /*kmutex_lock(&vnode->vn_mutex);*/
 
     int err = s5_write_file(vnode, offset, buf, len);
 
     /*kmutex_unlock(&vnode->vn_mutex);*/
+
+    unlock_vnode(vnode);
 
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_write");*/
@@ -520,9 +545,14 @@ s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
 
     dprintf("s5fs level call hook\n");
 
+    lock_vnode(dir);
+
     int inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_DATA, 0);
     if (inodeno < 0) {
         *result = NULL;
+
+        unlock_vnode(dir);
+
         return inodeno;
     }
     KASSERT(inodeno);
@@ -539,8 +569,13 @@ s5fs_create(vnode_t *dir, const char *name, size_t namelen, vnode_t **result)
         /*vput->s5fs_delete_vnode->decrement linkcount->s5_free_inode*/
         /*s5_free_inode(*result);*/
         dprintf("some error occured, the error number is %d.\n", err);
+
+        unlock_vnode(dir);
+
         return err;
     }
+    unlock_vnode(dir);
+
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_create");*/
         /*return -1;*/
@@ -568,6 +603,8 @@ s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t dev
 
     dprintf("s5fs level call hook\n");
 
+    lock_vnode(dir);
+
     int inodeno;
     if (S_ISCHR(mode)) {
         inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_CHR, devid);
@@ -578,6 +615,8 @@ s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t dev
     }
 
     if (inodeno < 0) {
+        unlock_vnode(dir);
+
         return inodeno;
     }
     KASSERT(inodeno);
@@ -590,10 +629,15 @@ s5fs_mknod(vnode_t *dir, const char *name, size_t namelen, int mode, devid_t dev
     if (err < 0) {
         /*s5_free_inode(file);*/
         dprintf("some error occured, the error number is %d.\n", err);
+
+        unlock_vnode(dir);
+
         return err;
     }
 
     KASSERT(err == 0);
+    unlock_vnode(dir);
+
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_mknod");*/
         /*return -1;*/
@@ -615,8 +659,12 @@ s5fs_lookup(vnode_t *base, const char *name, size_t namelen, vnode_t **result)
 
     dprintf("s5fs level call hook\n");
 
+    lock_vnode(base);
+
     int inodeno = s5_find_dirent(base, name, namelen);
     if (inodeno < 0) {
+        unlock_vnode(base);
+
         return inodeno;
     }
     /*inodeno can be 0: inode for root*/
@@ -624,6 +672,9 @@ s5fs_lookup(vnode_t *base, const char *name, size_t namelen, vnode_t **result)
 
     *result = vget(base->vn_fs, inodeno);
     KASSERT(*result);
+
+    unlock_vnode(base);
+
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_lookup");*/
         /*return -1;*/
@@ -651,8 +702,15 @@ s5fs_link(vnode_t *src, vnode_t *dir, const char *name, size_t namelen)
 
     dprintf("s5fs level call hook\n");
 
+    lock_vnode(src);
+    lock_vnode(dir);
+
     /*switch the order of parameters*/
     int err = s5_link(dir, src, name, namelen);
+
+    unlock_vnode(src);
+    unlock_vnode(dir);
+    
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_link");*/
         /*return -1;*/
@@ -677,7 +735,12 @@ s5fs_unlink(vnode_t *dir, const char *name, size_t namelen)
 
     dprintf("s5fs level call hook\n");
 
+    lock_vnode(dir);
+
     int err = s5_remove_dirent(dir, name, namelen);
+
+    unlock_vnode(dir);
+
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_unlink");*/
         /*return -1;*/
@@ -712,14 +775,22 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
 
     dprintf("called with name: %s\n", name);
 
+    lock_vnode(dir);
+
     if ((unsigned)dir->vn_len >= S5_MAX_FILE_SIZE) {
         panic("It's hardly the case, gonna panic here during debugging.\n");
+
+        lock_vnode(dir);
+
         return -ENOSPC;
     }
 
     /*Allocate an inode*/
     int inodeno = s5_alloc_inode(dir->vn_fs, S5_TYPE_DIR, 0);
     if (inodeno < 0) {
+
+        lock_vnode(dir);
+
         return inodeno;
     }
     KASSERT(inodeno);
@@ -739,6 +810,9 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
     if (err < 0) {
         /*s5_free_inode(vnode_child);*/
         vput(vnode_child);
+
+        lock_vnode(dir);
+
         return err;
     }
     KASSERT(dir->vn_len % sizeof(s5_dirent_t) == 0);
@@ -753,6 +827,9 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
         }
         /*s5_free_inode(vnode_child);*/
         vput(vnode_child);
+
+        lock_vnode(dir);
+
         return err;
     }
     s5_inode_t *inode_child = VNODE_TO_S5INODE(vnode_child);
@@ -772,6 +849,9 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
         }
         /*s5_free_inode(vnode_child);*/
         vput(vnode_child);
+
+        lock_vnode(dir);
+
         return err;
     }
     dprintf("'..' directory is added\n");
@@ -779,6 +859,9 @@ s5fs_mkdir(vnode_t *dir, const char *name, size_t namelen)
     KASSERT(inode_child->s5_linkcount == 2);
     vput(vnode_child);
     dprintf("this directory's size is now %d\n", dir->vn_len);
+
+    lock_vnode(dir);
+
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_mkdir");*/
         /*return -1;*/
@@ -808,9 +891,14 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
 
     dprintf("rmdir is called\n");
 
+    lock_vnode(parent);
+
     /*get the vnode for the child*/
     int inodeno = s5_find_dirent(parent, name, namelen);
     if (inodeno < 0) {
+
+        unlock_vnode(parent);
+
         return inodeno;
     }
     vnode_t *child = vget(parent->vn_fs, inodeno);
@@ -821,17 +909,26 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
     /*determine if the child dir is empty or not*/
     if (child->vn_len != 2 * sizeof(s5_dirent_t)) {
         vput(child);
+
+        unlock_vnode(parent);
+
         return -ENOTEMPTY;
     }
     int err = 0;
     err = s5_find_dirent(parent, ".", 1);
     if (err < 0) {
         vput(child);
+
+        unlock_vnode(parent);
+
         return -ENOTEMPTY;
     }
     err = s5_find_dirent(parent, "..", 2);
     if (err < 0) {
         vput(child);
+
+        unlock_vnode(parent);
+
         return -ENOTEMPTY;
     }
     /*
@@ -858,6 +955,9 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
     err = s5_remove_dirent(child, "..", 2);
     if (err < 0) {
         vput(child);
+
+        unlock_vnode(parent);
+
         return err;
     }
 
@@ -872,10 +972,16 @@ s5fs_rmdir(vnode_t *parent, const char *name, size_t namelen)
             panic("The file system is corrupted\n");
         }
         vput(child);
+
+        unlock_vnode(parent);
+
         return err;
     }
 
     vput(child);
+
+    unlock_vnode(parent);
+
     return err;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_rmdir");*/
         /*return -1;*/
@@ -901,17 +1007,28 @@ s5fs_readdir(vnode_t *vnode, off_t offset, struct dirent *d)
 
     dprintf("s5fs level call hook\n");
 
+    lock_vnode(vnode);
+
     if (offset > vnode->vn_len) {
+
+        unlock_vnode(vnode);
+
         return 0;
     }
 
     s5_dirent_t s5_dirent;
     int err = s5_read_file(vnode, offset, (char *)(&s5_dirent), sizeof(s5_dirent_t));
     if (err < 0) {
+
+        unlock_vnode(vnode);
+
         return err;
     }
     if (err == 0) {
         KASSERT(offset == vnode->vn_len);
+
+        unlock_vnode(vnode);
+
         return 0;
     }
     KASSERT(err == sizeof(s5_dirent_t));
@@ -922,6 +1039,9 @@ s5fs_readdir(vnode_t *vnode, off_t offset, struct dirent *d)
     d->d_name[S5_NAME_LEN - 1] = '\0';
 
     KASSERT(err == sizeof(s5_dirent_t));
+
+    unlock_vnode(vnode);
+
     return sizeof(s5_dirent_t);
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_readdir");*/
         /*return -1;*/
@@ -943,6 +1063,8 @@ s5fs_stat(vnode_t *vnode, struct stat *ss)
     s5_inode_t *i = VNODE_TO_S5INODE(vnode);
     KASSERT(i);
 
+    lock_vnode(vnode);
+
     memset(ss, 0, sizeof(struct stat));
     ss->st_mode = vnode->vn_mode;
     ss->st_ino = (int)vnode->vn_vno;
@@ -953,6 +1075,8 @@ s5fs_stat(vnode_t *vnode, struct stat *ss)
     ss->st_size = (int)vnode->vn_len;
     ss->st_blksize = (int) PAGE_SIZE;
     ss->st_blocks = s5_inode_blocks(vnode);
+
+    unlock_vnode(vnode);
 
     return 0;
         /*NOT_YET_IMPLEMENTED("S5FS: s5fs_stat");*/
