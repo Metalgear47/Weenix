@@ -244,7 +244,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 
                     if (blocknum < 0) {
                         /*not sure about free the pframe*/
-                        pframe_free(ibp);
+                        /*pframe_free(ibp);*/
                         s5_free_block(fs, (uint32_t)indirect_block);
                         return blocknum;
                     }
@@ -257,7 +257,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                          *I free the pframe here because I've already dirty it
                          */
                         /*not sure about free the pframe*/
-                        pframe_free(ibp);
+                        /*pframe_free(ibp);*/
                         s5_free_block(fs, (uint32_t)indirect_block);
                         s5_free_block(fs, (uint32_t)blocknum);
                         return err;
@@ -279,7 +279,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     if (err < 0) {
                         inode->s5_indirect_block = 0;
                         s5_dirty_inode(fs, inode);
-                        pframe_free(ibp);
+                        /*pframe_free(ibp);*/
                         s5_free_block(fs, (uint32_t)indirect_block);
                         s5_free_block(fs, (uint32_t)blocknum);
                         return err;

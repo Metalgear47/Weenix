@@ -249,8 +249,7 @@ s5fs_read_vnode(vnode_t *vnode)
     dprintf("crazykeyword inode linkcount incremented, ino %d, linkcount now is: %d\n",vnode->vn_vno, inode->s5_linkcount);
 
     pframe_pin(pframe_inode_block);
-    err = pframe_dirty(pframe_inode_block);
-    KASSERT(!err && "Shouldn't fail when dirtying it");
+    s5_dirty_inode(fs, inode);
     pframe_unpin(pframe_inode_block);
 
     switch (inode->s5_type) {
