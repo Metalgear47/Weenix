@@ -252,7 +252,7 @@ s5fs_read_vnode(vnode_t *vnode)
     err = pframe_dirty(pframe_inode_block);
     KASSERT(!err && "Shouldn't fail when dirtying it");
     /*s5_dirty_inode(fs, inode);*/
-    pframe_unpin(pframe_inode_block);
+    /*pframe_unpin(pframe_inode_block);*/
 
     switch (inode->s5_type) {
         case S5_TYPE_DATA:
@@ -317,7 +317,7 @@ s5fs_delete_vnode(vnode_t *vnode)
     inode->s5_linkcount--;
     dprintf("crazykeyword inode linkcount decremented, ino %d, linkcount now is: %d\n",vnode->vn_vno, inode->s5_linkcount);
 
-    pframe_pin(pframe_inode_block);
+    /*pframe_pin(pframe_inode_block);*/
     pframe_dirty(pframe_inode_block);
     pframe_unpin(pframe_inode_block);
 

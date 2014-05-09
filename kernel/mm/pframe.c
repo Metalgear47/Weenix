@@ -350,7 +350,7 @@ get_resident:
         }
         
         KASSERT(err == 0);
-        KASSERT(o == (*result)->pf_obj);
+        /*KASSERT(o == (*result)->pf_obj);*/
         return err;
     }
 
