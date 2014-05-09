@@ -63,7 +63,6 @@ static int s5_alloc_block(s5fs_t *);
 int
 s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 {
-    KASSERT(vnode);
     if (seekptr < 0) {
         return -EINVAL;
     }
@@ -75,77 +74,45 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
     /*block number exceeds the max number*/
     if (blocknum_file >= S5_MAX_FILE_BLOCKS) {
         /*it should be checked on upper layer. But it would be nice if I also check here.*/
-        dprintf("request a block exceeding max file blocks.\n");
-        /*not sure about the return value here*/
         return -EINVAL;
     }
 
     int blocknum = 0;
     /*get the file's corresponding inode*/
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
-    /*s5fs_t *fs = VNODE_TO_S5FS(vnode);
-    pframe_t *pframe_inode_block = NULL;
-    int ret = pframe_get(S5FS_TO_VMOBJ(fs), S5_INODE_BLOCK(vnode->vn_vno), &pframe_inode_block);
-    if (ret < 0) {
-        KASSERT(pframe_inode_block == NULL);
-        return ret;
-    }
-    s5_inode_t *inode = (s5_inode_t *)pframe_inode_block->pf_addr + S5_INODE_OFFSET(vnode->vn_vno);*/
-    KASSERT(inode);
-    /*KASSERT(inode == VNODE_TO_S5INODE(vnode));*/
-    if ((S5_TYPE_DATA == inode->s5_type)
-            || (S5_TYPE_DIR == inode->s5_type)
-            || (S5_TYPE_CHR == inode->s5_type)
-            || (S5_TYPE_BLK == inode->s5_type)) {
-
-    } else {
-        panic("let's see what happened.");
-        return -EINVAL;
-    }
 
     /*get the file system*/
     s5fs_t *fs = VNODE_TO_S5FS(vnode);
-    KASSERT(fs);
 
     if (blocknum_file < S5_NDIRECT_BLOCKS) {
         /*direct block*/
-        dprintf("it's in direct blocks\n");
 
         /*get the actually block number on disk*/
         blocknum = inode->s5_direct_blocks[blocknum_file];
         if (blocknum == 0) {
             /*sparse block*/
-            dprintf("It's a sparse block\n");
 
             if (alloc == 0) {
-                dprintf("No need to alloc, just return 0\n");
 
                 return 0;
             } else {
-                dprintf("need to alloc!, gonna call s5_alloc_block\n");
 
                 blocknum = s5_alloc_block(fs);
                 if (blocknum < 0) {
-                    dprintf("Got some error: %d\n", blocknum);
                     return blocknum;
                 }
-                /*blocknum should not be 0*/
-                KASSERT(blocknum);
 
                 inode->s5_direct_blocks[blocknum_file] = blocknum;
                 s5_dirty_inode(fs, inode);
-                dprintf("the newly allocated block is %d\n", blocknum);
                 return blocknum;
             }
         } else {
             /*not a sparse block*/
-            dprintf("It's not a sparse block, block number is %d\n", blocknum);
 
             return blocknum;
         }
     } else {
         /*indirect block*/
-        dprintf("It's indirect blocks.\n");
 
         /*not sure about check here*/
         if (((S5_TYPE_DATA == inode->s5_type)
@@ -162,32 +129,23 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                 pframe_get(S5FS_TO_VMOBJ(fs),
                            (inode->s5_indirect_block),
                            &ibp);
-                KASSERT(ibp
-                        && "because never fails for block_device "
-                        "vm_objects");
 
                 b = (uint32_t *)(ibp->pf_addr);
                 /*the block number on device*/
                 blocknum = b[blocknum_indirect];
 
                 if (blocknum == 0) {
-                    dprintf("It's a sparse block\n");
+                    /*sparse block*/
                     if (alloc == 0) {
-                        dprintf("no need to allocate, just return 0\n");
                         return 0;
                     } else {
-                        dprintf("need to allocate a new block, gonna start\n");
-
                         pframe_pin(ibp);
                         blocknum = s5_alloc_block(fs);
                         pframe_unpin(ibp);
 
                         if (blocknum < 0) {
-                            dprintf("get some error: %d\n", blocknum);
                             return blocknum;
                         } else {
-                            /*blocknum should not be 0*/
-                            KASSERT(blocknum);
                             /*store it back in the indirect blocks array*/
                             b[blocknum_indirect] = blocknum;
 
@@ -199,26 +157,17 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                                 return err;
                             }
 
-                            dprintf("the newly allocated block number is %d\n", blocknum);
                             return blocknum;
                         }
                     }
                 } else {
-                    dprintf("not a sparse block, block number is %d\n", blocknum);
                     return blocknum;
                 }
             } else {
-                KASSERT(inode->s5_indirect_block == 0);
-                /*indirect block is all 0s*/
-                dprintf("indirect block is a sparse block.\n");
-
                 if (alloc == 0) {
                     dprintf("no need to allocate, just return 0\n");
                     return 0;
                 } else {
-                    dprintf("no choice but to allocate\n");
-                    dprintf("allocating an indirect block\n");
-
                     /*allocate the block for indirect block first*/
                     int indirect_block = s5_alloc_block(fs);
                     if (indirect_block < 0) {
@@ -226,15 +175,12 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                         return indirect_block;
                     }
 
-                    KASSERT(indirect_block);
                     mmobj_t *o = S5FS_TO_VMOBJ(fs);
-                    KASSERT(o);
-
+                    
                     pframe_t *ibp = NULL;
                     /*load the page frame for indirect block*/
                     int err = pframe_get(o, (uint32_t)indirect_block, &ibp);
                     if (err < 0) {
-                        KASSERT(ibp == NULL);
                         s5_free_block(fs, (uint32_t)indirect_block);
                         panic("it should never fail for block_device vm_obj\n");
                         return err;
@@ -258,9 +204,6 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                         return blocknum;
                     }
 
-                    /*blocknum should not be 0*/
-                    KASSERT(blocknum);
-
                     if (err < 0) {
                         /*
                          *I free the pframe here because I've already dirty it
@@ -272,8 +215,6 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                         return err;
                     }
 
-                    /*blocknum should not be 0*/
-                    KASSERT(blocknum);
                     /*update the indirect block number*/
                     inode->s5_indirect_block = (uint32_t)indirect_block;
                     /*update the block number in indirect block*/
@@ -302,9 +243,6 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
             return -EINVAL;
         }
     }
-    
-        /*NOT_YET_IMPLEMENTED("S5FS: s5_seek_to_block");*/
-        /*return -1;*/
 }
 
 
@@ -350,18 +288,12 @@ unlock_s5(s5fs_t *fs)
 int
 s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
 {
-    KASSERT(vnode);
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
-    KASSERT(inode);
-    KASSERT((S5_TYPE_DATA == inode->s5_type)
-             || (S5_TYPE_DIR == inode->s5_type));
 
     if (seek < 0 || (unsigned)seek >= S5_MAX_FILE_SIZE) {
         dprintf("requesting a write to negative position or exceeding the maximum file size\n");
         return -EINVAL;
     }
-
-    dprintf("vnode address is %p, off set is %d, buffer address is %p, writing length is %u\n", vnode, seek, bytes, len);
 
     /*get the block number*/
     uint32_t block_start = S5_DATA_BLOCK(seek);
@@ -371,28 +303,21 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
     if ((unsigned)end >= S5_MAX_FILE_SIZE) {
         end = S5_MAX_FILE_SIZE - 1;
         len = end - seek + 1;
-        /*partial_write_flag = 1;*/
-        dprintf("write exceeds the end of the file: end is %u, len is %u\n", end, len);
     }
     uint32_t block_end = S5_DATA_BLOCK(end);
-    dprintf("starting block number is %u, end block number is %u\n", block_start, block_end);
-
+    
     /*get the offset inside block*/
     off_t offset_start = S5_DATA_OFFSET(seek);
     off_t offset_end = S5_DATA_OFFSET(end);
-    dprintf("start offset is %u, end offset is %u\n", offset_start, offset_end);
-
+    
     /*write to only one block*/
     if (block_start == block_end) {
-        dprintf("only write to one block\n");
         pframe_t *block_pframe = NULL;
         int err = pframe_get(&vnode->vn_mmobj, block_start, &block_pframe);
         if (err < 0) {
-            KASSERT(block_pframe == NULL);
             return err;
         }
 
-        KASSERT((unsigned)(offset_end - offset_start + 1) == len);
         char *pf_off = (char *)block_pframe->pf_addr + offset_start;
         memcpy(pf_off, bytes, len);
 
@@ -407,8 +332,6 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
             vnode->vn_len = file_length;
             /*update size in s5_inode*/
             inode->s5_size = (uint32_t)file_length;
-            dprintf("updating the file size to %d\n", file_length);
-            dprintf("inode length is %u\n", inode->s5_size);
         }
         /*dirty the inode*/
         s5_dirty_inode(VNODE_TO_S5FS(vnode), inode);
@@ -416,12 +339,10 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         return len;
     }
 
-    dprintf("write to multi blocks\n");
     /*write to the start block*/
     pframe_t *block_pframe = NULL;
     int err = pframe_get(&vnode->vn_mmobj, block_start, &block_pframe);
     if (err < 0) {
-        KASSERT(block_pframe == NULL);
         return err;
     }
 
@@ -455,24 +376,17 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
         }
     }
 
-    KASSERT((unsigned)(vnode->vn_len) == inode->s5_size);
     off_t file_length = end + 1;
     /*update len in vnode*/
     if (file_length > vnode->vn_len) {
         vnode->vn_len = file_length;
         /*update size in s5_inode*/
         inode->s5_size = (unsigned)file_length;
-        dprintf("updating the file size to %d\n", file_length);
     }
     /*dirty the inode*/
     s5_dirty_inode(VNODE_TO_S5FS(vnode), inode);
 
-    /*if (partial_write_flag) {
-        return -ENOSPC;
-    }*/
     return len;
-        /*NOT_YET_IMPLEMENTED("S5FS: s5_write_file");*/
-        /*return -1;*/
 }
 
 /*
@@ -498,22 +412,13 @@ s5_write_file(vnode_t *vnode, off_t seek, const char *bytes, size_t len)
 int
 s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
 {
-    KASSERT(vnode);
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
-    KASSERT(inode);
-    KASSERT((S5_TYPE_DATA == inode->s5_type)
-             || (S5_TYPE_DIR == inode->s5_type));
-    KASSERT((unsigned)(vnode->vn_len) == inode->s5_size);
 
     if (seek < 0) {
-        dprintf("requesting a read to negative position\n");
         return -EINVAL;
     }
 
-    dprintf("vnode address is %p, off set is %u, buffer address is %p, reading length is %u\n", vnode, seek, dest, len);
-
     if ((unsigned)seek >= inode->s5_size) {
-        dprintf("end of the file has been reached\n");
         return 0;
     }
 
@@ -524,18 +429,14 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
     if ((unsigned)end >= inode->s5_size) {
         end = inode->s5_size - 1;
         len = end - seek + 1;
-        dprintf("read exceeds the end of the file: end is %u, len is %u\n", end, len);
     }
     uint32_t block_end = S5_DATA_BLOCK(end);
-    dprintf("starting block number is %u, end block number is %u\n", block_start, block_end);
-
+    
     /*get the offset inside block*/
     off_t offset_start = S5_DATA_OFFSET(seek);
     off_t offset_end = S5_DATA_OFFSET(end);
-    dprintf("start offset is %u, end offset is %u\n", offset_start, offset_end);
-
+    
     if (block_start == block_end) {
-        dprintf("only read one block\n");
         pframe_t *block_pframe = NULL;
         int err = pframe_get(&vnode->vn_mmobj, block_start, &block_pframe);
         if (err < 0) {
@@ -543,19 +444,16 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
             return err;
         }
 
-        KASSERT((unsigned)(offset_end - offset_start + 1) == len);
         char *pf_off = (char *)block_pframe->pf_addr + offset_start;
         memcpy(dest, pf_off, len);
 
         return len;
     }
 
-    dprintf("read multi blocks\n");
     /*read the start block*/
     pframe_t *block_pframe = NULL;
     int err = pframe_get(&vnode->vn_mmobj, block_start, &block_pframe);
     if (err < 0) {
-        KASSERT(block_pframe == NULL);
         return err;
     }
 
@@ -569,7 +467,6 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
         pframe_t *cur_pframe = NULL;
         err = pframe_get(&vnode->vn_mmobj, i, &cur_pframe);
         if (err < 0) {
-            KASSERT(cur_pframe == NULL);
             return err;
         }
 
@@ -582,8 +479,6 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
     }
 
     return len;
-        /*NOT_YET_IMPLEMENTED("S5FS: s5_read_file");*/
-        /*return -1;*/
 }
 
 /*
@@ -606,37 +501,25 @@ s5_read_file(struct vnode *vnode, off_t seek, char *dest, size_t len)
 static int
 s5_alloc_block(s5fs_t *fs)
 {
-    KASSERT(fs);
-    dprintf("s5_alloc_block called\n");
-
     s5_super_t *s = fs->s5f_super;
 
     lock_s5(fs);
 
-    KASSERT(S5_NBLKS_PER_FNODE > s->s5s_nfree);
-    dprintf("s5s_nfree is %u and s5s_free_blocks[NBLKS - 1] is %u\n", s->s5s_nfree, s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1]);
-
     if (s->s5s_nfree == 0 && s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1] == (uint32_t) -1) {
-        dprintf("there are no free blocks\n");
         unlock_s5(fs);
-        /*panic("aha");*/
         return -ENOSPC;
     }
 
     int blocknum = 0;
 
     if (s->s5s_nfree == 0) {
-        dprintf("no free block nums in superblock, gonna copy a whole from the next one.\n");
-
+        
         /*get the pframe where we will copy free block nums from*/
         pframe_t *next_free_blocks = NULL;
-        KASSERT(fs->s5f_bdev);
         blocknum = (int)s->s5s_free_blocks[S5_NBLKS_PER_FNODE - 1];
-        KASSERT(blocknum > 0);
-
+        
         pframe_get(&fs->s5f_bdev->bd_mmobj, (uint32_t)blocknum, &next_free_blocks);
-        KASSERT(next_free_blocks->pf_addr);
-
+        
         memcpy((void *)(s->s5s_free_blocks), next_free_blocks->pf_addr, 
                 S5_NBLKS_PER_FNODE * sizeof(int));
         /*this will not initialize the contents of an allocated block*/
@@ -651,8 +534,6 @@ s5_alloc_block(s5fs_t *fs)
 
     unlock_s5(fs);
 
-    KASSERT(blocknum > 0);
-    dprintf("block allocated, the block number is %d\n", blocknum);
     return blocknum;
         /*NOT_YET_IMPLEMENTED("S5FS: s5_alloc_block");*/
         /*return -1;*/
@@ -853,28 +734,13 @@ s5_free_inode(vnode_t *vnode)
 int
 s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
 {
-    KASSERT(vnode);
-    KASSERT(name);
-    KASSERT(S_ISDIR(vnode->vn_mode));
-
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
-    KASSERT(inode);
-    KASSERT(S5_TYPE_DIR == inode->s5_type);
-    KASSERT((unsigned)(vnode->vn_len) == inode->s5_size);
-    KASSERT(inode->s5_size % sizeof(s5_dirent_t) == 0);
-
-    KASSERT(namelen < S5_NAME_LEN);
-
-    dprintf("s5fs_subr level call hook\n");
-
+    
     ((char *)name)[namelen] = 0;
-    dprintf("vnode address is %p, name is '%s' inode size is %d\n", vnode, name, vnode->vn_len);
-
+    
     int err = 0;
     off_t offset = 0;
     off_t filesize = vnode->vn_len;
-    KASSERT((filesize % sizeof(s5_dirent_t)) == 0);
-    KASSERT((unsigned)filesize == inode->s5_size);
     s5_dirent_t dirent;
 
     /*scan thru every dirent*/
@@ -895,14 +761,10 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
             return dirent.s5d_inode;
         }
 
-        KASSERT(err == sizeof(s5_dirent_t));
         offset += sizeof(s5_dirent_t);
     }
 
-    dprintf("The dirent is not found in the directory.\n");
     return -ENOENT;
-        /*NOT_YET_IMPLEMENTED("S5FS: s5_find_dirent");*/
-        /*return -1;*/
 }
 
 /*
@@ -928,27 +790,14 @@ s5_find_dirent(vnode_t *vnode, const char *name, size_t namelen)
 int
 s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 {
-    KASSERT(vnode);
-    KASSERT(name);
-    KASSERT(S_ISDIR(vnode->vn_mode));
-
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
-    KASSERT(inode);
-    KASSERT(S5_TYPE_DIR == inode->s5_type);
-
-    KASSERT(namelen < S5_NAME_LEN);
-
-    dprintf("s5fs_subr level call hook\n");
-
+    
     ((char *)name)[namelen] = 0;
-    dprintf("vnode address is %p, name is %s\n", vnode, name);
-
+    
     int err = 0;
     int inodeno = 0;
     off_t offset = 0;
     off_t filesize = vnode->vn_len;
-    KASSERT((filesize % sizeof(s5_dirent_t)) == 0);
-    KASSERT((unsigned)filesize == inode->s5_size);
     s5_dirent_t dirent_target;
 
     /*search for the to-be-deleted dirent*/
@@ -973,27 +822,20 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
         offset += sizeof(s5_dirent_t);
     }
 
-    KASSERT(inodeno >= 0);
-    KASSERT(err >= 0);
-    KASSERT(offset < filesize);
-
     /*get the last dirent*/
     s5_dirent_t dirent_last;
     err = s5_read_file(vnode, filesize - sizeof(s5_dirent_t), (char *)(&dirent_last), sizeof(s5_dirent_t));
     if (err < 0) {
         return err;
     }
-    KASSERT(err == sizeof(s5_dirent_t));
-
+    
     /*write the last dirent into the deleted dirent position*/
     err = s5_write_file(vnode, offset, (const char *)(&dirent_last), sizeof(s5_dirent_t));
     if (err < 0) {
         return err;
     }
-    KASSERT(err == sizeof(s5_dirent_t));
-
+    
     s5fs_t *fs = VNODE_TO_S5FS(vnode);
-    KASSERT(fs);
     vnode_t *vnode_deleted = vget(fs->s5f_fs, inodeno);
     if (vnode_deleted == NULL) {
         panic("don't know what to do here\n");
@@ -1001,7 +843,6 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 
     /*not sure about the maintainance of linkcount*/
     s5_inode_t *inode_deleted = VNODE_TO_S5INODE(vnode_deleted);
-    KASSERT(inode_deleted);
     inode_deleted->s5_linkcount--;
     dprintf("crazykeyword inode linkcount incremented, ino %d, linkcount now is: %d\n", vnode_deleted->vn_vno, inode_deleted->s5_linkcount);
     s5_dirty_inode(fs, inode_deleted);
@@ -1013,12 +854,8 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
     vnode->vn_len -= sizeof(s5_dirent_t);
     inode->s5_size -= sizeof(s5_dirent_t);
     s5_dirty_inode(fs, inode);
-    /*still need to dirty_inode*/
-    /*s5_dirty_inode(fs, inode_deleted);*/
 
     return 0;
-        /*NOT_YET_IMPLEMENTED("S5FS: s5_remove_dirent");*/
-        /*return -1;*/
 }
 
 /*
@@ -1035,26 +872,12 @@ s5_remove_dirent(vnode_t *vnode, const char *name, size_t namelen)
 int
 s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
 {
-    KASSERT(parent);
-    KASSERT(name);
-    KASSERT(S_ISDIR(parent->vn_mode));
-
     s5_inode_t *inode_parent = VNODE_TO_S5INODE(parent);
-    KASSERT(inode_parent);
-    KASSERT(S5_TYPE_DIR == inode_parent->s5_type);
-    KASSERT((unsigned)(parent->vn_len) == inode_parent->s5_size);
-    KASSERT(parent->vn_len % sizeof(s5_dirent_t) == 0);
-
+    
     s5_inode_t *inode_child = VNODE_TO_S5INODE(child);
-    KASSERT(inode_child);
-
-    KASSERT(namelen < S5_NAME_LEN);
-
-    dprintf("s5fs_subr level call hook\n");
-
+    
     ((char *)name)[namelen] = 0;
-    dprintf("parent vnode address is %p, child vnode address is %p, name is %s\n", parent, child, name);
-
+    
     /*examine if the dirent already exists*/
     int err = s5_find_dirent(parent, name, namelen);
     if (err > 0) {
@@ -1064,38 +887,27 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
     if (err < 0 && err != -ENOENT) {
         return err;
     }
-    KASSERT(err == -ENOENT);
-
+    
     /*construct the dirent*/
     s5_dirent_t dirent;
     strncpy(dirent.s5d_name, name, namelen);
     dirent.s5d_name[namelen] = '\0';
-    KASSERT(inode_child->s5_number == child->vn_vno);
     dirent.s5d_inode = inode_child->s5_number;
-    KASSERT(inode_child->s5_type != 0);
-
+    
     /*write it to the end of the file*/
     err = s5_write_file(parent, parent->vn_len, (const char *)(&dirent), sizeof(s5_dirent_t));
     if (err < 0) {
         return err;
     }
-    KASSERT(err == sizeof(s5_dirent_t));
-
-    /*increase the refcount on child*/
-    /*actually no need, it's not we've acquired a new pointer to child*/
-    /*vref(child);*/
-
+    
     /*special case '.'*/
     if (!name_match(".", name, namelen)) {
         /*increment the linkcount for inode*/
         inode_child->s5_linkcount++;
-        dprintf("crazykeyword inode linkcount incremented, ino %d, linkcount now is: %d\n", child->vn_vno, inode_child->s5_linkcount);
         s5_dirty_inode(VNODE_TO_S5FS(parent), inode_child);
     }
 
     return 0;
-        /*NOT_YET_IMPLEMENTED("S5FS: s5_link");*/
-        /*return -1;*/
 }
 
 /*
@@ -1110,12 +922,7 @@ s5_link(vnode_t *parent, vnode_t *child, const char *name, size_t namelen)
 int
 s5_inode_blocks(vnode_t *vnode)
 {
-    KASSERT(vnode);
-
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
-    KASSERT(inode);
-
-    dprintf("s5fs_subr level call hook\n");
 
     int result = 0;
     uint32_t i;
@@ -1155,6 +962,4 @@ s5_inode_blocks(vnode_t *vnode)
     }
 
     return result;
-        /*NOT_YET_IMPLEMENTED("S5FS: s5_inode_blocks");*/
-        /*return -1;*/
 }
