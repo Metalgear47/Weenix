@@ -114,6 +114,18 @@ static vnode_ops_t s5fs_file_vops = {
         .cleanpage = s5fs_cleanpage
 };
 
+static void
+lock_vnode(vnode_t *vn)
+{
+    kmutex_lock(&vn->vn_mutex);
+}
+
+static void
+unlock_vnode(vnode_t *vn)
+{
+    kmutex_unlock(&vn->vn_mutex);
+}
+
 /*
  * Read fs->fs_dev and set fs_op, fs_root, and fs_i.
  *
