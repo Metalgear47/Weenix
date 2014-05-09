@@ -436,13 +436,8 @@ pframe_pin(pframe_t *pf)
 void
 pframe_unpin(pframe_t *pf)
 {
-    KASSERT(pf->pf_pincount > 0);
-    dbg(DBG_PFRAME, "called on pframe %p.with pincount: %d, total pinned: %d\n", pf, pf->pf_pincount, npinned);
-
     pf->pf_pincount--;
     if (pf->pf_pincount == 0) {
-        dbg(DBG_PFRAME, "pincount reaches 0, gonna add it to correct list.\n");
-
         /*remove it from pinned list*/
         list_remove(&pf->pf_link);
         npinned--;
@@ -452,9 +447,6 @@ pframe_unpin(pframe_t *pf)
         /*a little bit shaky about insert tail(LRU)*/
         nallocated++;
     }
-
-    KASSERT(pf->pf_pincount >= 0);
-        /*NOT_YET_IMPLEMENTED("S5FS: pframe_unpin");*/
 }
 
 /*
@@ -544,9 +536,6 @@ pframe_free(pframe_t *pf)
         KASSERT(!pframe_is_busy(pf));
 
         dbg(DBG_PFRAME, "uncaching page %d of obj %p\n", pf->pf_pagenum, pf->pf_obj);
-    if ((uintptr_t)pf->pf_obj == 0xc1ea71fc && pf->pf_pagenum == 5) {
-        dbg(DBG_PFRAME, "123");
-    }
 
         mmobj_t *o = pf->pf_obj;
 
