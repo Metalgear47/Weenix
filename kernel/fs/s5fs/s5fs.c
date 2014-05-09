@@ -36,6 +36,7 @@
 #include "vm/shadow.h"
 
 #define dprintf(...) dbg(DBG_S5FS, __VA_ARGS__)
+#define S5_MAX_FILE_SIZE        S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE
 
 /* Diagnostic/Utility: */
 static int s5_check_super(s5_super_t *super);

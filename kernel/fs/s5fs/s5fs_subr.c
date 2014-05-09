@@ -27,6 +27,7 @@
 #include "mm/page.h"
 
 #define dprintf(...) dbg(DBG_S5FS, __VA_ARGS__)
+#define S5_MAX_FILE_SIZE        S5_MAX_FILE_BLOCKS * S5_BLOCK_SIZE
 
 #define s5_dirty_super(fs)                                           \
         do {                                                         \
