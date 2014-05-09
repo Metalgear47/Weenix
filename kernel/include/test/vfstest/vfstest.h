@@ -1,8 +1,5 @@
 #pragma once
 
-#include "errno.h"
-#include "limits.h"
-
 /* "kernel" utility things */
 
 /* fprintf */
