@@ -83,7 +83,16 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
     int blocknum = 0;
     /*get the file's corresponding inode*/
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
+    /*s5fs_t *fs = VNODE_TO_S5FS(vnode);
+    pframe_t *pframe_inode_block = NULL;
+    int ret = pframe_get(S5FS_TO_VMOBJ(fs), S5_INODE_BLOCK(vnode->vn_vno), &pframe_inode_block);
+    if (ret < 0) {
+        KASSERT(pframe_inode_block == NULL);
+        return ret;
+    }
+    s5_inode_t *inode = (s5_inode_t *)pframe_inode_block->pf_addr + S5_INODE_OFFSET(vnode->vn_vno);*/
     KASSERT(inode);
+    /*KASSERT(inode == VNODE_TO_S5INODE(vnode));*/
     if ((S5_TYPE_DATA == inode->s5_type)
             || (S5_TYPE_DIR == inode->s5_type)
             || (S5_TYPE_CHR == inode->s5_type)
