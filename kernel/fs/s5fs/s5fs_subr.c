@@ -84,10 +84,15 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
     /*get the file's corresponding inode*/
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
     KASSERT(inode);
-    KASSERT((S5_TYPE_DATA == inode->s5_type)
+    if ((S5_TYPE_DATA == inode->s5_type)
             || (S5_TYPE_DIR == inode->s5_type)
             || (S5_TYPE_CHR == inode->s5_type)
-            || (S5_TYPE_BLK == inode->s5_type));
+            || (S5_TYPE_BLK == inode->s5_type)) {
+
+    } else {
+        panic("let's see what happened.");
+        return -EINVAL;
+    }
 
     /*get the file system*/
     s5fs_t *fs = VNODE_TO_S5FS(vnode);
