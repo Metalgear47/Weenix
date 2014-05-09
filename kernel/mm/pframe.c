@@ -332,7 +332,7 @@ get_resident:
         if (err < 0) {
             /*it's allocated but some error occured during fill the page*/
             /*so reclaim all the memory this page took*/
-            pframe_free(*result);
+            /*pframe_free(*result);*/
             /*set the result to NULL*/
             *result = NULL;
             dbg(DBG_PFRAME, "some error when trying to fill the page, error number is %d\n", err);

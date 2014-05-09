@@ -219,6 +219,7 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
 
     KASSERT(o->mmo_shadowed == NULL);
     KASSERT(o == bottom_obj);
+    pframe_pin(pf);
 
     pframe_t *pf_source = NULL;
     int err = pframe_lookup(o, pf->pf_pagenum, 1, &pf_source);
@@ -229,7 +230,6 @@ shadow_fillpage(mmobj_t *o, pframe_t *pf)
     
     KASSERT(pf_source);
     memcpy(pf->pf_addr, pf_source->pf_addr, PAGE_SIZE);
-    pframe_pin(pf);
     return 0;
         /*NOT_YET_IMPLEMENTED("VM: shadow_fillpage");*/
         /*return 0;*/

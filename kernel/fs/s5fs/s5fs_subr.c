@@ -84,10 +84,15 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
     /*get the file's corresponding inode*/
     s5_inode_t *inode = VNODE_TO_S5INODE(vnode);
     KASSERT(inode);
-    KASSERT((S5_TYPE_DATA == inode->s5_type)
+    if ((S5_TYPE_DATA == inode->s5_type)
             || (S5_TYPE_DIR == inode->s5_type)
             || (S5_TYPE_CHR == inode->s5_type)
-            || (S5_TYPE_BLK == inode->s5_type));
+            || (S5_TYPE_BLK == inode->s5_type)) {
+
+    } else {
+        panic("let's see what happened.");
+        return -EINVAL;
+    }
 
     /*get the file system*/
     s5fs_t *fs = VNODE_TO_S5FS(vnode);
@@ -239,7 +244,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
 
                     if (blocknum < 0) {
                         /*not sure about free the pframe*/
-                        pframe_free(ibp);
+                        /*pframe_free(ibp);*/
                         s5_free_block(fs, (uint32_t)indirect_block);
                         return blocknum;
                     }
@@ -252,7 +257,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                          *I free the pframe here because I've already dirty it
                          */
                         /*not sure about free the pframe*/
-                        pframe_free(ibp);
+                        /*pframe_free(ibp);*/
                         s5_free_block(fs, (uint32_t)indirect_block);
                         s5_free_block(fs, (uint32_t)blocknum);
                         return err;
@@ -274,7 +279,7 @@ s5_seek_to_block(vnode_t *vnode, off_t seekptr, int alloc)
                     if (err < 0) {
                         inode->s5_indirect_block = 0;
                         s5_dirty_inode(fs, inode);
-                        pframe_free(ibp);
+                        /*pframe_free(ibp);*/
                         s5_free_block(fs, (uint32_t)indirect_block);
                         s5_free_block(fs, (uint32_t)blocknum);
                         return err;
