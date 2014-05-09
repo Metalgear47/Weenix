@@ -349,13 +349,8 @@ get_resident:
             dbg(DBG_PFRAME, "after pageout deamon reclaimed pframes.\n");
         }
         
-        KASSERT(err == 0);
-        /*KASSERT(o == (*result)->pf_obj);*/
         return err;
     }
-
-        /*NOT_YET_IMPLEMENTED("S5FS: pframe_get");*/
-        /*return 0;*/
 }
 
 int
@@ -414,9 +409,6 @@ pframe_migrate(pframe_t *pf, mmobj_t *dest)
 void
 pframe_pin(pframe_t *pf)
 {
-    KASSERT(pf->pf_pincount >= 0 && "Bad thing happened, pincount is negative.\n");
-    dbg(DBG_PFRAME, "called on pframe %p. with pincount: %d, total pinned: %d\n", pf, pf->pf_pincount, npinned);
-
     pf->pf_pincount++;
     if (pf->pf_pincount == 1){
         dbg(DBG_PFRAME, "this pframe is first pinned, add it to correct list.\n");
@@ -429,9 +421,6 @@ pframe_pin(pframe_t *pf)
         list_insert_head(&pinned_list, &pf->pf_link);
         npinned++;
     }
-
-    KASSERT(pf->pf_pincount > 0);
-        /*NOT_YET_IMPLEMENTED("S5FS: pframe_pin");*/
 }
 
 /*

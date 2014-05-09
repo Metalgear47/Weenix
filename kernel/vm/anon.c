@@ -39,10 +39,7 @@ static mmobj_ops_t anon_mmobj_ops = {
 void
 anon_init()
 {
-    dbg(DBG_ANON, "anon function hook\n");
     anon_allocator = slab_allocator_create("anonymous object", sizeof(mmobj_t));
-    KASSERT(anon_allocator);
-        /*NOT_YET_IMPLEMENTED("VM: anon_init");*/
 }
 
 /*
@@ -54,15 +51,11 @@ anon_init()
 mmobj_t *
 anon_create()
 {
-    dbg(DBG_ANON, "anon function hook\n");
     mmobj_t *mmo = slab_obj_alloc(anon_allocator);
     if (mmo) {
         mmobj_init(mmo, &anon_mmobj_ops);
-        /*list_init(&mmo->mmo_un.mmo_vmas);*/
     }
     return mmo;
-        /*NOT_YET_IMPLEMENTED("VM: anon_create");*/
-        /*return NULL;*/
 }
 
 /* Implementation of mmobj entry points: */
@@ -73,13 +66,7 @@ anon_create()
 static void
 anon_ref(mmobj_t *o)
 {
-    KASSERT(o);
-    KASSERT(o->mmo_refcount >= 0);
-
     o->mmo_refcount++;
-    dbg(DBG_ANON, "anon_ref: 0x%p, up to %d, nrespages=%d\n",
-        o,  o->mmo_refcount, o->mmo_nrespages);
-        /*NOT_YET_IMPLEMENTED("VM: anon_ref");*/
 }
 
 /*
@@ -93,14 +80,6 @@ anon_ref(mmobj_t *o)
 static void
 anon_put(mmobj_t *o)
 {
-    KASSERT(o);
-
-    KASSERT(0 <= o->mmo_nrespages);
-    KASSERT(o->mmo_nrespages < o->mmo_refcount);
-
-    dbg(DBG_ANON, "anon_put: 0x%p, down to %d, nrespages = %d\n",
-        o, o->mmo_refcount - 1, o->mmo_nrespages);
-
     if ((o->mmo_refcount - 1) == o->mmo_nrespages) {
         pframe_t *pframe_cur;
         list_iterate_begin(&o->mmo_respages, pframe_cur, pframe_t, pf_olink) {
@@ -118,17 +97,12 @@ anon_put(mmobj_t *o)
 
             pframe_free(pframe_cur);
         } list_iterate_end();
-
-        KASSERT(0 == o->mmo_nrespages);
-        KASSERT(1 == o->mmo_refcount);
     }
 
     if (0 < --o->mmo_refcount) {
         return;
     }
 
-    KASSERT(0 == o->mmo_nrespages);
-    KASSERT(0 == o->mmo_refcount);
 
     slab_obj_free(anon_allocator, o);
         /*NOT_YET_IMPLEMENTED("VM: anon_put");*/
@@ -139,9 +113,6 @@ anon_put(mmobj_t *o)
 static int
 anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 {
-    dbg(DBG_ANON, "anon function hook\n");
-    KASSERT(o);
-
     int err = pframe_get(o, pagenum, pf);
     if (err < 0) {
         KASSERT(*pf == NULL);
@@ -162,54 +133,20 @@ anon_lookuppage(mmobj_t *o, uint32_t pagenum, int forwrite, pframe_t **pf)
 static int
 anon_fillpage(mmobj_t *o, pframe_t *pf)
 {
-    dbg(DBG_ANON, "anon function hook\n");
-    KASSERT(o);
-    KASSERT(pf);
-    KASSERT(pf->pf_addr);
-    KASSERT(o == pf->pf_obj);
-
     memset(pf->pf_addr, 0, PAGE_SIZE);
     pframe_pin(pf);
 
     return 0;
-        /*NOT_YET_IMPLEMENTED("VM: anon_fillpage");*/
-        /*return 0;*/
 }
 
 static int
 anon_dirtypage(mmobj_t *o, pframe_t *pf)
 {
-    dbg(DBG_ANON, "anon function hook\n");
-    KASSERT(o);
-    KASSERT(pf);
-    KASSERT(pf->pf_addr);
-    KASSERT(o == pf->pf_obj);
-
     return 0;
-        /*NOT_YET_IMPLEMENTED("VM: anon_dirtypage");*/
-        /*return -1;*/
 }
 
 static int
 anon_cleanpage(mmobj_t *o, pframe_t *pf)
 {
-    dbg(DBG_ANON, "anon function hook\n");
-    KASSERT(o);
-    KASSERT(pf);
-    KASSERT(pf->pf_addr);
-    KASSERT(o == pf->pf_obj);
-
-    /*just disable them for now*/
-    /*seems most of the cleanup is done during pageoutd*/
-    /*pframe_free(pf);*/
-    
-    /*
-     *it's pinned thru the whole life cycle, and should be unpinned
-     *before it's cleaned
-     */
-    /*pframe_unpin(pf);*/
-
     return 0;
-        /*NOT_YET_IMPLEMENTED("VM: anon_cleanpage");*/
-        /*return -1;*/
 }
