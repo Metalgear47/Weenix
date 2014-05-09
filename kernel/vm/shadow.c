@@ -125,9 +125,9 @@ shadow_put(mmobj_t *o)
             /*uncache the page frame*/
             /*pframe_clean(pframe_cur);*/
             
-            /*if (pframe_is_dirty(pframe_cur)) {
+            if (pframe_is_dirty(pframe_cur)) {
                 pframe_clean(pframe_cur);
-            }*/
+            }
              
             
             pframe_free(pframe_cur);

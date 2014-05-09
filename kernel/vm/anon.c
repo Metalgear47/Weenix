@@ -110,9 +110,9 @@ anon_put(mmobj_t *o)
             /*maybe no need to free it here*/
             /*pframe_clean(pframe_cur);*/
             
-            /*if (pframe_is_dirty(pframe_cur)) {
+            if (pframe_is_dirty(pframe_cur)) {
                 pframe_clean(pframe_cur);
-            }*/
+            }
              
             /*o->mmo_ops->cleanpage(o, pframe_cur);*/
 
