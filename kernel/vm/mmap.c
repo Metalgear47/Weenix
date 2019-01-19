@@ -19,12 +19,6 @@
 #include "vm/vmmap.h"
 #include "vm/mmap.h"
 
-/*
- *my own include
- */
-#include "fs/fcntl.h"
-#include "fs/stat.h"
-
 #define LEN_TO_PAGES(len) len / PAGE_SIZE + ((len % PAGE_SIZE == 0) ? 0 : 1)
 
 int valid_addr(void *addr, size_t len)
